@@ -1,0 +1,81 @@
+<div class="mb-4">
+
+    <div class="d-flex flex-column flex-sm-row
+                justify-content-between
+                align-items-sm-center
+                gap-2 mb-3">
+
+        <div>
+            <h5 class="mb-1">
+                Gallery Event
+            </h5>
+
+            <div class="text-secondary small">
+                Tambahkan foto dokumentasi event.
+            </div>
+        </div>
+
+        <button type="button"
+                class="btn btn-outline-primary"
+                id="addGalleryButton">
+
+            <i class="ti ti-plus me-1"></i>
+            Tambah Foto
+
+        </button>
+
+    </div>
+
+    <div id="newGalleryContainer"></div>
+
+</div>
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    // =========================================================
+    // EVENT TYPE : FREE / PAID
+    // =========================================================
+
+    const eventType = document.getElementById('event_type');
+    const priceInput = document.getElementById('price');
+
+    function togglePrice() {
+
+        if (!eventType || !priceInput) {
+            return;
+        }
+
+        if (eventType.value === 'free') {
+
+            priceInput.value = 0;
+            priceInput.disabled = true;
+
+        } else {
+
+            priceInput.disabled = false;
+
+            if (priceInput.value === '0') {
+                priceInput.value = '';
+            }
+        }
+    }
+
+    if (eventType) {
+
+        eventType.addEventListener('change', togglePrice);
+
+        // Jalankan saat halaman pertama kali dibuka
+        togglePrice();
+    }
+
+
+    // =========================================================
+    // YOUTUBE PREVIEW
+    // =========================================================
+
+
+
+});
+</script>
+@endpush

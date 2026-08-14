@@ -1,5 +1,5 @@
 @extends('tablar::auth.layout')
-@section('title', 'Ruang Kembali')
+@section('title', 'ZH Picture')
 @section('content')
 <style>
     body {
@@ -320,7 +320,7 @@ label {
                 </div>
 
                 <div class="text-center text-muted mt-4 small">
-                    Ruang Kembali © {{ date('Y') }} Semua Hak Dilindungi
+                    ZH Picture © {{ date('Y') }} Semua Hak Dilindungi
                 </div>
             </form>
         </div>

@@ -1,0 +1,384 @@
+
+<div class="card-body">
+    <form action="{{ route('event_categories.store') }}" method="POST">
+        @csrf
+
+        <div class="row">
+            {{-- Nama Kategori --}}
+            <div class="col-md-6 mb-3">
+                <label class="form-label">
+                    Nama Kategori <span class="text-danger">*</span>
+                </label>
+
+                <input
+                    type="text"
+                    name="name"
+                    class="form-control @error('name') is-invalid @enderror"
+                    value="{{ old('name') }}"
+                    required
+                >
+
+                @error('name')
+                    <div class="invalid-feedback">
+                        {{ $message }}
+                    </div>
+                @enderror
+            </div>
+
+            {{-- Slug --}}
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Slug</label>
+
+                <input
+                    type="text"
+                    name="slug"
+                    class="form-control @error('slug') is-invalid @enderror"
+                    value="{{ old('slug') }}"
+                    placeholder="contoh: seminar-nasional"
+                >
+
+                @error('slug')
+                    <div class="invalid-feedback">
+                        {{ $message }}
+                    </div>
+                @enderror
+
+                <small class="text-muted">
+                    Kosongkan jika slug ingin dibuat otomatis.
+                </small>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Kategori Aktif</label>
+                <select name="is_active" class="form-select">
+                    <option value="">-- Pilih Tipe --</option>
+                    <option value="1">Aktif</option>
+                    <option value="0">Tidak Aktif</option>
+                </select>
+            </div>
+
+            {{-- Deskripsi --}}
+            <div class="col-12 mb-3">
+                <label class="form-label">Deskripsi</label>
+
+                <textarea
+                    name="description"
+                    rows="4"
+                    class="form-control @error('description') is-invalid @enderror"
+                    placeholder="Deskripsi kategori..."
+                >{{ old('description') }}</textarea>
+
+                @error('description')
+                    <div class="invalid-feedback">
+                        {{ $message }}
+                    </div>
+                @enderror
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-between">
+            <a
+                href="{{ route('event_categories.index') }}"
+                class="btn btn-secondary"
+            >
+                Batal
+            </a>
+
+            <button type="submit" class="btn btn-success">
+                Simpan
+            </button>
+        </div>
+    </form>
+</div>
+
+
+
+
+
+{{-- ========================================================= --}}
+{{-- CSS --}}
+{{-- ========================================================= --}}
+
+<style>
+
+    .media-preview-box {
+        width: 100%;
+        height: 220px;
+
+        overflow: hidden;
+
+        border: 1px solid var(--tblr-border-color);
+        border-radius: 10px;
+
+        background: var(--tblr-bg-surface-secondary);
+    }
+
+    .media-preview-image {
+        width: 100%;
+        height: 100%;
+
+        display: block;
+
+        object-fit: cover;
+    }
+
+    .media-preview-empty {
+        width: 100%;
+        height: 100%;
+
+        display: flex;
+        flex-direction: column;
+
+        align-items: center;
+        justify-content: center;
+
+        color: var(--tblr-secondary);
+
+        gap: 5px;
+    }
+
+    .media-preview-empty i {
+        font-size: 40px;
+    }
+
+    .youtube-preview-container {
+        border: 1px solid var(--tblr-border-color);
+        border-radius: 10px;
+
+        overflow: hidden;
+
+        background: var(--tblr-bg-surface);
+    }
+
+    .youtube-preview-header {
+        display: flex;
+
+        align-items: center;
+        justify-content: space-between;
+
+        gap: 15px;
+
+        padding: 12px 15px;
+
+        border-bottom: 1px solid var(--tblr-border-color);
+    }
+
+    .youtube-preview-wrapper {
+        position: relative;
+
+        width: 100%;
+
+        padding-top: 56.25%;
+
+        background: #000;
+    }
+
+    .youtube-preview-wrapper iframe {
+        position: absolute;
+
+        inset: 0;
+
+        width: 100%;
+        height: 100%;
+
+        border: 0;
+    }
+
+    .event-gallery-edit-grid {
+        display: flex;
+
+        gap: 15px;
+
+        overflow-x: auto;
+
+        padding-bottom: 8px;
+
+        scroll-snap-type: x mandatory;
+
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .event-gallery-edit-grid::-webkit-scrollbar {
+        height: 6px;
+    }
+
+    .event-gallery-edit-grid::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .event-gallery-edit-grid::-webkit-scrollbar-thumb {
+        background: var(--tblr-border-color);
+        border-radius: 10px;
+    }
+
+    .event-gallery-card {
+        flex: 0 0 230px;
+
+        border: 1px solid var(--tblr-border-color);
+        border-radius: 10px;
+
+        overflow: hidden;
+
+        background: var(--tblr-bg-surface);
+
+        scroll-snap-align: start;
+    }
+
+    .event-gallery-image-wrapper {
+        position: relative;
+
+        width: 100%;
+        height: 155px;
+
+        overflow: hidden;
+    }
+
+    .event-gallery-edit-image {
+        width: 100%;
+        height: 100%;
+
+        display: block;
+
+        object-fit: cover;
+    }
+
+    .event-gallery-delete {
+        position: absolute;
+
+        top: 8px;
+        right: 8px;
+
+        width: 34px;
+        height: 34px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        border: 0;
+        border-radius: 8px;
+
+        color: #fff;
+
+        background: rgba(214, 57, 57, .9);
+
+        cursor: pointer;
+
+        transition: .2s ease;
+    }
+
+    .event-gallery-delete:hover {
+        background: rgba(180, 35, 35, 1);
+        transform: scale(1.05);
+    }
+
+    .event-gallery-card.is-deleted {
+        opacity: .45;
+    }
+
+    .event-gallery-card.is-deleted
+    .event-gallery-edit-image {
+        filter: grayscale(1);
+    }
+
+    .new-gallery-list {
+        display: flex;
+
+        gap: 15px;
+
+        overflow-x: auto;
+
+        padding-bottom: 8px;
+    }
+
+    .new-gallery-item {
+        position: relative;
+
+        flex: 0 0 230px;
+
+        border: 1px solid var(--tblr-border-color);
+        border-radius: 10px;
+
+        overflow: hidden;
+
+        background: var(--tblr-bg-surface);
+    }
+
+    .new-gallery-preview {
+        width: 100%;
+        height: 155px;
+
+        display: block;
+
+        object-fit: cover;
+    }
+
+    .new-gallery-remove {
+        position: absolute;
+
+        top: 8px;
+        right: 8px;
+
+        width: 34px;
+        height: 34px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        border: 0;
+        border-radius: 8px;
+
+        color: #fff;
+
+        background: rgba(214, 57, 57, .9);
+
+        cursor: pointer;
+    }
+
+    .event-gallery-empty {
+        min-height: 170px;
+
+        display: flex;
+        flex-direction: column;
+
+        align-items: center;
+        justify-content: center;
+
+        text-align: center;
+
+        border: 1px dashed var(--tblr-border-color);
+        border-radius: 10px;
+
+        color: var(--tblr-secondary);
+    }
+
+    .event-gallery-empty i {
+        font-size: 38px;
+    }
+
+    @media (max-width: 575.98px) {
+
+        .media-preview-box {
+            height: 190px;
+        }
+
+        .event-gallery-card,
+        .new-gallery-item {
+            flex-basis: 210px;
+        }
+
+        .event-gallery-image-wrapper,
+        .new-gallery-preview {
+            height: 140px;
+        }
+
+    }
+
+</style>
+
+
+
+{{-- ========================================================= --}}
+{{-- JAVASCRIPT --}}
+{{-- ========================================================= --}}
+

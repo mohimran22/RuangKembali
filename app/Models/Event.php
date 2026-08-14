@@ -222,4 +222,11 @@ class Event extends Model
 
     return null;
 }
+public function rundowns()
+{
+    return $this->hasMany(EventRundown::class)
+        ->orderBy('rundown_date')
+        ->orderBy('sort_order')
+        ->orderBy('start_time');
+}
 }

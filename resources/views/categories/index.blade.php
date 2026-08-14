@@ -33,7 +33,7 @@
             <div class="col-12">
                 <div class="card">
                     <div class="card-header">
-                        <p class="text-center mb-4" style="font-size: 1.5rem; font-weight: 400; font-family: 'Poppins', sans-serif;">
+                        <p class="text-center mb-4" style="font-size: 1.5rem; font-weight: 400; font-family: 'Montserrat', sans-serif;">
                                 Daftar Kategori Event
                         </p>
                     </div>
@@ -41,25 +41,44 @@
                                 <div class="alert alert-success">{{ session('success') }}</div>
                             @endif
                         <div class="table-responsive">
-                            <table class="table table-bordered">
+                            <table class="table card-table table-vcenter">
                                 <thead>
                                     <tr>
                                         <th>No.</th>
                                         <th>Nama Kategori</th>
+                                        <th>Slug</th>
+                                        <th>Deskripsi</th>
                                         <th>Aksi</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach($eventcategory as $piece)
+                                    @foreach($eventcategory as $cat)
                                         <tr>
                                             <td>{{ $loop->iteration }}</td>
                                             
-                                            <td>{{ $piece->name }}</td>
+                                            <td>{{ $cat->name }}</td>
+                                            <td>{{ $cat->slug }}</td>
+                                            <td>{{ $cat->description }}</td>
                                             <td>
-                                                <a href="{{ route('event_categories.edit', $piece) }}" class="btn btn-sm btn-warning">Edit</a>
-                                                <form action="{{ route('event_categories.destroy', $piece) }}" method="POST" style="display:inline-block">
-                                                    @csrf @method('DELETE')
-                                                    <button onclick="return confirm('Delete this piece?')" class="btn btn-sm btn-danger">Delete</button>
+                                                <a href="{{ route('event_categories.edit', $cat) }}"
+                                                class="btn btn-sm btn-warning"
+                                                title="Edit">
+                                                    <i class="ti ti-edit"></i>
+                                                </a>
+
+                                                <form action="{{ route('event_categories.destroy', $cat) }}"
+                                                    method="POST"
+                                                    class="d-inline-block">
+                                                    @csrf
+                                                    @method('DELETE')
+
+                                                    <button
+                                                        type="submit"
+                                                        onclick="return confirm('Hapus data kategori ini?')"
+                                                        class="btn btn-sm btn-danger"
+                                                        title="Hapus">
+                                                        <i class="ti ti-trash"></i>
+                                                    </button>
                                                 </form>
                                             </td>
                                         </tr>

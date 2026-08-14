@@ -263,103 +263,119 @@ public function create()
     ));
 }
 
-    public function store(Request $request)
-    {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'event_category_id' => 'required|exists:event_categories,id',
-            'event_type' => 'required|in:free,paid',
-            'audience_type' => 'required|in:public,gender,age',
-            'registration_open' => 'nullable|date',
-            'registration_close' => 'nullable|date|after_or_equal:registration_open',
-            'start_at' => 'required|date',
-            'end_at' => 'required|date|after:start_at',
-            'location' => 'nullable|string|max:255',
-            'price' => [
-                'required_if:event_type,paid',
-                'nullable',
-                'numeric',
-                'min:0',
-            ],
-            'quota' => 'nullable|integer|min:1',
+public function store(Request $request)
+{
+    $request->validate([
+        'name' => 'required|string|max:255',
+        'event_category_id' => 'required|exists:event_categories,id',
+        'event_type' => 'required|in:free,paid',
+        'audience_type' => 'required|in:public,gender,age',
+        'registration_open' => 'nullable|date',
+        'registration_close' => 'nullable|date|after_or_equal:registration_open',
+        'start_at' => 'required|date',
+        'end_at' => 'required|date|after:start_at',
+        'location' => 'nullable|string|max:255',
+        'price' => [
+            'required_if:event_type,paid',
+            'nullable',
+            'numeric',
+            'min:0',
+        ],
+        'quota' => 'nullable|integer|min:1',
+        'description' => 'nullable|string',
+        'is_published' => 'required|boolean',
+        'poster' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+        'thumbnail' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+        'youtube_url' => 'nullable|url|max:500',
+        'gallery_images' => 'nullable|array',
+        'gallery_images.*' => 'image|mimes:jpg,jpeg,png,webp|max:2048',
+    ]);
 
-            'poster' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
-            'thumbnail' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
 
-            'description' => 'nullable|string',
-            'is_published' => 'required|boolean',
-        ]);
+    DB::beginTransaction();
+    $uploadedFiles = [];
 
-        DB::beginTransaction();
-
-        try {
-
-            $poster = null;
-            $thumbnail = null;
-
-            if ($request->hasFile('poster')) {
-                $poster = $request->file('poster')
-                    ->store('events/posters', 'public');
-            }
-
-            if ($request->hasFile('thumbnail')) {
-                $thumbnail = $request->file('thumbnail')
-                    ->store('events/thumbnails', 'public');
-            }
-
-            Event::create([
-
-                'event_code' => $this->generateEventCode(),
-
-                'name' => $request->name,
-                'event_category_id' => $request->event_category_id,
-                'event_type' => $request->event_type,
-                'audience_type' => $request->audience_type,
-
-                'registration_open' => $request->registration_open,
-                'registration_close' => $request->registration_close,
-
-                'start_at' => $request->start_at,
-                'end_at' => $request->end_at,
-
-                'location' => $request->location,
-                'price' => $request->event_type === 'free'
-                    ? 0
-                    : ($request->price ?? 0),
-                'quota' => $request->quota,
-
-                'poster' => $poster,
-                'thumbnail' => $thumbnail,
-
-                'description' => $request->description,
-                'is_published' => $request->boolean('is_published'),
-            ]);
-
-            DB::commit();
-
-            return redirect()
-                ->route('events.index')
-                ->with('success', 'Event berhasil ditambahkan.');
-
-        } catch (\Throwable $e) {
-
-            DB::rollBack();
-
-            if ($poster) {
-                Storage::disk('public')->delete($poster);
-            }
-
-            if ($thumbnail) {
-                Storage::disk('public')->delete($thumbnail);
-            }
-
-            report($e);
-
-            return back()
-                ->withInput()
-                ->with('error', 'Event gagal ditambahkan. Silakan coba lagi.');
+    try {
+        $poster = null;
+        if ($request->hasFile('poster')) {
+            $poster = $request->file('poster')->store('events/posters', 'public');
+            $uploadedFiles[] = $poster;
         }
+
+        $thumbnail = null;
+
+        if ($request->hasFile('thumbnail')) {
+            $thumbnail = $request->file('thumbnail')->store('events/thumbnails', 'public');
+            $uploadedFiles[] = $thumbnail;
+        }
+
+        $event = Event::create([
+            'event_code' => $this->generateEventCode(),
+            'name' => $request->name,
+            'event_category_id' => $request->event_category_id,
+            'event_type' => $request->event_type,
+            'audience_type' => $request->audience_type,
+            'registration_open' => $request->registration_open,
+            'registration_close' => $request->registration_close,
+            'start_at' => $request->start_at,
+            'end_at' => $request->end_at,
+            'location' => $request->location,
+            'price' => $request->event_type === 'free'
+                ? 0
+                : ($request->price ?? 0),
+            'quota' => $request->quota,
+            'poster' => $poster,
+            'thumbnail' => $thumbnail,
+            'youtube_url' => $request->youtube_url,
+            'description' => $request->description,
+            'is_published' => $request->boolean('is_published'),
+        ]);
+        if ($request->hasFile('gallery_images')) {
+            foreach (
+                $request->file('gallery_images')
+                as $index => $image
+            ) {
+                $path = $image->store(
+                    'events/galleries',
+                    'public'
+                );
+                $uploadedFiles[] = $path;
+                EventGallery::create([
+                    'event_id' => $event->id,
+                    'image' => $path,
+                    'caption' => null,
+                    'sort_order' =>$index + 1,
+                ]);
+            }
+        }
+
+        DB::commit();
+
+        return redirect()
+            ->route('events.index')
+            ->with(
+                'success',
+                'Event berhasil ditambahkan.'
+            );
+
+    } catch (\Throwable $e) {
+
+        DB::rollBack();
+
+        foreach ($uploadedFiles as $file) {
+
+            Storage::disk('public')
+                ->delete($file);
+        }
+        report($e);
+        return back()
+            ->withInput()
+            ->with(
+                'error',
+                'Event gagal ditambahkan. Silakan coba lagi.'
+            );
     }
+}
 
 private function generateEventCode(): string
 {

@@ -26,7 +26,7 @@ use App\Http\Controllers\PartnerController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\WarehouseController;
 use App\Http\Controllers\ProductColorController;
-use App\Http\Controllers\ProductBrandController;
+use App\Http\Controllers\EventSpeakerController;
 use App\Http\Controllers\ProductTypeController;
 use App\Http\Controllers\EventCategoryController;
 use App\Http\Controllers\SupplierCatalogController;
@@ -264,7 +264,7 @@ Route::post('/switch-role', [RoleSwitchController::class, 'switch'])
     ->name('switch.role');
 
 route::resource('/product_colors', ProductColorController::class);
-route::resource('/product_brands', ProductBrandController::class);
+route::resource('/event_speakers', EventSpeakerController::class);
 route::resource('/event_categories', EventCategoryController::class);
 route::resource('/product_types', ProductTypeController::class);
 

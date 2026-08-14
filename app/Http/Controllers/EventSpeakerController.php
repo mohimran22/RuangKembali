@@ -2,18 +2,18 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\ProductBrand;
+use App\Models\EventSpeaker;
 use Illuminate\Http\Request;
 
-class ProductBrandController extends Controller
+class EventSpeakerController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        $product_brands = ProductBrand::all();
-        return view('brands.index', compact('product_brands'));
+        $event_speakers = EventSpeaker::all();
+        return view('speakers.index', compact('event_speakers'));
     }
 
     /**
@@ -21,7 +21,7 @@ class ProductBrandController extends Controller
      */
     public function create()
     {
-         return view('brands.create');
+         return view('speakers.create');
     }
 
     /**
@@ -39,7 +39,7 @@ class ProductBrandController extends Controller
             'factory_origin' => $request->factory_origin,
         ]);
 
-        return redirect()->route('product_brands.index')
+        return redirect()->route('product_speakers.index')
             ->with('success', 'Piece berhasil ditambahkan.');
     }
 
@@ -56,7 +56,7 @@ class ProductBrandController extends Controller
      */
     public function edit(ProductBrand $product_brand)
     {
-        return view('brands.edit', compact('product_brand'));
+        return view('speakers.edit', compact('product_brand'));
     }
 
 
@@ -76,7 +76,7 @@ class ProductBrandController extends Controller
 
         ]);
 
-        return redirect()->route('product_brands.index')
+        return redirect()->route('product_speakers.index')
             ->with('success', 'Piece berhasil diperbarui.');
     }
 
@@ -87,7 +87,7 @@ class ProductBrandController extends Controller
     {
         $product_brand->delete();
 
-        return redirect()->route('product_brands.index')
+        return redirect()->route('product_speakers.index')
             ->with('success', 'Piece berhasil dihapus.');
 
     }

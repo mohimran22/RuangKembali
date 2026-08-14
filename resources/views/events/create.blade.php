@@ -32,12 +32,9 @@
                                 </ul>
                             </div>
                         @endif
-                    <form action="{{ route('events.store') }}" method="POST" enctype="multipart/form-data">
+                    <form id="eventForm" action="{{ route('events.store') }}" method="POST" enctype="multipart/form-data">
                         @csrf
 
-                        {{-- ============================= --}}
-                        {{-- INFORMASI EVENT --}}
-                        {{-- ============================= --}}
                         <div class="mb-4">
                             <h4 class="mb-1">Informasi Event</h4>
                             <div class="text-secondary small">
@@ -95,11 +92,6 @@
                             </div>
 
                         </div>
-
-
-                        {{-- ============================= --}}
-                        {{-- JADWAL EVENT --}}
-                        {{-- ============================= --}}
                         <div class="mb-4">
                             <h4 class="mb-1">Jadwal Event</h4>
                             <div class="text-secondary small">
@@ -149,10 +141,6 @@
 
                         </div>
 
-
-                        {{-- ============================= --}}
-                        {{-- LOKASI & TIKET --}}
-                        {{-- ============================= --}}
                         <div class="mb-4">
                             <h4 class="mb-1">Lokasi & Tiket</h4>
                             <div class="text-secondary small">
@@ -198,10 +186,6 @@
 
                         </div>
 
-
-                        {{-- ============================= --}}
-                        {{-- AUDIENCE & PUBLIKASI --}}
-                        {{-- ============================= --}}
                         <div class="mb-4">
                             <h4 class="mb-1">Audience & Publikasi</h4>
                             <div class="text-secondary small">
@@ -258,10 +242,6 @@
 
                         </div>
 
-
-                        {{-- ============================= --}}
-                        {{-- MEDIA --}}
-                        {{-- ============================= --}}
                         <div class="mb-4">
                             <h4 class="mb-1">Media Event</h4>
                             <div class="text-secondary small">
@@ -296,8 +276,9 @@
                                     Gunakan gambar dengan rasio yang sesuai untuk thumbnail.
                                 </div>
                             </div>
-                            {{-- YouTube --}}
-                            <div class="col-md-6">
+                        </div>
+                        <div class="row mb-4">
+                            <div class="col-12">
 
                                 <label class="form-label">
                                     Video YouTube
@@ -311,8 +292,9 @@
 
                                     <input type="url"
                                         name="youtube_url"
+                                        id="youtube_url"
                                         class="form-control"
-                                        value="{{ old('youtube_url', $event->youtube_url ?? '') }}"
+                                        value="{{ old('youtube_url') }}"
                                         placeholder="https://www.youtube.com/watch?v=...">
 
                                 </div>
@@ -322,43 +304,97 @@
                                 </div>
 
                             </div>
-                        </div>
+                            <div class="col-12 mt-3">
 
+                                <div id="youtubePreviewContainer"
+                                    class="youtube-preview-container d-none">
 
-                        {{-- ============================= --}}
-                        {{-- DESKRIPSI --}}
-                        {{-- ============================= --}}
-                        <div class="mb-4">
-                            <h4 class="mb-1">Deskripsi Event</h4>
-                            <div class="text-secondary small">
-                                Jelaskan informasi lengkap mengenai event.
+                                    <div class="youtube-preview-header">
+
+                                        <div>
+                                            <div class="fw-semibold">
+                                                Preview Video
+                                            </div>
+
+                                            <div class="text-secondary small">
+                                                Video yang akan ditampilkan pada halaman event.
+                                            </div>
+                                        </div>
+
+                                        <button type="button"
+                                                class="btn btn-sm btn-ghost-secondary"
+                                                id="removeYoutubePreview">
+
+                                            <i class="ti ti-x"></i>
+
+                                        </button>
+
+                                    </div>
+
+                                    <div class="youtube-preview-wrapper">
+
+                                        <iframe id="youtubePreview"
+                                                src=""
+                                                title="Preview YouTube"
+                                                frameborder="0"
+                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                                allowfullscreen>
+                                        </iframe>
+
+                                    </div>
+
+                                </div>
+
                             </div>
                         </div>
+                        <div class="mb-4">
 
+                            <div class="d-flex flex-column flex-sm-row
+                                        justify-content-between
+                                        align-items-sm-center
+                                        gap-2 mb-3">
+
+                                <div>
+                                    <h5 class="mb-1">
+                                        Gallery Event
+                                    </h5>
+
+                                    <div class="text-secondary small">
+                                        Tambahkan foto dokumentasi event.
+                                    </div>
+                                </div>
+
+                                <button type="button"
+                                        class="btn btn-outline-primary"
+                                        id="addGalleryButton">
+
+                                    <i class="ti ti-plus me-1"></i>
+                                    Tambah Foto
+
+                                </button>
+
+                            </div>
+
+                            <div id="newGalleryContainer"></div>
+
+                        </div>
                         <div class="row mb-4">
-
+                            <div class="mb-4">
+                                <h4 class="mb-1">Deskripsi Event</h4>
+                                <div class="text-secondary small">
+                                    Jelaskan informasi lengkap mengenai event.
+                                </div>
+                            </div>
                             <div class="col-12">
-                                <label class="form-label">Deskripsi</label>
-
                                 <textarea name="description"
-                                    rows="7"
+                                    rows="5"
                                     class="form-control"
                                     placeholder="Tuliskan deskripsi lengkap mengenai event...">{{ old('description') }}</textarea>
                             </div>
 
                         </div>
 
-
-                        {{-- ============================= --}}
-                        {{-- ACTION --}}
-                        {{-- ============================= --}}
                         <div class="d-flex flex-column flex-sm-row justify-content-end gap-2 pt-3 border-top">
-
-                            <a href="{{ route('events.index') }}"
-                            class="btn btn-secondary">
-                                Batal
-                            </a>
-
                             <button type="submit"
                                     class="btn btn-primary">
                                 <i class="ti ti-device-floppy me-1"></i>
@@ -377,18 +413,9 @@
 @push('js')
 <script>
     $(document).ready(function () {
-
-        // ==========================================
-        // SELECT2
-        // ==========================================
         $('.select2').select2({
             width: '100%'
         });
-
-
-        // ==========================================
-        // EVENT TYPE → PRICE
-        // ==========================================
         const $eventType = $('#event_type');
         const $price = $('#price');
 
@@ -425,20 +452,406 @@
             handleEventType();
         });
 
-
-        // ==========================================
-        // SEBELUM SUBMIT
-        // ==========================================
         $('form').on('submit', function () {
 
-            // Pastikan event gratis selalu mengirim price = 0
             if ($eventType.val() === 'free') {
                 $price.prop('disabled', false);
                 $price.val(0);
             }
 
         });
+            const youtubeInput = document.getElementById('youtube_url');
+    const youtubePreview = document.getElementById('youtubePreview');
+    const youtubeIframe = document.getElementById('youtubeIframe');
 
+    function getYoutubeEmbedUrl(url) {
+
+        if (!url) {
+            return null;
+        }
+
+        try {
+
+            const parsedUrl = new URL(url);
+
+            if (
+                parsedUrl.hostname.includes('youtube.com') &&
+                parsedUrl.searchParams.get('v')
+            ) {
+                return 'https://www.youtube.com/embed/' +
+                    parsedUrl.searchParams.get('v');
+            }
+
+            if (parsedUrl.hostname === 'youtu.be') {
+
+                const videoId = parsedUrl.pathname
+                    .replace('/', '')
+                    .split('?')[0];
+
+                if (videoId) {
+
+                    return 'https://www.youtube.com/embed/' +
+                        videoId;
+                }
+            }
+
+            if (
+                parsedUrl.hostname.includes('youtube.com') &&
+                parsedUrl.pathname.startsWith('/embed/')
+            ) {
+
+                const videoId = parsedUrl.pathname
+                    .replace('/embed/', '')
+                    .split('/')[0];
+
+                if (videoId) {
+
+                    return 'https://www.youtube.com/embed/' +
+                        videoId;
+                }
+            }
+
+        } catch (error) {
+
+            return null;
+        }
+
+        return null;
+    }
+
+
+    function updateYoutubePreview() {
+
+        if (
+            !youtubeInput ||
+            !youtubePreview ||
+            !youtubeIframe
+        ) {
+            return;
+        }
+
+        const url = youtubeInput.value.trim();
+
+        if (!url) {
+
+            youtubePreview.classList.add('d-none');
+            youtubeIframe.src = '';
+
+            return;
+        }
+
+        const embedUrl = getYoutubeEmbedUrl(url);
+
+        if (embedUrl) {
+
+            youtubeIframe.src = embedUrl;
+            youtubePreview.classList.remove('d-none');
+
+        } else {
+
+            youtubePreview.classList.add('d-none');
+            youtubeIframe.src = '';
+        }
+    }
+
+
+    if (youtubeInput) {
+
+        youtubeInput.addEventListener(
+            'input',
+            updateYoutubePreview
+        );
+
+        youtubeInput.addEventListener(
+            'change',
+            updateYoutubePreview
+        );
+    }
+
+    const addGalleryButton =
+        document.getElementById('addGalleryButton');
+
+    const newGalleryContainer =
+        document.getElementById('newGalleryContainer');
+    let galleryFiles = new DataTransfer();
+
+    function createGalleryInput() {
+
+        const input = document.createElement('input');
+
+        input.type = 'file';
+        input.name = 'gallery_images[]';
+        input.accept = 'image/jpeg,image/png,image/webp';
+        input.multiple = true;
+
+        input.classList.add('d-none');
+
+        document
+            .getElementById('eventForm')
+            ?.appendChild(input);
+
+        return input;
+    }
+
+    const eventForm =
+        document.getElementById('eventForm') ||
+        document.querySelector('form[action*="events.store"]');
+
+    let galleryInput =
+        document.getElementById('galleryInput');
+
+    if (!galleryInput && eventForm) {
+
+        galleryInput = document.createElement('input');
+
+        galleryInput.type = 'file';
+        galleryInput.id = 'galleryInput';
+        galleryInput.name = 'gallery_images[]';
+        galleryInput.accept =
+            'image/jpeg,image/png,image/webp';
+        galleryInput.multiple = true;
+
+        galleryInput.classList.add('d-none');
+
+        eventForm.appendChild(galleryInput);
+    }
+
+    function renderGalleryPreview() {
+
+        if (!newGalleryContainer) {
+            return;
+        }
+
+        newGalleryContainer.innerHTML = '';
+
+
+        if (galleryFiles.files.length === 0) {
+
+            newGalleryContainer.innerHTML = `
+                <div class="border rounded p-4 text-center text-secondary">
+                    <i class="ti ti-photo-off fs-1 d-block mb-2"></i>
+                    Belum ada foto gallery.
+                </div>
+            `;
+
+            return;
+        }
+
+        const wrapper = document.createElement('div');
+
+        wrapper.className =
+            'd-flex gap-3 overflow-x-auto pb-2';
+
+
+        Array.from(galleryFiles.files)
+            .forEach((file, index) => {
+
+                const card = document.createElement('div');
+
+                card.className =
+                    'position-relative flex-shrink-0';
+
+                card.style.width = '180px';
+
+                const imageWrapper = document.createElement('div');
+
+                imageWrapper.className = 'position-relative rounded overflow-hidden border';
+
+                imageWrapper.style.height = '120px';
+
+                const image = document.createElement('img');
+
+                image.className =
+                    'w-100 h-100 object-fit-cover';
+
+                image.alt =
+                    file.name;
+
+                const reader =
+                    new FileReader();
+
+                reader.onload = function (e) {
+
+                    image.src = e.target.result;
+                };
+
+                reader.readAsDataURL(file);
+
+                const removeButton = document.createElement('button');
+
+                removeButton.type = 'button';
+
+                removeButton.className = 'btn btn-danger btn-sm position-absolute top-0 end-0 m-1';
+
+                removeButton.innerHTML = '<i class="ti ti-trash"></i>';
+                removeButton.title = 'Hapus foto';
+
+
+                removeButton.addEventListener(
+                    'click',
+                    function () {
+
+                        removeGalleryFile(index);
+                    }
+                );
+
+                const fileName =
+                    document.createElement('div');
+
+                fileName.className =
+                    'small text-truncate mt-2';
+
+                fileName.title =
+                    file.name;
+
+                fileName.textContent =
+                    file.name;
+
+                imageWrapper.appendChild(image);
+
+                imageWrapper.appendChild(removeButton);
+
+                card.appendChild(imageWrapper);
+
+                card.appendChild(fileName);
+
+                wrapper.appendChild(card);
+            });
+
+
+        newGalleryContainer.appendChild(wrapper);
+    }
+
+    if (addGalleryButton) {
+
+        addGalleryButton.addEventListener(
+            'click',
+            function () {
+
+                if (!galleryInput) {
+                    return;
+                }
+
+                galleryInput.click();
+            }
+        );
+    }
+
+    if (galleryInput) {
+
+        galleryInput.addEventListener(
+            'change',
+            function () {
+
+                const files =
+                    Array.from(this.files);
+
+                files.forEach(function (file) {
+
+                    const allowedTypes = [
+                        'image/jpeg',
+                        'image/png',
+                        'image/webp'
+                    ];
+
+                    if (
+                        !allowedTypes.includes(
+                            file.type
+                        )
+                    ) {
+
+                        return;
+                    }
+
+                    if (
+                        file.size >
+                        2 * 1024 * 1024
+                    ) {
+
+                        return;
+                    }
+
+                    const alreadyExists =
+                        Array.from(
+                            galleryFiles.files
+                        ).some(function (existingFile) {
+
+                            return (
+                                existingFile.name ===
+                                    file.name &&
+
+                                existingFile.size ===
+                                    file.size &&
+
+                                existingFile.lastModified ===
+                                    file.lastModified
+                            );
+                        });
+
+
+                    if (!alreadyExists) {
+
+                        galleryFiles.items.add(file);
+                    }
+                });
+
+                this.files =
+                    galleryFiles.files;
+
+
+                renderGalleryPreview();
+
+                this.value = '';
+            }
+        );
+    }
+
+    function removeGalleryFile(index) {
+
+        const newFiles =
+            new DataTransfer();
+
+
+        Array.from(galleryFiles.files)
+            .forEach(function (file, fileIndex) {
+
+                if (fileIndex !== index) {
+
+                    newFiles.items.add(file);
+                }
+            });
+
+
+        galleryFiles =
+            newFiles;
+
+
+        if (galleryInput) {
+
+            galleryInput.files =
+                galleryFiles.files;
+        }
+
+
+        renderGalleryPreview();
+    }
+
+    renderGalleryPreview();
+
+    if (eventForm) {
+
+        eventForm.addEventListener(
+            'submit',
+            function () {
+
+                if (galleryInput) {
+
+                    galleryInput.files =
+                        galleryFiles.files;
+                }
+            }
+        );
+    }
     });
 </script>
 @endpush

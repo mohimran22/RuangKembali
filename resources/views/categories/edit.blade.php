@@ -3,123 +3,109 @@
 
 @section('content')
     <!-- Page header -->
-    <div class="page-header d-print-none">
+    <div class="page-header d-print-none mb-4">
         <div class="container-xl">
-            <div class="row g-2 align-items-center">
-                <!-- Page title actions -->
-                <div class="col-12 col-md-auto ms-auto d-print-none">
-                    <div class="btn-list">
-                  
-                        <a href=" {{ route("event_categories.index") }} " class="btn btn-primary d-none d-sm-inline-block" >
-                            Kembali
-                        </a>
-                        
-                    </div>
+            <div class="row align-items-center">
+                <div class="col d-flex align-items-center">
+                    <a href="{{ route('event_categories.index') }}" class="btn btn-primary d-flex align-items-center">
+                        <i class="ti ti-arrow-left"></i>
+                    </a>
+                    
+                        <h2 class="page-title mb-0">Ubah Data Kategori</h2>
+                    
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Page body -->
     <div class="page-body">
         <div class="container-xl">
-            <div class="row row-deck row-cards">
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-header">
-                            <p class="text-center mb-4" style="font-size: 1.5rem; font-weight: 400; font-family: 'Poppins', sans-serif;">
-                                Edit Data Kategori
-                            </p>
-                        </div>
-
-                        <div class="card-body">
-                            <form action="{{ route('event_categories.update', $event_category->id) }}" method="POST"  style="font-size: 1.5rem; font-weight: 400; font-family: 'Poppins', sans-serif;">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-body px-5 py-4">
+                            <form action="{{ route('event_categories.update', $event_category->id) }}" method="POST">
                                 @csrf
                                 @method('PUT')
 
                                 <div class="row">
-                                    <div class="col-md-6 mb-3">
-                                        <label class="form-label">Nama Lengkap</label>
-                                        <input type="text" name="name" class="form-control" value="{{ old('name', $event_category->name) }}" required>
+                                    {{-- Nama Kategori --}}
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label required">
+                                            Nama Kategori
+                                        </label>
+
+                                        <input
+                                            type="text"
+                                            name="name"
+                                            class="form-control @error('name') is-invalid @enderror"
+                                            value="{{ old('name', $event_category->name) }}"
+                                            required
+                                        >
+
+                                        @error('name')
+                                            <div class="invalid-feedback">
+                                                {{ $message }}
+                                            </div>
+                                        @enderror
                                     </div>
 
-                                    
+                                    {{-- Slug --}}
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label">Slug</label>
 
-                                    
-                                </div>
+                                        <input
+                                            type="text"
+                                            name="slug"
+                                            class="form-control @error('slug') is-invalid @enderror"
+                                            value="{{ old('slug', $event_category->slug) }}"
+                                            placeholder="contoh: seminar-nasional"
+                                        >
 
-                                <div class="mb-3">
-                                    <label class="form-label">Kategori Aktif</label>
-                                    <select name="is_active" class="form-select">
-                                        <option value="">-- Pilih Tipe --</option>
-                                        <option value="1">Aktif</option>
-                                        <option value="0">Tidak Aktif</option>
-                                    </select>
-                                </div>
+                                        @error('slug')
+                                            <div class="invalid-feedback">
+                                                {{ $message }}
+                                            </div>
+                                        @enderror
 
-                                {{-- <div class="row">
-                                    <div class="col-md-6 mb-3">
-                                        <label class="form-label">Jenis Kelamin</label>
-                                        <select name="gender" class="form-select">
-                                            <option value="">-- Pilih kelamin --</option>
-                                            <option value="1" {{ $event_category->gender == 1 ? 'selected' : '' }}>Laki - Laki</option>
-                                            <option value="2" {{ $event_category->gender == 2 ? 'selected' : '' }}>Perempuan</option>
+                                        <small class="text-muted">
+                                            Kosongkan jika slug ingin dibuat otomatis.
+                                        </small>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label">Kategori Aktif</label>
+                                        <select name="is_active" class="form-select">
+                                            <option value="">-- Pilih Tipe --</option>
+                                            <option value="1">Aktif</option>
+                                            <option value="0">Tidak Aktif</option>
                                         </select>
                                     </div>
 
-                                    <div class="col-md-6 mb-3">
-                                                <label>Tanggal Lahir *</label>
-                                                <input type="date" name="birth_date" class="form-control" required
-                                                    value="{{ old('birth_date', $event_category->birth_date) }}"
-                                                    pattern="\d{4}-\d{2}-\d{2}" placeholder="YYYY-MM-DD">
+                                    {{-- Deskripsi --}}
+                                    <div class="col-12 mb-3">
+                                        <label class="form-label">Deskripsi</label>
+
+                                        <textarea
+                                            name="description"
+                                            rows="4"
+                                            class="form-control @error('description') is-invalid @enderror"
+                                            placeholder="Deskripsi kategori..."
+                                        >{{ old('description', $event_category->description) }}</textarea>
+
+                                        @error('description')
+                                            <div class="invalid-feedback">
+                                                {{ $message }}
+                                            </div>
+                                        @enderror
                                     </div>
                                 </div>
 
-                                <div class="row">
-                                    <div class="col-md-6 mb-3">
-                                        <label class="form-label">Pekerjaan</label>
-                                        <input type="text" name="job" class="form-control" value="{{ old('job', $event_category->job) }}">
-                                    </div>
-
-                                    <div class="col-md-6 mb-3">
-                                        <label class="form-label">Telepon Kantor</label>
-                                        <input type="number" name="job_phone" class="form-control" value="{{ old('job_phone', $event_category->job_phone) }}">
-                                    </div>
+                                <div class="text-end mt-5">
+                                    <button type="submit" class="btn btn-primary px-4">
+                                        <i class="ti ti-device-floppy me-1"></i> Simpan Data Perubahan
+                                    </button>
                                 </div>
-
-                                <div class="row">
-                                    <div class="col-md-6 mb-3">
-                                            <label for="last_education_level" class="form-label">Jenjang Pendidikan <code>*</code></label>
-                                            <select name="last_education_level" class="form-select" required>
-                                                <option value="">-- Pilih Jenjang --</option>
-                                                <option value="SD" {{ $event_category->last_education_level == 'SD' ? 'selected' : '' }}>SD</option>
-                                                <option value="SMP" {{ $event_category->last_education_level == 'SMP' ? 'selected' : '' }}>SMP</option>
-                                                <option value="SMA" {{ $event_category->last_education_level == 'SMA' ? 'selected' : '' }}>SMA</option>
-                                                <option value="D3" {{ $event_category->last_education_level == 'D3' ? 'selected' : '' }}>D3</option>
-                                                <option value="S1" {{ $event_category->last_education_level == 'S1' ? 'selected' : '' }}>S1</option>
-                                                <option value="S2" {{ $event_category->last_education_level == 'S2' ? 'selected' : '' }}>S2</option>
-                                                <option value="S3" {{ $event_category->last_education_level == 'S3' ? 'selected' : '' }}>S3</option>
-                                            </select>
-                                    </div>
-
-                                    <div class="col-md-6 mb-3">
-                                                <label class="form-label">Nama Sekolah</label>
-                                                <input type="text" name="institution_name" class="form-control" value="{{ old('institution_name', $event_category->institution_name) }}">
-                                    </div>
-                                </div> --}}
-
-
-                        <div class="d-flex justify-content-between">
-                            <a href="{{ route('event_categories.index') }}" class="btn btn-secondary">Batal</a>
-                            <button type="submit" class="btn btn-success">Simpan Perubahan</button>
+                            </form>
                         </div>
-                    </form>
- 
-
-                        </div>
-                    </div>
-                </div>
-            </div>
+                    </div>        
         </div>
     </div>
 @endsection
