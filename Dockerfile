@@ -49,11 +49,11 @@ RUN npm run build \
 RUN chown -R www-data:www-data storage bootstrap/cache \
  && chmod -R 775 storage bootstrap/cache
 
-COPY docker/php.ini /usr/local/etc/php/conf.d/uploads.ini
+COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
 
 EXPOSE 8080
 
-CMD sh -c "\
-php artisan optimize || true && \
-php artisan storage:link || true && \
-php artisan serve --host=0.0.0.0 --port=${PORT:-8080}"
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+
+CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8080"]
