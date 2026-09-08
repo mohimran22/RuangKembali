@@ -70,7 +70,7 @@
 
                             <div class="col-md-4 mb-3">
                                 <label class="form-label">Aktif</label>
-                                <select name="is_active" class="form-select">
+                                <select name="is_active" class="form-select select2">
                                     <option value="1">Yes</option>
                                     <option value="0">No</option>
                                 </select>

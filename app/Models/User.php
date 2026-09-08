@@ -96,7 +96,8 @@ public function activeRole()
         'account_number',
         'account_holder',
         'active_role',
-        'identity_photo'
+        'identity_photo',
+        'is_speakers'
     ];
 
     /**
@@ -148,6 +149,11 @@ public function activeRole()
     return $this->belongsTo(Bank::class);
 }
 
+public function speakingEvents()
+{
+    return $this->belongsToMany(Event::class, 'event_speakers', 'user_id', 'event_id')
+                ->withTimestamps();
+}
     public function getPhotoUrlAttribute()
     {
         return $this->photo

@@ -35,6 +35,76 @@ header.navbar .d-flex {
     justify-content:flex-end;
     align-items:center;
 }
+.event-gallery-scroll {
+    display: flex;
+    overflow-x: auto;
+    overflow-y: hidden;
+    gap: 12px;
+    padding-bottom: 8px;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch; /* smooth scroll di iOS */
+}
+
+.event-gallery-item {
+    flex: 0 0 auto;
+    width: 220px;
+    scroll-snap-align: start;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #f5f5f5;
+}
+
+.event-gallery-image {
+    width: 100%;
+    height: 160px;
+    object-fit: cover;
+    display: block;
+}
+
+.event-gallery-caption {
+    padding: 6px 8px;
+    font-size: 0.8rem;
+    color: #555;
+}
+
+/* Scrollbar tipis biar rapi (opsional, khusus browser berbasis WebKit) */
+.event-gallery-scroll::-webkit-scrollbar {
+    height: 6px;
+}
+.event-gallery-scroll::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 3px;
+}
+.event-speaker-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 90px;
+    text-align: center;
+}
+
+.event-speaker-avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: #f5f5f5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    margin-bottom: 6px;
+}
+
+.event-speaker-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.event-speaker-avatar i {
+    font-size: 28px;
+    color: #aaa;
+}
 @media (max-width: 1200px){
 
     .mobile-header{
@@ -179,5 +249,11 @@ header.navbar .d-flex {
     }
     .navbar-collapse{
         display: block !important;
+    }
+    .event-gallery-item {
+        width: 160px;
+    }
+    .event-gallery-image {
+        height: 120px;
     }
 }

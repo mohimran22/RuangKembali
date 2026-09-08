@@ -125,6 +125,26 @@
                                                 <div class="invalid-feedback">{{ $message }}</div>
                                             @enderror
                                         </div>
+                                        <div class="col-md-2">
+                                            <label class="form-label">Apakah Pembicara?</label>
+
+                                            <div class="form-check form-switch mt-2">
+                                                <input type="checkbox"
+                                                    class="form-check-input"
+                                                    id="is_speakers"
+                                                    name="is_speakers"
+                                                    value="1"
+                                                    {{ old('is_speakers') ? 'checked' : '' }}>
+
+                                                <label class="form-check-label" for="is_speakers">
+                                                    Ya, sebagai pembicara
+                                                </label>
+                                            </div>
+
+                                            @error('is_speakers')
+                                                <div class="invalid-feedback d-block">{{ $message }}</div>
+                                            @enderror
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="section-block mb-5">

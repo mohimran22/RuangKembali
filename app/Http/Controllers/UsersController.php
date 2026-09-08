@@ -36,11 +36,10 @@ class UsersController extends Controller
                  ->whereHas('roles', function ($q) {
                      $q->whereIn('name', ['Pemilik Lisensi', 'Karyawan']);
                  });
-}
- else {
+            } else {
             // Default: hanya user itu sendiri
-            $users = User::all();
-        }
+                $users = User::all();
+            }
 
             return Datatables::of($users)
 
@@ -140,6 +139,7 @@ class UsersController extends Controller
         'postal_code_id' => 'nullable|exists:postal_codes,id',
         'phone' => 'nullable',
         'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        'is_speakers' => 'nullable|boolean',
     ]);
 
     DB::beginTransaction();
@@ -154,11 +154,8 @@ class UsersController extends Controller
                     'public'
                 );
         }
-
-        // Hash password
         $validated['password'] = Hash::make($validated['password']);
-
-        // Simpan user
+        $validated['is_speakers'] = $request->boolean('is_speakers');
         $user = User::create($validated);
 
         // Assign role
@@ -229,6 +226,7 @@ public function show(User $user)
         'postal_code_id' => 'nullable|exists:postal_codes,id',
         'phone' => 'nullable|regex:/^[0-9]+$/',
         'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        'is_speakers' => 'nullable|boolean',
     ]);
 
     DB::beginTransaction();
@@ -254,10 +252,10 @@ public function show(User $user)
         if (!empty($validated['password'])) {
             $validated['password'] = Hash::make($validated['password']);
         } else {
-            unset($validated['password']); // biar tidak menimpa dengan null
+            unset($validated['password']);
         }
 
-        // Update data user
+        $validated['is_speakers'] = $request->boolean('is_speakers');
         $user->update($validated);
 
         // Update role (hapus role lama dan tambahkan role baru)

@@ -244,7 +244,6 @@
                                     Media
                                 </h3>
                             </div>
-
                             <div class="card-body">
 
                                 <img src="{{ Storage::url($event->thumbnail) }}"
@@ -472,6 +471,49 @@
                 </div>
 
             </div>
+            @if($event->speakers->count())
+
+                <div class="card mb-4">
+
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <i class="ti ti-microphone-2 me-2"></i>
+                            Pembicara
+                        </h3>
+                    </div>
+
+                    <div class="card-body">
+
+                        <div class="d-flex flex-wrap gap-3">
+
+                            @foreach($event->speakers as $speaker)
+
+                                <div class="event-speaker-item">
+
+                                    <div class="event-speaker-avatar">
+                                        @if($speaker->photo)
+                                            <img src="{{ asset('storage/'.$speaker->photo) }}"
+                                                 alt="{{ $speaker->fullname }}">
+                                        @else
+                                            <i class="ti ti-user"></i>
+                                        @endif
+                                    </div>
+
+                                    <div class="fw-semibold">
+                                        {{ $speaker->fullname }}
+                                    </div>
+
+                                </div>
+
+                            @endforeach
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            @endif
             <div class="card mb-4">
 
                 <div class="card-header">

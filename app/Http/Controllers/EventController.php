@@ -236,6 +236,8 @@ public function create()
 {
     $categories = EventCategory::orderBy('name')->get();
 
+    $speakers = User::where('is_speakers', true)->get();
+
     $eventTypes = [
         'free' => 'Gratis',
         'paid' => 'Berbayar',
@@ -257,6 +259,7 @@ public function create()
 
     return view('events.create', compact(
         'categories',
+        'speakers',
         'eventTypes',
         'audiences',
         'statuses'
@@ -289,6 +292,8 @@ public function store(Request $request)
         'youtube_url' => 'nullable|url|max:500',
         'gallery_images' => 'nullable|array',
         'gallery_images.*' => 'image|mimes:jpg,jpeg,png,webp|max:2048',
+        'speaker_ids' => 'nullable|array',
+        'speaker_ids.*' => 'exists:users,id',
     ]);
 
 
@@ -330,6 +335,7 @@ public function store(Request $request)
             'description' => $request->description,
             'is_published' => $request->boolean('is_published'),
         ]);
+        $event->speakers()->sync($request->speaker_ids ?? []);
         if ($request->hasFile('gallery_images')) {
             foreach (
                 $request->file('gallery_images')
@@ -415,98 +421,50 @@ public function edit(Event $event)
         'finished' => 'Selesai',
         'cancelled' => 'Dibatalkan',
     ];
-
+    $speakers = User::where('is_speakers', true)->get();
     return view('events.edit', compact(
         'event',
         'categories',
         'eventTypes',
         'audiences',
-        'statuses'
+        'statuses',
+        'speakers'
     ));
 }
 
 public function update(Request $request, Event $event)
 {
     abort_if(
-        auth()->user()->cannot('lihat daftar event'),
+        auth()->user()->cannot('ubah data event'),
         403
     );
 
     $request->validate([
-
-        // =========================
-        // EVENT
-        // =========================
         'name' => 'required|string|max:255',
+        'event_category_id' => 'required|exists:event_categories,id',
+        'event_type' => 'required|in:free,paid',
+        'audience_type' => 'required|in:public,gender,age',
+        'registration_open' => 'nullable|date',
+        'registration_close' => 'nullable|date|after_or_equal:registration_open',
+        'start_at' => 'required|date',
+        'end_at' => 'required|date|after:start_at',
+        'location' => 'nullable|string|max:255',
+        'price' => 'nullable|numeric|min:0',
+        'quota' => 'nullable|integer|min:1',
+        'is_published' => 'required|boolean',
+        'description' => 'nullable|string',
+        'poster' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+        'thumbnail' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+        'youtube_url' => 'nullable|url|max:500',
+        'gallery_images' => 'nullable|array',
+        'gallery_images.*' => 'image|mimes:jpg,jpeg,png,webp|max:2048',
+        'delete_gallery_ids' => 'nullable|array',
+        'delete_gallery_ids.*' => 'exists:event_galleries,id',
+        'gallery_captions' => 'nullable|array',
+        'gallery_captions.*' =>  'nullable|string|max:255',
+        'speaker_ids' => 'nullable|array',
+        'speaker_ids.*' => 'exists:users,id',
 
-        'event_category_id' =>
-            'required|exists:event_categories,id',
-
-        'event_type' =>
-            'required|in:free,paid',
-
-        'audience_type' =>
-            'required|in:public,gender,age',
-
-        'registration_open' =>
-            'nullable|date',
-
-        'registration_close' =>
-            'nullable|date|after_or_equal:registration_open',
-
-        'start_at' =>
-            'required|date',
-
-        'end_at' =>
-            'required|date|after:start_at',
-
-        'location' =>
-            'nullable|string|max:255',
-
-        'price' =>
-            'nullable|numeric|min:0',
-
-        'quota' =>
-            'nullable|integer|min:1',
-
-        'is_published' =>
-            'required|boolean',
-
-        'description' =>
-            'nullable|string',
-
-        // =========================
-        // MEDIA
-        // =========================
-        'poster' =>
-            'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
-
-        'thumbnail' =>
-            'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
-
-        'youtube_url' =>
-            'nullable|url|max:500',
-
-        // =========================
-        // GALLERY
-        // =========================
-        'gallery_images' =>
-            'nullable|array',
-
-        'gallery_images.*' =>
-            'image|mimes:jpg,jpeg,png,webp|max:2048',
-
-        'delete_gallery_ids' =>
-            'nullable|array',
-
-        'delete_gallery_ids.*' =>
-            'exists:event_galleries,id',
-
-        'gallery_captions' =>
-            'nullable|array',
-
-        'gallery_captions.*' =>
-            'nullable|string|max:255',
     ]);
 
     DB::beginTransaction();
@@ -520,46 +478,26 @@ public function update(Request $request, Event $event)
             'event_category_id' => $request->event_category_id,
             'event_type' => $request->event_type,
             'audience_type' => $request->audience_type,
-
-            'registration_open' =>
-                $request->registration_open,
-
-            'registration_close' =>
-                $request->registration_close,
-
-            'start_at' =>
-                $request->start_at,
-
-            'end_at' =>
-                $request->end_at,
-
-            'location' =>
-                $request->location,
-
+            'registration_open' => $request->registration_open,
+            'registration_close' => $request->registration_close,
+            'start_at' => $request->start_at,
+            'end_at' => $request->end_at,
+            'location' => $request->location,
             'price' => $request->event_type === 'free'
                 ? 0
                 : ($request->price ?? 0),
 
-            'quota' =>
-                $request->quota,
-
-            'youtube_url' =>
-                $request->youtube_url,
-
-            'description' =>
-                $request->description,
-
-            'is_published' =>
-                $request->boolean('is_published'),
+            'quota' => $request->quota,
+            'youtube_url' => $request->youtube_url,
+            'description' => $request->description,
+            'is_published' => $request->boolean('is_published'),
         ];
-
 
         if ($request->hasFile('poster')) {
 
             $oldPoster = $event->poster;
 
-            $poster = $request->file('poster')
-                ->store('events/posters', 'public');
+            $poster = $request->file('poster')->store('events/posters', 'public');
 
             $newFiles[] = $poster;
 
@@ -575,16 +513,12 @@ public function update(Request $request, Event $event)
 
             $oldThumbnail = $event->thumbnail;
 
-            $thumbnail = $request->file('thumbnail')
-                ->store('events/thumbnails', 'public');
+            $thumbnail = $request->file('thumbnail')->store('events/thumbnails', 'public');
 
             $newFiles[] = $thumbnail;
 
             $eventData['thumbnail'] = $thumbnail;
 
-            /*
-             * Hapus thumbnail lama.
-             */
             if ($oldThumbnail) {
                 Storage::disk('public')
                     ->delete($oldThumbnail);
@@ -592,7 +526,7 @@ public function update(Request $request, Event $event)
         }
 
         $event->update($eventData);
-
+        $event->speakers()->sync($request->speaker_ids ?? []);
         if ($request->filled('delete_gallery_ids')) {
 
             $galleries = EventGallery::where('event_id', $event->id)

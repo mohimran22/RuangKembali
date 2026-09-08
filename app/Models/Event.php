@@ -46,10 +46,11 @@ class Event extends Model
         return $this->belongsTo(EventCategory::class, 'event_category_id');
     }
 
-    public function speakers()
-    {
-        return $this->hasMany(EventSpeaker::class);
-    }
+public function speakers()
+{
+    return $this->belongsToMany(User::class, 'event_speakers', 'event_id', 'user_id')
+                ->withTimestamps();
+}
 
     public function faqs()
     {

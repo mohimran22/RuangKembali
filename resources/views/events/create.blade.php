@@ -44,8 +44,7 @@
 
                         <div class="row g-3 mb-4">
 
-                            {{-- Nama Event --}}
-                            <div class="col-12">
+                            <div class="col-md-4">
                                 <label class="form-label required">Nama Event</label>
                                 <input type="text"
                                     name="name"
@@ -56,7 +55,7 @@
                             </div>
 
                             {{-- Kategori --}}
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <label class="form-label required">Kategori</label>
                                 <select name="event_category_id"
                                         class="form-select select2"
@@ -73,24 +72,35 @@
                             </div>
 
                             {{-- Jenis Event --}}
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <label class="form-label required">Jenis Event</label>
-                                <select id="event_type"
-                                        name="event_type"
-                                        class="form-select select2"
-                                        required>
-                                    <option value="free"
-                                        {{ old('event_type', 'free') == 'free' ? 'selected' : '' }}>
-                                        Gratis
-                                    </option>
-
-                                    <option value="paid"
-                                        {{ old('event_type') == 'paid' ? 'selected' : '' }}>
-                                        Berbayar
-                                    </option>
-                                </select>
+                                    <select id="event_type" name="event_type" class="form-select select2" required>
+                                        @foreach($eventTypes as $value => $label)
+                                            <option value="{{ $value }}"
+                                                {{ old('event_type', 'free') == $value ? 'selected' : '' }}>
+                                                {{ $label }}
+                                            </option>
+                                        @endforeach
+                                    </select>
                             </div>
+                        </div>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label">Pembicara</label>
 
+                                <select name="speaker_ids[]" class="form-select select2" multiple>
+                                    @foreach($speakers as $speaker)
+                                        <option value="{{ $speaker->id }}"
+                                            {{ in_array($speaker->id, old('speaker_ids', [])) ? 'selected' : '' }}>
+                                            {{ $speaker->fullname }}
+                                        </option>
+                                    @endforeach
+                                </select>
+
+                                <div class="form-hint">
+                                    Pilih satu atau lebih pembicara untuk event ini.
+                                </div>
+                            </div>
                         </div>
                         <div class="mb-4">
                             <h4 class="mb-1">Jadwal Event</h4>
@@ -198,26 +208,14 @@
                             {{-- Audience --}}
                             <div class="col-md-6">
                                 <label class="form-label">Audience</label>
-                                <select name="audience_type"
-                                        class="form-select select2"
-                                        required>
-
-                                    <option value="public"
-                                        {{ old('audience_type', 'public') == 'public' ? 'selected' : '' }}>
-                                        Umum
-                                    </option>
-
-                                    <option value="gender"
-                                        {{ old('audience_type') == 'gender' ? 'selected' : '' }}>
-                                        Berdasarkan Gender
-                                    </option>
-
-                                    <option value="age"
-                                        {{ old('audience_type') == 'age' ? 'selected' : '' }}>
-                                        Berdasarkan Usia
-                                    </option>
-
-                                </select>
+                                    <select name="audience_type" class="form-select select2" required>
+                                        @foreach($audiences as $value => $label)
+                                            <option value="{{ $value }}"
+                                                {{ old('audience_type', 'public') == $value ? 'selected' : '' }}>
+                                                {{ $label }}
+                                            </option>
+                                        @endforeach
+                                    </select>
                             </div>
 
                             {{-- Publish --}}

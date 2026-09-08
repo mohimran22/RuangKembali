@@ -64,34 +64,57 @@
                             </div>
                         @endif
                         </div>
-                        <div class="col-md-9">
-                            <div class="row g-3">
-                                <div class="col-md-4">
-                                    <div class="text-muted small">Nama Lengkap</div>
-                                    <div class="fw-bold">{{ $user->fullname ?? '-' }}</div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="text-muted small">Email</div>
-                                    <div class="fw-bold">{{ $user->email ?? '-' }}</div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="text-muted small">Telepon</div>
-                                    <div class="fw-bold">{{ $user->phone ?? '-' }}</div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="text-muted small mt-2">Tanggal Lahir</div>
-                                    <div class="fw-bold">{{ $user->birth_date_formatted ?? '-' }}</div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="text-muted small mt-2">Jenis Kelamin</div>
-                                    <div class="fw-bold">{{ $user->readable_gender ?? '-' }}</div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="text-muted small mt-2">Posisi / Jabatan</div>
-                                    <div class="fw-bold">{{ $user->roles->pluck('name')->implode(', ') ?: '-' }}</div>
-                                </div>
-                            </div>
-                        </div>
+<div class="col-md-9">
+    <div class="row g-3">
+
+        {{-- Baris 1: Identitas dasar --}}
+        <div class="col-md-4">
+            <div class="text-muted small">Nama Lengkap</div>
+            <div class="fw-bold">{{ $user->fullname ?? '-' }}</div>
+        </div>
+        <div class="col-md-4">
+            <div class="text-muted small">Email</div>
+            <div class="fw-bold">{{ $user->email ?? '-' }}</div>
+        </div>
+        <div class="col-md-4">
+            <div class="text-muted small">Telepon</div>
+            <div class="fw-bold">{{ $user->phone ?? '-' }}</div>
+        </div>
+
+        {{-- Baris 2: Data personal lainnya --}}
+        <div class="col-md-4">
+            <div class="text-muted small mt-2">Tanggal Lahir</div>
+            <div class="fw-bold">{{ $user->birth_date_formatted ?? '-' }}</div>
+        </div>
+        <div class="col-md-4">
+            <div class="text-muted small mt-2">Jenis Kelamin</div>
+            <div class="fw-bold">{{ $user->readable_gender ?? '-' }}</div>
+        </div>
+        <div class="col-md-4">
+            <div class="text-muted small mt-2">Pembicara</div>
+            <div class="fw-bold">
+                @if($user->is_speakers)
+                    <span class="badge bg-success-lt">
+                        <i class="ti ti-microphone me-1"></i>
+                        Ya
+                    </span>
+                @else
+                    <span class="badge bg-secondary-lt">
+                        <i class="ti ti-microphone-off me-1"></i>
+                        Tidak
+                    </span>
+                @endif
+            </div>
+        </div>
+
+        {{-- Baris 3: Peran --}}
+        <div class="col-md-12">
+            <div class="text-muted small mt-2">Posisi / Jabatan</div>
+            <div class="fw-bold">{{ $user->roles->pluck('name')->implode(', ') ?: '-' }}</div>
+        </div>
+
+    </div>
+</div>
                     </div>
                 </div>
             </div>
@@ -132,8 +155,7 @@
                 </div>
             </div>
 
-            {{-- Section: Bank Information (ganti HR section lama) --}}
-            <div class="card mb-4 shadow-sm">
+            {{-- <div class="card mb-4 shadow-sm">
                 <div class="card-header">
                     <h3 class="card-title mb-0">Informasi Bank</h3>
                 </div>
@@ -153,7 +175,7 @@
                         </div>
                     </div>
                 </div>
-            </div>
+            </div> --}}
 
         </div> {{-- end tab personal --}}
 
