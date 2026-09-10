@@ -1352,7 +1352,7 @@ input[type=number]::-webkit-outer-spin-button {
 
     color: var(--tblr-primary);
 
-    font-size: 22px;
+    font-size: 18px;
 }
 
 .event-stat-label {

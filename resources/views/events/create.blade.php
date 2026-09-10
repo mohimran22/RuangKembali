@@ -101,6 +101,13 @@
                                     Pilih satu atau lebih pembicara untuk event ini.
                                 </div>
                             </div>
+                            <div class="col-12">
+                                <label class="form-label required">Deskripsi Event</label>
+                                <textarea name="description"
+                                    rows="5"
+                                    class="form-control"
+                                    placeholder="Tuliskan deskripsi lengkap mengenai event...">{{ old('description') }}</textarea>
+                            </div>
                         </div>
                         <div class="mb-4">
                             <h4 class="mb-1">Jadwal Event</h4>
@@ -111,19 +118,17 @@
 
                         <div class="row g-3 mb-4">
 
-                            {{-- Registrasi Dibuka --}}
                             <div class="col-md-6">
                                 <label class="form-label">Registrasi Dibuka</label>
-                                <input type="date"
+                                <input type="datetime-local"
                                     name="registration_open"
                                     class="form-control"
                                     value="{{ old('registration_open') }}">
                             </div>
 
-                            {{-- Registrasi Ditutup --}}
                             <div class="col-md-6">
                                 <label class="form-label">Registrasi Ditutup</label>
-                                <input type="date"
+                                <input type="datetime-local"
                                     name="registration_close"
                                     class="form-control"
                                     value="{{ old('registration_close') }}">
@@ -150,7 +155,6 @@
                             </div>
 
                         </div>
-
                         <div class="mb-4">
                             <h4 class="mb-1">Lokasi & Tiket</h4>
                             <div class="text-secondary small">
@@ -159,9 +163,7 @@
                         </div>
 
                         <div class="row g-3 mb-4">
-
-                            {{-- Lokasi --}}
-                            <div class="col-md-6">
+                            <div class="col-md-3">
                                 <label class="form-label">Lokasi</label>
                                 <input type="text"
                                     name="location"
@@ -169,8 +171,14 @@
                                     value="{{ old('location') }}"
                                     placeholder="Contoh: Hotel Fortuna Grande">
                             </div>
-
-                            {{-- Harga --}}
+                            <div class="col-md-3">
+                                <label class="form-label">Link Google Maps</label>
+                                <input type="url"
+                                    name="google_maps_url"
+                                    class="form-control"
+                                    value="{{ old('google_maps_url') }}"
+                                    placeholder="https://maps.google.com/...">
+                            </div>
                             <div class="col-md-3">
                                 <label class="form-label">Harga Tiket</label>
                                 <input type="number"
@@ -182,8 +190,6 @@
                                     value="{{ old('price', 0) }}"
                                     placeholder="0">
                             </div>
-
-                            {{-- Kuota --}}
                             <div class="col-md-3">
                                 <label class="form-label">Kuota Peserta</label>
                                 <input type="number"
@@ -346,7 +352,6 @@
                             </div>
                         </div>
                         <div class="mb-4">
-
                             <div class="d-flex flex-column flex-sm-row
                                         justify-content-between
                                         align-items-sm-center
@@ -363,7 +368,7 @@
                                 </div>
 
                                 <button type="button"
-                                        class="btn btn-outline-primary"
+                                        class="btn btn-primary"
                                         id="addGalleryButton">
 
                                     <i class="ti ti-plus me-1"></i>
@@ -376,31 +381,256 @@
                             <div id="newGalleryContainer"></div>
 
                         </div>
-                        <div class="row mb-4">
-                            <div class="mb-4">
-                                <h4 class="mb-1">Deskripsi Event</h4>
-                                <div class="text-secondary small">
-                                    Jelaskan informasi lengkap mengenai event.
+                        <div class="mb-4">
+                            <div class="d-flex flex-column flex-sm-row
+                                        justify-content-between
+                                        align-items-sm-center
+                                        gap-2 mb-3">
+
+                                <div>
+                                    <h4 class="mb-1">Rundown Event</h4>
+                                    <div class="text-secondary small">
+                                        Susunan acara berdasarkan waktu pelaksanaan event.
+                                    </div>
                                 </div>
+
+                                <button type="button"
+                                        class="btn btn-primary"
+                                        id="addRundownButton">
+                                    <i class="ti ti-plus me-1"></i>
+                                    Tambah Rundown
+                                </button>
                             </div>
-                            <div class="col-12">
-                                <textarea name="description"
-                                    rows="5"
-                                    class="form-control"
-                                    placeholder="Tuliskan deskripsi lengkap mengenai event...">{{ old('description') }}</textarea>
+
+                            <div id="newRundownContainer">
+
+                                @php
+                                    $oldRundowns = old('rundowns', []);
+                                @endphp
+
+                                @if(count($oldRundowns))
+
+                                    @foreach($oldRundowns as $index => $rundown)
+
+                                        <div class="rundown-create-card mb-2 p-2 border rounded"
+                                            data-rundown-index="{{ $index }}">
+
+                                            <div class="row g-2 align-items-end">
+
+                                                {{-- Tanggal --}}
+                                                <div class="col-md-2">
+                                                    <label class="form-label small mb-1">
+                                                        Tanggal
+                                                    </label>
+
+                                                    <input type="date"
+                                                        name="rundowns[{{ $index }}][rundown_date]"
+                                                        class="form-control form-control-sm"
+                                                        value="{{ $rundown['rundown_date'] ?? '' }}">
+                                                </div>
+
+                                                {{-- Mulai --}}
+                                                <div class="col-md-1">
+                                                    <label class="form-label small mb-1">
+                                                        Mulai
+                                                    </label>
+
+                                                    <input type="time"
+                                                        name="rundowns[{{ $index }}][start_time]"
+                                                        class="form-control form-control-sm"
+                                                        value="{{ $rundown['start_time'] ?? '' }}">
+                                                </div>
+
+                                                {{-- Selesai --}}
+                                                <div class="col-md-1">
+                                                    <label class="form-label small mb-1">
+                                                        Selesai
+                                                    </label>
+
+                                                    <input type="time"
+                                                        name="rundowns[{{ $index }}][end_time]"
+                                                        class="form-control form-control-sm"
+                                                        value="{{ $rundown['end_time'] ?? '' }}">
+                                                </div>
+
+                                                {{-- Aktivitas --}}
+                                                <div class="col-md-3">
+                                                    <label class="form-label small mb-1">
+                                                        Aktivitas
+                                                    </label>
+
+                                                    <input type="text"
+                                                        name="rundowns[{{ $index }}][activity]"
+                                                        class="form-control form-control-sm"
+                                                        value="{{ $rundown['activity'] ?? '' }}"
+                                                        placeholder="Contoh: Registrasi Peserta">
+                                                </div>
+
+                                                {{-- Pembicara --}}
+                                                <div class="col-md-2">
+                                                    <label class="form-label small mb-1">
+                                                        Pembicara/MC
+                                                    </label>
+
+                                                    <input type="text"
+                                                        name="rundowns[{{ $index }}][speaker]"
+                                                        class="form-control form-control-sm"
+                                                        value="{{ $rundown['speaker'] ?? '' }}"
+                                                        placeholder="Nama pembicara / MC">
+                                                </div>
+
+                                                {{-- Lokasi --}}
+                                                <div class="col-md-2">
+                                                    <label class="form-label small mb-1">
+                                                        Lokasi
+                                                    </label>
+
+                                                    <input type="text"
+                                                        name="rundowns[{{ $index }}][location]"
+                                                        class="form-control form-control-sm"
+                                                        value="{{ $rundown['location'] ?? '' }}"
+                                                        placeholder="Lokasi">
+                                                </div>
+
+                                                {{-- Hapus --}}
+                                                <div class="col-md-1">
+                                                    <button type="button"
+                                                            class="btn btn-sm btn-danger w-100 rundown-remove-btn"
+                                                            title="Hapus rundown">
+                                                        <i class="ti ti-trash"></i>
+                                                    </button>
+                                                </div>
+
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                @else
+                                    <div id="rundownEmptyState" class="event-gallery-empty">
+                                        <i class="ti ti-list-details"></i>
+                                        <div class="fw-semibold mt-2">
+                                            Belum ada rundown
+                                        </div>
+                                        <div class="text-secondary small">
+                                            Klik "Tambah Rundown" untuk menambahkan susunan acara.
+                                        </div>
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+
+                            <div class="d-flex flex-column flex-sm-row
+                                        justify-content-between
+                                        align-items-sm-center
+                                        gap-2 mb-3">
+
+                                <div>
+                                    <h4 class="mb-1">FAQ Event</h4>
+
+                                    <div class="text-secondary small">
+                                        Pertanyaan dan jawaban yang sering ditanyakan peserta.
+                                    </div>
+                                </div>
+
+                                <button type="button"
+                                        class="btn btn-primary"
+                                        id="addFaqButton">
+
+                                    <i class="ti ti-plus me-1"></i>
+
+                                    Tambah FAQ
+                                </button>
+                            </div>
+
+
+                            <div id="faqContainer">
+
+                                @php
+                                    $oldFaqs = old('faqs', []);
+                                @endphp
+
+
+                                @if(count($oldFaqs))
+
+                                    @foreach($oldFaqs as $index => $faq)
+
+                                        <div class="faq-create-card mb-2 p-3 border rounded"
+                                            data-faq-index="{{ $index }}">
+
+                                            <div class="row g-2">
+                                                <div class="col-md-5">
+
+                                                    <label class="form-label small mb-1">
+                                                        Pertanyaan
+                                                    </label>
+
+                                                    <input type="text"
+                                                        name="faqs[{{ $index }}][question]"
+                                                        class="form-control form-control-sm"
+                                                        value="{{ $faq['question'] ?? '' }}"
+                                                        placeholder="Contoh: Apakah event ini gratis?">
+
+                                                </div>
+                                                <div class="col-md-6">
+
+                                                    <label class="form-label small mb-1">
+                                                        Jawaban
+                                                    </label>
+
+                                                    <textarea name="faqs[{{ $index }}][answer]"
+                                                            class="form-control form-control-sm"
+                                                            rows="2"
+                                                            placeholder="Tuliskan jawaban FAQ">{{ $faq['answer'] ?? '' }}</textarea>
+                                                </div>
+
+                                                <div class="col-md-1 d-flex align-items-end">
+
+                                                    <button type="button"
+                                                            class="btn btn-sm btn-danger w-100 faq-remove-btn"
+                                                            title="Hapus FAQ">
+
+                                                        <i class="ti ti-trash"></i>
+
+                                                    </button>
+
+                                                </div>
+
+                                            </div>
+
+                                        </div>
+
+                                    @endforeach
+
+                                @else
+
+                                    <div id="faqEmptyState"
+                                        class="event-gallery-empty">
+
+                                        <i class="ti ti-help-circle"></i>
+
+                                        <div class="fw-semibold mt-2">
+                                            Belum ada FAQ
+                                        </div>
+
+                                        <div class="text-secondary small">
+                                            Klik "Tambah FAQ" untuk menambahkan pertanyaan dan jawaban.
+                                        </div>
+
+                                    </div>
+
+                                @endif
+
                             </div>
 
                         </div>
-
                         <div class="d-flex flex-column flex-sm-row justify-content-end gap-2 pt-3 border-top">
                             <button type="submit"
                                     class="btn btn-primary">
                                 <i class="ti ti-device-floppy me-1"></i>
                                 Simpan Event
                             </button>
-
                         </div>
-
                     </form>
                 </div>
             </div>
@@ -408,6 +638,7 @@
     </div>
 
 @endsection
+@vite('resources/js/pages/event-faq.js')
 @push('js')
 <script>
     $(document).ready(function () {
@@ -851,5 +1082,192 @@
         );
     }
     });
+</script>
+<script>
+const addRundownButton =
+    document.getElementById('addRundownButton');
+
+const newRundownContainer =
+    document.getElementById('newRundownContainer');
+
+let rundownIndex =
+    newRundownContainer
+        ? newRundownContainer.querySelectorAll('.rundown-create-card').length
+        : 0;
+
+function createRundownCard() {
+
+    if (!newRundownContainer) {
+        return;
+    }
+
+    const emptyState = document.getElementById('rundownEmptyState');
+
+    if (emptyState) {
+        emptyState.remove();
+    }
+
+    const index = rundownIndex++;
+
+    const card = document.createElement('div');
+
+    card.className = 'rundown-create-card mb-2 p-2 border rounded';
+
+    card.dataset.rundownIndex = index;
+
+    card.innerHTML = `
+        <div class="row g-2 align-items-end">
+
+            <div class="col-md-2">
+                <label class="form-label small mb-1">
+                    Tanggal
+                </label>
+
+                <input type="date"
+                       name="rundowns[${index}][rundown_date]"
+                       class="form-control form-control-sm">
+            </div>
+
+            <div class="col-md-1">
+                <label class="form-label small mb-1">
+                    Mulai
+                </label>
+
+                <input type="time"
+                       name="rundowns[${index}][start_time]"
+                       class="form-control form-control-sm">
+            </div>
+
+            <div class="col-md-1">
+                <label class="form-label small mb-1">
+                    Selesai
+                </label>
+
+                <input type="time"
+                       name="rundowns[${index}][end_time]"
+                       class="form-control form-control-sm">
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label small mb-1">
+                    Aktivitas
+                </label>
+
+                <input type="text"
+                       name="rundowns[${index}][activity]"
+                       class="form-control form-control-sm"
+                       placeholder="Contoh: Registrasi Peserta">
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label small mb-1">
+                    Pembicara/MC
+                </label>
+
+                <input type="text"
+                       name="rundowns[${index}][speaker]"
+                       class="form-control form-control-sm"
+                       placeholder="Nama pembicara / MC">
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label small mb-1">
+                    Lokasi
+                </label>
+
+                <input type="text"
+                       name="rundowns[${index}][location]"
+                       class="form-control form-control-sm"
+                       placeholder="Lokasi">
+            </div>
+
+            <div class="col-md-1">
+                <button type="button"
+                        class="btn btn-sm btn-danger w-100 rundown-remove-btn"
+                        title="Hapus rundown">
+
+                    <i class="ti ti-trash"></i>
+
+                </button>
+            </div>
+
+        </div>
+    `;
+
+    newRundownContainer.appendChild(card);
+}
+
+if (addRundownButton) {
+
+    addRundownButton.addEventListener(
+        'click',
+        function () {
+
+            createRundownCard();
+
+        }
+    );
+
+}
+
+if (newRundownContainer) {
+
+    newRundownContainer.addEventListener(
+        'click',
+        function (event) {
+
+            const removeButton =
+                event.target.closest('.rundown-remove-btn');
+
+            if (!removeButton) {
+                return;
+            }
+
+            const card =
+                removeButton.closest('.rundown-create-card');
+
+            if (card) {
+                card.remove();
+            }
+
+            renderRundownEmptyState();
+
+        }
+    );
+
+}
+
+function renderRundownEmptyState() {
+
+    if (!newRundownContainer) {
+        return;
+    }
+
+    const cards =
+        newRundownContainer.querySelectorAll(
+            '.rundown-create-card'
+        );
+
+    if (cards.length === 0) {
+
+        newRundownContainer.innerHTML = `
+            <div id="rundownEmptyState"
+                 class="event-gallery-empty">
+
+                <i class="ti ti-list-details"></i>
+
+                <div class="fw-semibold mt-2">
+                    Belum ada rundown
+                </div>
+
+                <div class="text-secondary small">
+                    Klik "Tambah Rundown" untuk menambahkan susunan acara.
+                </div>
+
+            </div>
+        `;
+    }
+
+}
 </script>
 @endpush

@@ -29,12 +29,13 @@ class Event extends Model
         'description',
         'status',
         'is_published',
-        'youtube_url'
+        'youtube_url',
+        'google_maps_url'
     ];
 
     protected $casts = [
-        'registration_open'  => 'date',
-        'registration_close' => 'date',
+        'registration_open'  => 'datetime',
+        'registration_close' => 'datetime',
         'start_at'           => 'datetime',
         'end_at'             => 'datetime',
         'price'              => 'decimal:2',
@@ -52,10 +53,10 @@ public function speakers()
                 ->withTimestamps();
 }
 
-    public function faqs()
-    {
-        return $this->hasMany(EventFaq::class);
-    }
+public function faqs() 
+{ 
+    return $this->hasMany(EventFaq::class, 'event_id')->orderBy('sort_order'); 
+}
 
     public function galleries()
     {
@@ -188,9 +189,6 @@ public function speakers()
 
     $url = $this->youtube_url;
 
-    /*
-     * youtube.com/watch?v=xxxxx
-     */
     if (str_contains($url, 'youtube.com/watch')) {
 
         parse_str(parse_url($url, PHP_URL_QUERY), $query);
@@ -200,9 +198,6 @@ public function speakers()
         }
     }
 
-    /*
-     * youtu.be/xxxxx
-     */
     if (str_contains($url, 'youtu.be/')) {
 
         $path = parse_url($url, PHP_URL_PATH);
@@ -214,9 +209,6 @@ public function speakers()
         }
     }
 
-    /*
-     * youtube.com/embed/xxxxx
-     */
     if (str_contains($url, 'youtube.com/embed/')) {
         return $url;
     }

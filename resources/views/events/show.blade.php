@@ -63,6 +63,43 @@
         </div>
     </div>
 
+    <ul class="nav nav-tabs mb-4" id="eventDetailTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active"
+                    id="detail-tab"
+                    data-bs-toggle="tab"
+                    data-bs-target="#detail-pane"
+                    type="button"
+                    role="tab"
+                    aria-controls="detail-pane"
+                    aria-selected="true">
+                <i class="ti ti-info-circle me-1"></i>
+                Detail Event
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link"
+                    id="rundown-tab"
+                    data-bs-toggle="tab"
+                    data-bs-target="#rundown-pane"
+                    type="button"
+                    role="tab"
+                    aria-controls="rundown-pane"
+                    aria-selected="false">
+                <i class="ti ti-list-details me-1"></i>
+                Rundown
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="eventDetailTabsContent">
+
+    <div class="tab-pane fade show active"
+         id="detail-pane"
+         role="tabpanel"
+         aria-labelledby="detail-tab"
+         tabindex="0">
+
     <div class="row g-4 mb-4">
 
         <div class="col-lg-8">
@@ -91,8 +128,6 @@
 
 
                 <div class="card-body">
-
-                    {{-- Category + Type --}}
                     <div class="d-flex flex-wrap gap-2 mb-3">
 
                         @if($event->category)
@@ -119,9 +154,6 @@
                         @endif
 
                     </div>
-
-
-                    {{-- Nama Event --}}
                     <h1 class="event-title">
                         {{ $event->name }}
                     </h1>
@@ -148,18 +180,13 @@
                         </div>
 
                     @endif
-
-
-                    {{-- Main Stats --}}
                     <div class="row g-3 mt-4">
-
-                        {{-- Price --}}
                         <div class="col-sm-6">
 
                             <div class="event-stat-card">
 
                                 <div class="event-stat-icon">
-                                    <i class="ti ti-currency-dollar"></i>
+                                    Rp
                                 </div>
 
                                 <div>
@@ -175,7 +202,7 @@
 
                                         @else
 
-                                            Rp {{ number_format($event->price ?? 0, 0, ',', '.') }}
+                                            {{ number_format($event->price ?? 0, 0, ',', '.') }}
 
                                         @endif
 
@@ -223,7 +250,7 @@
                             <i class="ti ti-map-pin"></i>
                         </div>
 
-                        <div>
+                        <div class="flex-grow-1">
                             <div class="event-stat-label">
                                 Lokasi
                             </div>
@@ -232,6 +259,16 @@
                                 {{ $event->location ?: 'Lokasi belum ditentukan' }}
                             </div>
                         </div>
+
+                        @if ($event->google_maps_url)
+                            <a href="{{ $event->google_maps_url }}"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="event-location-arrow"
+                            aria-label="Buka lokasi di Google Maps">
+                                <i class="ti ti-arrow-right"></i>
+                            </a>
+                        @endif
 
                     </div>
                     @if($event->thumbnail)
@@ -607,6 +644,132 @@
 
                 @endif
         </div>
+
+    </div>
+
+    </div>{{-- /#detail-pane --}}
+
+
+    <div class="tab-pane fade"
+         id="rundown-pane"
+         role="tabpanel"
+         aria-labelledby="rundown-tab"
+         tabindex="0">
+
+        <div class="card">
+
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="ti ti-list-details me-2"></i>
+                    Rundown Acara
+                </h3>
+            </div>
+
+            <div class="card-body">
+
+                @if($event->rundowns && $event->rundowns->count())
+
+                    @php
+                        $groupedRundowns = $event->rundowns
+                            ->sortBy([
+                                ['rundown_date', 'asc'],
+                                ['sort_order', 'asc'],
+                                ['start_time', 'asc'],
+                            ])
+                            ->groupBy(function ($item) {
+                                return \Carbon\Carbon::parse($item->rundown_date)->format('Y-m-d');
+                            });
+                    @endphp
+
+                    @foreach($groupedRundowns as $date => $items)
+
+                        @if($groupedRundowns->count() > 1)
+                            <div class="text-secondary small text-uppercase fw-semibold mb-2 mt-4">
+                                {{ \Carbon\Carbon::parse($date)->translatedFormat('l, d F Y') }}
+                            </div>
+                        @endif
+
+                        <div class="event-timeline">
+
+                            @foreach($items as $rundown)
+
+                                <div class="event-timeline-item">
+
+                                    <div class="event-timeline-icon">
+                                        <i class="ti ti-clock"></i>
+                                    </div>
+
+                                    <div>
+
+                                        <div class="text-secondary small">
+                                            {{ \Carbon\Carbon::parse($rundown->start_time)->format('H:i') }}
+                                            @if($rundown->end_time)
+                                                - {{ \Carbon\Carbon::parse($rundown->end_time)->format('H:i') }}
+                                            @endif
+                                            WIB
+                                        </div>
+
+                                        <div class="fw-semibold">
+                                            {{ $rundown->activity }}
+                                        </div>
+
+                                        @if($rundown->description)
+                                            <div class="text-secondary small mt-1">
+                                                {{ $rundown->description }}
+                                            </div>
+                                        @endif
+
+                                        <div class="d-flex flex-wrap gap-3 mt-1">
+
+                                            @if($rundown->speaker && $rundown->speaker !== '-')
+                                                <div class="text-secondary small">
+                                                    <i class="ti ti-microphone-2 me-1"></i>
+                                                    {{ $rundown->speaker }}
+                                                </div>
+                                            @endif
+
+                                            @if($rundown->location)
+                                                <div class="text-secondary small">
+                                                    <i class="ti ti-map-pin me-1"></i>
+                                                    {{ $rundown->location }}
+                                                </div>
+                                            @endif
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            @endforeach
+
+                        </div>
+
+                    @endforeach
+
+                @else
+
+                    <div class="event-gallery-empty">
+
+                        <i class="ti ti-list-details"></i>
+
+                        <div class="fw-semibold mt-2">
+                            Belum ada rundown
+                        </div>
+
+                        <div class="text-secondary small">
+                            Rundown acara belum ditambahkan.
+                        </div>
+
+                    </div>
+
+                @endif
+
+            </div>
+
+        </div>
+
+    </div>
 
     </div>
 </div>

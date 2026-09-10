@@ -15,7 +15,6 @@ class EventRundown extends Model
         'start_time',
         'end_time',
         'activity',
-        'description',
         'speaker',
         'location',
         'sort_order',

@@ -8,7 +8,7 @@ use App\Models\Customer;
 use App\Models\Affiliator;
 use App\Models\Worker;
 use App\Models\Invoice;
-use App\Models\InvoiceBuild;
+use App\Models\EventRundown;
 use App\Models\Province;
 use App\Models\City;
 use App\Models\District;
@@ -294,6 +294,17 @@ public function store(Request $request)
         'gallery_images.*' => 'image|mimes:jpg,jpeg,png,webp|max:2048',
         'speaker_ids' => 'nullable|array',
         'speaker_ids.*' => 'exists:users,id',
+        'google_maps_url' => 'nullable|url|max:2048',
+        'rundowns' => 'nullable|array',
+        'rundowns.*.rundown_date' => 'required|date',
+        'rundowns.*.start_time' => 'required|date_format:H:i',
+        'rundowns.*.end_time' => 'required|date_format:H:i',
+        'rundowns.*.activity' => 'required|string|max:255',
+        'rundowns.*.speaker' => 'nullable|string|max:255',
+        'rundowns.*.location' => 'nullable|string|max:255',
+        'faqs' => 'nullable|array',
+        'faqs.*.question' => 'required|string|max:255',
+        'faqs.*.answer' => 'required|string',
     ]);
 
 
@@ -325,6 +336,7 @@ public function store(Request $request)
             'start_at' => $request->start_at,
             'end_at' => $request->end_at,
             'location' => $request->location,
+            'google_maps_url' => $request->google_maps_url,
             'price' => $request->event_type === 'free'
                 ? 0
                 : ($request->price ?? 0),
@@ -336,6 +348,32 @@ public function store(Request $request)
             'is_published' => $request->boolean('is_published'),
         ]);
         $event->speakers()->sync($request->speaker_ids ?? []);
+        if ($request->filled('rundowns')) {
+
+            foreach ($request->rundowns as $index => $rundown) {
+
+                $event->rundowns()->create([
+                    'rundown_date' => $rundown['rundown_date'],
+                    'start_time' => $rundown['start_time'],
+                    'end_time' => $rundown['end_time'],
+                    'activity' => $rundown['activity'],
+                    'speaker' => $rundown['speaker'] ?? null,
+                    'location' => $rundown['location'] ?? null,
+                    'sort_order' => $index + 1,
+                ]);
+            }
+        }
+        if ($request->filled('faqs')) {
+
+            foreach ($request->faqs as $index => $faq) {
+
+                $event->faqs()->create([
+                    'question' => $faq['question'],
+                    'answer' => $faq['answer'],
+                    'sort_order' => $index + 1,
+                ]);
+            }
+        }
         if ($request->hasFile('gallery_images')) {
             foreach (
                 $request->file('gallery_images')
@@ -464,7 +502,26 @@ public function update(Request $request, Event $event)
         'gallery_captions.*' =>  'nullable|string|max:255',
         'speaker_ids' => 'nullable|array',
         'speaker_ids.*' => 'exists:users,id',
+        'existing_rundowns' => 'nullable|array',
+        'existing_rundowns.*.rundown_date' => 'required_with:existing_rundowns|date',
+        'existing_rundowns.*.start_time' => 'required_with:existing_rundowns',
+        'existing_rundowns.*.end_time' => 'required_with:existing_rundowns',
+        'existing_rundowns.*.activity' => 'required_with:existing_rundowns|string|max:255',
+        'existing_rundowns.*.speaker' => 'nullable|string|max:255',
+        'existing_rundowns.*.location' => 'nullable|string|max:255',
+        'existing_rundowns.*.description' => 'nullable|string',
+        'google_maps_url' => 'nullable|url|max:2048',
+        'new_rundowns' => 'nullable|array',
+        'new_rundowns.*.rundown_date' => 'required_with:new_rundowns|date',
+        'new_rundowns.*.start_time' => 'required_with:new_rundowns',
+        'new_rundowns.*.end_time' => 'required_with:new_rundowns',
+        'new_rundowns.*.activity' => 'required_with:new_rundowns|string|max:255',
+        'new_rundowns.*.speaker' => 'nullable|string|max:255',
+        'new_rundowns.*.location' => 'nullable|string|max:255',
+        'new_rundowns.*.description' => 'nullable|string',
 
+        'delete_rundown_ids' => 'nullable|array',
+        'delete_rundown_ids.*' => 'exists:event_rundowns,id',
     ]);
 
     DB::beginTransaction();
@@ -483,6 +540,7 @@ public function update(Request $request, Event $event)
             'start_at' => $request->start_at,
             'end_at' => $request->end_at,
             'location' => $request->location,
+            'google_maps_url' => $request->google_maps_url,
             'price' => $request->event_type === 'free'
                 ? 0
                 : ($request->price ?? 0),
@@ -568,7 +626,44 @@ public function update(Request $request, Event $event)
                     ]);
             }
         }
+        // Hapus rundown yang ditandai
+        if ($request->filled('delete_rundown_ids')) {
+            EventRundown::where('event_id', $event->id)
+                ->whereIn('id', $request->delete_rundown_ids)
+                ->delete();
+        }
 
+        if ($request->filled('existing_rundowns')) {
+            foreach ($request->existing_rundowns as $rundownId => $data) {
+                EventRundown::where('id', $rundownId)
+                    ->where('event_id', $event->id)
+                    ->update([
+                        'rundown_date' => $data['rundown_date'],
+                        'start_time' => $data['start_time'],
+                        'end_time' => $data['end_time'],
+                        'activity' => $data['activity'],
+                        'speaker' => $data['speaker'] ?? null,
+                        'location' => $data['location'] ?? null,
+                    ]);
+            }
+        }
+
+        if ($request->filled('new_rundowns')) {
+            $lastOrder = EventRundown::where('event_id', $event->id)->max('sort_order') ?? 0;
+
+            foreach ($request->new_rundowns as $index => $data) {
+                EventRundown::create([
+                    'event_id' => $event->id,
+                    'rundown_date' => $data['rundown_date'],
+                    'start_time' => $data['start_time'],
+                    'end_time' => $data['end_time'],
+                    'activity' => $data['activity'],
+                    'speaker' => $data['speaker'] ?? null,
+                    'location' => $data['location'] ?? null,
+                    'sort_order' => $lastOrder + $index + 1,
+                ]);
+            }
+        }
         if ($request->hasFile('gallery_images')) {
 
             $lastOrder = EventGallery::where(
