@@ -379,7 +379,14 @@
                             </div>
 
                             <div id="newGalleryContainer"></div>
-
+                            <input
+                                type="file"
+                                id="galleryInput"
+                                name="gallery_images[]"
+                                accept="image/jpeg,image/png,image/webp"
+                                multiple
+                                class="d-none"
+                            >
                         </div>
                         <div class="mb-4">
                             <div class="d-flex flex-column flex-sm-row
@@ -804,46 +811,10 @@
         document.getElementById('newGalleryContainer');
     let galleryFiles = new DataTransfer();
 
-    function createGalleryInput() {
+    const eventForm = document.getElementById('eventForm');
 
-        const input = document.createElement('input');
-
-        input.type = 'file';
-        input.name = 'gallery_images[]';
-        input.accept = 'image/jpeg,image/png,image/webp';
-        input.multiple = true;
-
-        input.classList.add('d-none');
-
-        document
-            .getElementById('eventForm')
-            ?.appendChild(input);
-
-        return input;
-    }
-
-    const eventForm =
-        document.getElementById('eventForm') ||
-        document.querySelector('form[action*="events.store"]');
-
-    let galleryInput =
+    const galleryInput =
         document.getElementById('galleryInput');
-
-    if (!galleryInput && eventForm) {
-
-        galleryInput = document.createElement('input');
-
-        galleryInput.type = 'file';
-        galleryInput.id = 'galleryInput';
-        galleryInput.name = 'gallery_images[]';
-        galleryInput.accept =
-            'image/jpeg,image/png,image/webp';
-        galleryInput.multiple = true;
-
-        galleryInput.classList.add('d-none');
-
-        eventForm.appendChild(galleryInput);
-    }
 
     function renderGalleryPreview() {
 
@@ -968,71 +939,48 @@
 
     if (galleryInput) {
 
-        galleryInput.addEventListener(
-            'change',
-            function () {
+        galleryInput.addEventListener('change', function () {
 
-                const files =
-                    Array.from(this.files);
+            const files = Array.from(this.files);
 
-                files.forEach(function (file) {
+            const allowedTypes = [
+                'image/jpeg',
+                'image/png',
+                'image/webp'
+            ];
 
-                    const allowedTypes = [
-                        'image/jpeg',
-                        'image/png',
-                        'image/webp'
-                    ];
+            files.forEach(function (file) {
 
-                    if (
-                        !allowedTypes.includes(
-                            file.type
-                        )
-                    ) {
+                if (!allowedTypes.includes(file.type)) {
+                    return;
+                }
 
-                        return;
-                    }
+                if (file.size > 2 * 1024 * 1024) {
+                    return;
+                }
 
-                    if (
-                        file.size >
-                        2 * 1024 * 1024
-                    ) {
-
-                        return;
-                    }
-
-                    const alreadyExists =
-                        Array.from(
-                            galleryFiles.files
-                        ).some(function (existingFile) {
-
+                const alreadyExists =
+                    Array.from(galleryFiles.files).some(
+                        function (existingFile) {
                             return (
-                                existingFile.name ===
-                                    file.name &&
-
-                                existingFile.size ===
-                                    file.size &&
-
-                                existingFile.lastModified ===
-                                    file.lastModified
+                                existingFile.name === file.name &&
+                                existingFile.size === file.size &&
+                                existingFile.lastModified === file.lastModified
                             );
-                        });
+                        }
+                    );
 
+                if (!alreadyExists) {
+                    galleryFiles.items.add(file);
+                }
+            });
 
-                    if (!alreadyExists) {
+            // Simpan seluruh file ke input asli
+            this.files = galleryFiles.files;
 
-                        galleryFiles.items.add(file);
-                    }
-                });
+            renderGalleryPreview();
 
-                this.files =
-                    galleryFiles.files;
-
-
-                renderGalleryPreview();
-
-                this.value = '';
-            }
-        );
+        });
     }
 
     function removeGalleryFile(index) {

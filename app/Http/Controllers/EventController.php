@@ -307,7 +307,6 @@ public function store(Request $request)
         'faqs.*.answer' => 'required|string',
     ]);
 
-
     DB::beginTransaction();
     $uploadedFiles = [];
 
