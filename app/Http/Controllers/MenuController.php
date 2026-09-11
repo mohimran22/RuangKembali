@@ -136,14 +136,12 @@ public function edit(Menu $menu)
         ->with('success', 'Menu berhasil diubah.');
 }
 
-
-
     public function destroy(Menu $menu) 
     {
     
         if ($menu) {
             $menu->delete();
-            return response()->json(['status' => 'success', 'message' => 'User deleted successfully']);
+            return response()->json(['status' => 'success', 'message' => 'Menu berhasil dihapus']);
         }
 
         return response()->json(['status' => 'failed', 'message' => 'Unable to delete']);

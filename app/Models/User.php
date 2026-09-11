@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Support\Carbon;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
@@ -147,6 +148,11 @@ public function activeRole()
     public function bank()
 {
     return $this->belongsTo(Bank::class);
+}
+
+public function registrations(): HasMany
+{
+    return $this->hasMany(EventRegistration::class);
 }
 
 public function speakingEvents()

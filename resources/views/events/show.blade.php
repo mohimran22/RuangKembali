@@ -27,10 +27,14 @@
             <div class="col-auto">
                 <div class="btn-list">
 
-                    <a href="{{ route('events.edit', $event->id) }}"
-                       class="btn btn-primary">
-                        <i class="ti ti-edit me-1"></i>
+                    <a href="{{ route('events.register', $event->id) }}"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="btn btn-primary">
+
+                        <i class="ti ti-ticket me-1"></i>
                         Daftar Sekarang
+
                     </a>
 
                     <div class="dropdown">
@@ -307,6 +311,69 @@
                         </div>
 
                     @endif
+
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <i class="ti ti-help-circle me-2"></i>
+                                FAQ
+                            </h3>
+                        </div>
+
+                        <div class="card-body">
+
+                            @if($event->faqs && $event->faqs->count())
+
+                                <div class="accordion" id="eventFaqAccordion">
+
+                                    @foreach($event->faqs as $index => $faq)
+                                        <div class="accordion-item">
+                                            <h2 class="accordion-header" id="faq-heading-{{ $index }}">
+                                                <button
+                                                    class="accordion-button {{ $index !== 0 ? 'collapsed' : '' }}"
+                                                    type="button"
+                                                    data-bs-toggle="collapse"
+                                                    data-bs-target="#faq-collapse-{{ $index }}"
+                                                    aria-expanded="{{ $index === 0 ? 'true' : 'false' }}"
+                                                    aria-controls="faq-collapse-{{ $index }}"
+                                                >
+                                                    {{ $faq->question }}
+                                                </button>
+                                            </h2>
+
+                                            <div
+                                                id="faq-collapse-{{ $index }}"
+                                                class="accordion-collapse collapse {{ $index === 0 ? 'show' : '' }}"
+                                                aria-labelledby="faq-heading-{{ $index }}"
+                                                data-bs-parent="#eventFaqAccordion"
+                                            >
+                                                <div class="accordion-body">
+                                                    {!! nl2br(e($faq->answer)) !!}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endforeach
+
+                                </div>
+
+                            @else
+
+                                <div class="event-gallery-empty">
+                                    <i class="ti ti-help-circle-off"></i>
+
+                                    <div class="fw-semibold mt-2">
+                                        Belum ada FAQ
+                                    </div>
+
+                                    <div class="text-secondary small">
+                                        FAQ untuk event ini belum ditambahkan.
+                                    </div>
+                                </div>
+
+                            @endif
+
+                        </div>
+                    </div>
                 </div>
 
             </div>

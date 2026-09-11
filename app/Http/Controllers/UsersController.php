@@ -292,4 +292,37 @@ public function show(User $user)
         return response()->json(['status' => 'failed', 'message' => 'Unable to delete']);
     }
 
+    public function search(Request $request)
+    {
+        $query = $request->get('q', '');
+
+        if (strlen($query) < 2) {
+            return response()->json([]);
+        }
+
+        $eventId = $request->get('event_id');
+
+        $users = User::where(function ($q) use ($query) {
+                $q->where('fullname', 'like', "%{$query}%")
+                  ->orWhere('email', 'like', "%{$query}%");
+            })
+            ->when($eventId, function ($q) use ($eventId) {
+                $q->whereDoesntHave('registrations', function ($sub) use ($eventId) {
+                    $sub->where('event_id', $eventId);
+                });
+            })
+            ->limit(10)
+            ->get(['id', 'fullname', 'email']);
+
+        return response()->json(
+            $users->map(function ($user) {
+                return [
+                    'id' => $user->id,
+                    'name' => $user->fullname,
+                    'email' => $user->email,
+                ];
+            })
+        );
+    }
+
 }

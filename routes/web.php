@@ -33,7 +33,7 @@ use App\Http\Controllers\SupplierCatalogController;
 use App\Http\Controllers\ProductCatalogController;
 use App\Http\Controllers\RoleSwitchController;
 use App\Http\Controllers\MenuController;
-use App\Http\Controllers\DesignPackageController;
+use App\Http\Controllers\EventRegistrationController;
 use App\Http\Controllers\RabPackageController;
 use App\Http\Controllers\RabController;
 use App\Http\Controllers\JobCategoryController;
@@ -79,7 +79,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Route::get('/dashboard', [DashboardController::class, 'index'])
     //     ->name('dashboard');
 
-    // Route lain yang wajib email terverifikasi
+    Route::get(
+        '/events/{event}/register',
+        [EventRegistrationController::class, 'create']
+    )->name('events.register');
+
+    Route::post(
+        '/events/{event}/register',
+        [EventRegistrationController::class, 'store']
+    )->name('events.register.store');
 });
 Route::get('/dashboard', [DashboardController::class, 'index'])
         ->name('dashboard');
@@ -770,3 +778,8 @@ Route::get('/api/postal_codes/{sub_district_id}', function ($sub_district_id) {
 Route::get('/api/banks', function () {
     return \App\Models\Bank::select('id', 'name', 'code')->orderBy('name')->get();
 });
+// routes/web.php
+
+Route::get('/api/users/search', [UsersController::class, 'search'])
+    ->middleware('auth')
+    ->name('users.search');

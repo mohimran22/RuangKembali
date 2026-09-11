@@ -6,7 +6,7 @@ use App\Models\EventCategory;
 use App\Models\EventGallery;
 use App\Models\Customer;
 use App\Models\Affiliator;
-use App\Models\Worker;
+use App\Models\Eventfaq;
 use App\Models\Invoice;
 use App\Models\EventRundown;
 use App\Models\Province;
@@ -496,7 +496,6 @@ public function update(Request $request, Event $event)
         'price' => 'nullable|numeric|min:0',
         'quota' => 'nullable|integer|min:1',
         'is_published' => 'required|boolean',
-        'description' => 'nullable|string',
         'poster' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         'thumbnail' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         'youtube_url' => 'nullable|url|max:500',
@@ -515,7 +514,6 @@ public function update(Request $request, Event $event)
         'existing_rundowns.*.activity' => 'required_with:existing_rundowns|string|max:255',
         'existing_rundowns.*.speaker' => 'nullable|string|max:255',
         'existing_rundowns.*.location' => 'nullable|string|max:255',
-        'existing_rundowns.*.description' => 'nullable|string',
         'google_maps_url' => 'nullable|url|max:2048',
         'new_rundowns' => 'nullable|array',
         'new_rundowns.*.rundown_date' => 'required_with:new_rundowns|date',
@@ -531,6 +529,9 @@ public function update(Request $request, Event $event)
         'sponsorship_whatsapp' => 'nullable|string|max:30',
         'sponsorship_qris' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         'remove_sponsorship_qris' => 'nullable|boolean',
+        'faqs' => 'nullable|array',
+        'faqs.*.question' => 'required|string|max:255',
+        'faqs.*.answer' => 'required|string',
     ]);
 
     DB::beginTransaction();
@@ -592,35 +593,33 @@ public function update(Request $request, Event $event)
                     ->delete($oldThumbnail);
             }
         }
-        /*
- * QRIS Sponsorship
- */
-if ($request->hasFile('sponsorship_qris')) {
 
-    $oldQris = $event->sponsorship_qris;
+        if ($request->hasFile('sponsorship_qris')) {
 
-    $qris = $request->file('sponsorship_qris')
-        ->store('events/qris', 'public');
+            $oldQris = $event->sponsorship_qris;
 
-    $newFiles[] = $qris;
+            $qris = $request->file('sponsorship_qris')
+                ->store('events/qris', 'public');
 
-    $eventData['sponsorship_qris'] = $qris;
+            $newFiles[] = $qris;
 
-    if ($oldQris) {
-        Storage::disk('public')
-            ->delete($oldQris);
-    }
+            $eventData['sponsorship_qris'] = $qris;
 
-} elseif ($request->boolean('remove_sponsorship_qris')) {
+            if ($oldQris) {
+                Storage::disk('public')
+                    ->delete($oldQris);
+            }
 
-    if ($event->sponsorship_qris) {
+        } elseif ($request->boolean('remove_sponsorship_qris')) {
 
-        Storage::disk('public')
-            ->delete($event->sponsorship_qris);
-    }
+            if ($event->sponsorship_qris) {
 
-    $eventData['sponsorship_qris'] = null;
-}
+                Storage::disk('public')
+                    ->delete($event->sponsorship_qris);
+            }
+
+            $eventData['sponsorship_qris'] = null;
+        }
         $event->update($eventData);
         $event->speakers()->sync($request->speaker_ids ?? []);
         if ($request->filled('delete_gallery_ids')) {
@@ -634,18 +633,11 @@ if ($request->hasFile('sponsorship_qris')) {
 
             foreach ($galleries as $gallery) {
 
-                /*
-                 * Hapus file gallery
-                 */
                 if ($gallery->image) {
 
                     Storage::disk('public')
                         ->delete($gallery->image);
                 }
-
-                /*
-                 * Hapus record
-                 */
                 $gallery->delete();
             }
         }
@@ -739,6 +731,56 @@ if ($request->hasFile('sponsorship_qris')) {
             }
         }
 
+        $submittedFaqIds = [];
+
+        if ($request->filled('faqs')) {
+
+            foreach ($request->faqs as $index => $faqData) {
+
+                // FAQ lama
+                if (!empty($faqData['id'])) {
+
+                    $faq = EventFaq::where('id', $faqData['id'])
+                        ->where('event_id', $event->id)
+                        ->first();
+
+                    if ($faq) {
+
+                        $faq->update([
+                            'question'  => $faqData['question'],
+                            'answer'    => $faqData['answer'],
+                            'sort_order' => $faqData['sort_order'] ?? $index,
+                        ]);
+
+                        $submittedFaqIds[] = $faq->id;
+                    }
+
+                } else {
+
+                    // FAQ baru
+                    $faq = EventFaq::create([
+                        'event_id'   => $event->id,
+                        'question'   => $faqData['question'],
+                        'answer'     => $faqData['answer'],
+                        'sort_order' => $faqData['sort_order'] ?? $index,
+                    ]);
+
+                    $submittedFaqIds[] = $faq->id;
+                }
+            }
+        }
+
+
+        $faqQuery = EventFaq::where('event_id', $event->id);
+
+        if (count($submittedFaqIds)) {
+
+            $faqQuery->whereNotIn('id', $submittedFaqIds);
+
+        }
+
+        $faqQuery->delete();
+
         DB::commit();
 
         return redirect()
@@ -752,10 +794,6 @@ if ($request->hasFile('sponsorship_qris')) {
 
         DB::rollBack();
 
-        /*
-         * Hapus file-file baru yang sudah berhasil
-         * di-upload tetapi proses update gagal.
-         */
         foreach ($newFiles as $file) {
 
             Storage::disk('public')

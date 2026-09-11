@@ -957,24 +957,20 @@
 
 
                                                 <div class="row g-2">
-
-                                                    {{-- Pertanyaan --}}
                                                     <div class="col-md-5">
 
                                                         <label class="form-label small mb-1">
                                                             Pertanyaan
                                                         </label>
 
-                                                        <input type="text"
+                                                        <textarea
                                                             name="faqs[{{ $index }}][question]"
                                                             class="form-control form-control-sm"
-                                                            value="{{ $faq['question'] ?? '' }}"
-                                                            placeholder="Contoh: Apakah event ini gratis?">
+                                                            rows="2"
+                                                            placeholder="Contoh: Apakah event ini gratis?"
+                                                        >{{ $faq['question'] ?? '' }}</textarea>
 
                                                     </div>
-
-
-                                                    {{-- Jawaban --}}
                                                     <div class="col-md-6">
 
                                                         <label class="form-label small mb-1">
