@@ -90,6 +90,21 @@
                 Rundown
             </button>
         </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link"
+                    id="sponsorship-tab"
+                    data-bs-toggle="tab"
+                    data-bs-target="#sponsorship-pane"
+                    type="button"
+                    role="tab"
+                    aria-controls="sponsorship-pane"
+                    aria-selected="false">
+
+                <i class="ti ti-heart-handshake me-1"></i>
+                Sponsorship / Dukungan
+
+            </button>
+        </li>
     </ul>
 
     <div class="tab-content" id="eventDetailTabsContent">
@@ -770,7 +785,203 @@
         </div>
 
     </div>
+    <div class="tab-pane fade"
+     id="sponsorship-pane"
+     role="tabpanel"
+     aria-labelledby="sponsorship-tab"
+     tabindex="0">
 
+    <div class="card">
+
+        <div class="card-header">
+
+            <div>
+                <h3 class="card-title mb-1">
+                    <i class="ti ti-heart-handshake me-2"></i>
+                    Peluang Amal Shalih
+                </h3>
+
+                <div class="text-secondary small">
+                    Sponsorship / Dukungan Acara
+                </div>
+            </div>
+
+        </div>
+
+
+        <div class="card-body">
+
+            <div class="row g-4">
+
+                {{-- WhatsApp Admin --}}
+                <div class="col-lg-6">
+
+                    <div class="card card-sm border h-100">
+
+                        <div class="card-body">
+
+                            <div class="d-flex align-items-center gap-3 mb-4">
+
+                                <span class="avatar avatar-lg bg-success-lt">
+                                    <i class="ti ti-brand-whatsapp fs-2"></i>
+                                </span>
+
+                                <div>
+                                    <h3 class="mb-1">
+                                        Hubungi WA Admin
+                                    </h3>
+
+                                    <div class="text-secondary">
+                                        Hubungi admin untuk informasi
+                                        sponsorship atau dukungan acara.
+                                    </div>
+                                </div>
+
+                            </div>
+
+
+                            @if($event->sponsorship_whatsapp)
+
+                                @php
+                                    $whatsappNumber = preg_replace(
+                                        '/[^0-9]/',
+                                        '',
+                                        $event->sponsorship_whatsapp
+                                    );
+
+                                    if (str_starts_with($whatsappNumber, '0')) {
+                                        $whatsappNumber = '62' . substr($whatsappNumber, 1);
+                                    }
+                                @endphp
+
+
+                                <div class="text-secondary small mb-1">
+                                    Nomor WhatsApp Admin
+                                </div>
+
+                                <div class="fw-semibold mb-3">
+                                    {{ $event->sponsorship_whatsapp }}
+                                </div>
+
+
+                                <a href="https://wa.me/{{ $whatsappNumber }}"
+                                   target="_blank"
+                                   rel="noopener noreferrer"
+                                   class="btn btn-success">
+
+                                    <i class="ti ti-brand-whatsapp me-1"></i>
+                                    Hubungi Admin
+
+                                </a>
+
+                            @else
+
+                                <div class="event-gallery-empty">
+
+                                    <i class="ti ti-brand-whatsapp"></i>
+
+                                    <div class="fw-semibold mt-2">
+                                        WhatsApp Admin Belum Tersedia
+                                    </div>
+
+                                    <div class="text-secondary small">
+                                        Informasi kontak sponsorship belum
+                                        ditambahkan.
+                                    </div>
+
+                                </div>
+
+                            @endif
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                {{-- QRIS --}}
+                <div class="col-lg-6">
+
+                    <div class="card card-sm border h-100">
+
+                        <div class="card-body">
+
+                            <div class="d-flex align-items-center gap-3 mb-4">
+
+                                <span class="avatar avatar-lg bg-primary-lt">
+                                    <i class="ti ti-qrcode fs-2"></i>
+                                </span>
+
+                                <div>
+                                    <h3 class="mb-1">
+                                        QRIS
+                                    </h3>
+
+                                    <div class="text-secondary">
+                                        Dukungan acara melalui QRIS.
+                                    </div>
+                                </div>
+
+                            </div>
+
+
+                            @if($event->sponsorship_qris)
+
+                                <div class="text-center">
+
+                                    <div class="border rounded p-3 d-inline-block bg-white">
+
+                                        <img src="{{ Storage::url($event->sponsorship_qris) }}"
+                                             alt="QRIS {{ $event->name }}"
+                                             class="img-fluid"
+                                             style="
+                                                max-width: 320px;
+                                                max-height: 400px;
+                                                object-fit: contain;
+                                             ">
+
+                                    </div>
+
+                                    <div class="text-secondary small mt-3">
+                                        Scan QRIS untuk memberikan dukungan
+                                        terhadap acara ini.
+                                    </div>
+
+                                </div>
+
+                            @else
+
+                                <div class="event-gallery-empty">
+
+                                    <i class="ti ti-qrcode-off"></i>
+
+                                    <div class="fw-semibold mt-2">
+                                        QRIS Belum Tersedia
+                                    </div>
+
+                                    <div class="text-secondary small">
+                                        QRIS untuk dukungan acara belum
+                                        ditambahkan.
+                                    </div>
+
+                                </div>
+
+                            @endif
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
     </div>
 </div>
 

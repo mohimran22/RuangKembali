@@ -1030,6 +1030,114 @@
                                 </div>
 
                             </div>
+                            <div class="card mb-4">
+
+                                <div class="card-header">
+                                    <div>
+                                        <h3 class="card-title mb-1">
+                                            Peluang Amal Shalih
+                                        </h3>
+
+                                        <div class="text-secondary small">
+                                            Sponsorship / Dukungan Acara
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="card-body">
+
+                                    <div class="row g-4">
+
+                                        {{-- WhatsApp Admin --}}
+                                        <div class="col-md-6">
+
+                                            <label class="form-label">
+                                                WhatsApp Admin
+                                            </label>
+
+                                            <div class="input-group">
+
+                                                <span class="input-group-text">
+                                                    <i class="ti ti-brand-whatsapp"></i>
+                                                </span>
+
+                                                <input type="text"
+                                                    name="sponsorship_whatsapp"
+                                                    class="form-control"
+                                                    value="{{ old('sponsorship_whatsapp', $event->sponsorship_whatsapp) }}"
+                                                    placeholder="628123456789">
+
+                                            </div>
+
+                                            <div class="form-hint">
+                                                Nomor WhatsApp admin untuk keperluan sponsorship.
+                                            </div>
+
+                                        </div>
+
+
+                                        {{-- QRIS --}}
+                                        <div class="col-md-6">
+
+                                            <label class="form-label">
+                                                QRIS Dukungan Acara
+                                            </label>
+
+                                            @if($event->sponsorship_qris)
+
+                                                <div class="mb-3">
+
+                                                    <div class="border rounded p-2 d-inline-block bg-white">
+
+                                                        <img src="{{ Storage::url($event->sponsorship_qris) }}"
+                                                            alt="QRIS {{ $event->name }}"
+                                                            class="img-fluid"
+                                                            style="max-width: 220px; max-height: 220px; object-fit: contain;">
+
+                                                    </div>
+
+                                                </div>
+
+                                                <div class="form-check mb-2">
+
+                                                    <input type="checkbox"
+                                                        name="remove_sponsorship_qris"
+                                                        value="1"
+                                                        class="form-check-input"
+                                                        id="removeSponsorshipQris">
+
+                                                    <label class="form-check-label text-danger"
+                                                        for="removeSponsorshipQris">
+                                                        Hapus QRIS saat menyimpan
+                                                    </label>
+
+                                                </div>
+
+                                            @endif
+
+
+                                            <input type="file"
+                                                name="sponsorship_qris"
+                                                class="form-control"
+                                                accept="image/jpeg,image/png,image/webp">
+
+                                            <div class="form-hint">
+                                                @if($event->sponsorship_qris)
+                                                    Pilih file baru jika ingin mengganti QRIS.
+                                                @else
+                                                    Belum ada QRIS. Upload gambar QRIS di sini.
+                                                @endif
+
+                                                Format JPG, JPEG, PNG, atau WEBP.
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
                             <div class="d-flex flex-column
                                         flex-sm-row
                                         justify-content-end

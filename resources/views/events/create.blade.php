@@ -35,217 +35,242 @@
                     <form id="eventForm" action="{{ route('events.store') }}" method="POST" enctype="multipart/form-data">
                         @csrf
 
-                        <div class="mb-4">
-                            <h4 class="mb-1">Informasi Event</h4>
-                            <div class="text-secondary small">
-                                Informasi dasar mengenai event yang akan dibuat.
-                            </div>
-                        </div>
-
-                        <div class="row g-3 mb-4">
-
-                            <div class="col-md-4">
-                                <label class="form-label required">Nama Event</label>
-                                <input type="text"
-                                    name="name"
-                                    class="form-control"
-                                    value="{{ old('name') }}"
-                                    placeholder="Masukkan nama event"
-                                    required>
-                            </div>
-
-                            {{-- Kategori --}}
-                            <div class="col-md-4">
-                                <label class="form-label required">Kategori</label>
-                                <select name="event_category_id"
-                                        class="form-select select2"
-                                        required>
-                                    <option value="">Pilih Kategori</option>
-
-                                    @foreach($categories as $category)
-                                        <option value="{{ $category->id }}"
-                                            {{ old('event_category_id') == $category->id ? 'selected' : '' }}>
-                                            {{ $category->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-
-                            {{-- Jenis Event --}}
-                            <div class="col-md-4">
-                                <label class="form-label required">Jenis Event</label>
-                                    <select id="event_type" name="event_type" class="form-select select2" required>
-                                        @foreach($eventTypes as $value => $label)
-                                            <option value="{{ $value }}"
-                                                {{ old('event_type', 'free') == $value ? 'selected' : '' }}>
-                                                {{ $label }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                            </div>
-                        </div>
-                        <div class="row g-3 mb-4">
-                            <div class="col-md-6">
-                                <label class="form-label">Pembicara</label>
-
-                                <select name="speaker_ids[]" class="form-select select2" multiple>
-                                    @foreach($speakers as $speaker)
-                                        <option value="{{ $speaker->id }}"
-                                            {{ in_array($speaker->id, old('speaker_ids', [])) ? 'selected' : '' }}>
-                                            {{ $speaker->fullname }}
-                                        </option>
-                                    @endforeach
-                                </select>
-
-                                <div class="form-hint">
-                                    Pilih satu atau lebih pembicara untuk event ini.
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <div>
+                                    <h3 class="card-title mb-1">Informasi Event</h3>
+                                    <div class="text-secondary small">
+                                        Informasi dasar mengenai event yang akan dibuat.
+                                    </div>
                                 </div>
                             </div>
-                            <div class="col-12">
-                                <label class="form-label required">Deskripsi Event</label>
-                                <textarea name="description"
-                                    rows="5"
-                                    class="form-control"
-                                    placeholder="Tuliskan deskripsi lengkap mengenai event...">{{ old('description') }}</textarea>
+
+                            <div class="card-body">
+                                <div class="row g-3">
+
+                                    <div class="col-md-4">
+                                        <label class="form-label required">Nama Event</label>
+                                        <input type="text"
+                                            name="name"
+                                            class="form-control"
+                                            value="{{ old('name') }}"
+                                            placeholder="Masukkan nama event"
+                                            required>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label class="form-label required">Kategori</label>
+                                        <select name="event_category_id"
+                                                class="form-select select2"
+                                                required>
+                                            <option value="">Pilih Kategori</option>
+
+                                            @foreach($categories as $category)
+                                                <option value="{{ $category->id }}"
+                                                    {{ old('event_category_id') == $category->id ? 'selected' : '' }}>
+                                                    {{ $category->name }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label class="form-label required">Jenis Event</label>
+
+                                        <select id="event_type"
+                                                name="event_type"
+                                                class="form-select select2"
+                                                required>
+
+                                            @foreach($eventTypes as $value => $label)
+                                                <option value="{{ $value }}"
+                                                    {{ old('event_type', 'free') == $value ? 'selected' : '' }}>
+                                                    {{ $label }}
+                                                </option>
+                                            @endforeach
+
+                                        </select>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label">Pembicara</label>
+
+                                        <select name="speaker_ids[]"
+                                                class="form-select select2"
+                                                multiple>
+
+                                            @foreach($speakers as $speaker)
+                                                <option value="{{ $speaker->id }}"
+                                                    {{ in_array($speaker->id, old('speaker_ids', [])) ? 'selected' : '' }}>
+                                                    {{ $speaker->fullname }}
+                                                </option>
+                                            @endforeach
+
+                                        </select>
+
+                                        <div class="form-hint">
+                                            Pilih satu atau lebih pembicara untuk event ini.
+                                        </div>
+                                    </div>
+
+                                    <div class="col-12">
+                                        <label class="form-label required">Deskripsi Event</label>
+
+                                        <textarea name="description"
+                                            rows="5"
+                                            class="form-control"
+                                            placeholder="Tuliskan deskripsi lengkap mengenai event...">{{ old('description') }}</textarea>
+                                    </div>
+
+                                </div>
                             </div>
                         </div>
-                        <div class="mb-4">
-                            <h4 class="mb-1">Jadwal Event</h4>
-                            <div class="text-secondary small">
-                                Atur periode pendaftaran dan waktu pelaksanaan event.
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <div>
+                                    <h4 class="mb-1">Jadwal Event</h4>
+                                    <div class="text-secondary small">
+                                        Atur periode pendaftaran dan waktu pelaksanaan event.
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-3 mb-4">
+
+                                    <div class="col-md-6">
+                                        <label class="form-label">Registrasi Dibuka</label>
+                                        <input type="datetime-local"
+                                            name="registration_open"
+                                            class="form-control"
+                                            value="{{ old('registration_open') }}">
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label">Registrasi Ditutup</label>
+                                        <input type="datetime-local"
+                                            name="registration_close"
+                                            class="form-control"
+                                            value="{{ old('registration_close') }}">
+                                    </div>
+
+                                    {{-- Mulai Event --}}
+                                    <div class="col-md-6">
+                                        <label class="form-label required">Mulai Event</label>
+                                        <input type="datetime-local"
+                                            name="start_at"
+                                            class="form-control"
+                                            value="{{ old('start_at') }}"
+                                            required>
+                                    </div>
+
+                                    {{-- Selesai Event --}}
+                                    <div class="col-md-6">
+                                        <label class="form-label required">Selesai Event</label>
+                                        <input type="datetime-local"
+                                            name="end_at"
+                                            class="form-control"
+                                            value="{{ old('end_at') }}"
+                                            required>
+                                    </div>
+
+                                </div>
                             </div>
                         </div>
-
-                        <div class="row g-3 mb-4">
-
-                            <div class="col-md-6">
-                                <label class="form-label">Registrasi Dibuka</label>
-                                <input type="datetime-local"
-                                    name="registration_open"
-                                    class="form-control"
-                                    value="{{ old('registration_open') }}">
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <div>
+                                    <h4 class="mb-1">Lokasi & Tiket</h4>
+                                    <div class="text-secondary small">
+                                        Informasi lokasi, harga tiket, dan kapasitas peserta.
+                                    </div>
+                                </div>
                             </div>
+                            <div class="card-body">
+                                <div class="row g-3 mb-4">
+                                    <div class="col-md-3">
+                                        <label class="form-label">Lokasi</label>
+                                        <input type="text"
+                                            name="location"
+                                            class="form-control"
+                                            value="{{ old('location') }}"
+                                            placeholder="Contoh: Hotel Fortuna Grande">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Link Google Maps</label>
+                                        <input type="url"
+                                            name="google_maps_url"
+                                            class="form-control"
+                                            value="{{ old('google_maps_url') }}"
+                                            placeholder="https://maps.google.com/...">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Harga Tiket</label>
+                                        <input type="number"
+                                            name="price"
+                                            id="price"
+                                            class="form-control"
+                                            min="0"
+                                            step="0.01"
+                                            value="{{ old('price', 0) }}"
+                                            placeholder="0">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Kuota Peserta</label>
+                                        <input type="number"
+                                            name="quota"
+                                            class="form-control"
+                                            min="1"
+                                            value="{{ old('quota') }}"
+                                            placeholder="Tidak terbatas">
+                                    </div>
 
-                            <div class="col-md-6">
-                                <label class="form-label">Registrasi Ditutup</label>
-                                <input type="datetime-local"
-                                    name="registration_close"
-                                    class="form-control"
-                                    value="{{ old('registration_close') }}">
-                            </div>
-
-                            {{-- Mulai Event --}}
-                            <div class="col-md-6">
-                                <label class="form-label required">Mulai Event</label>
-                                <input type="datetime-local"
-                                    name="start_at"
-                                    class="form-control"
-                                    value="{{ old('start_at') }}"
-                                    required>
-                            </div>
-
-                            {{-- Selesai Event --}}
-                            <div class="col-md-6">
-                                <label class="form-label required">Selesai Event</label>
-                                <input type="datetime-local"
-                                    name="end_at"
-                                    class="form-control"
-                                    value="{{ old('end_at') }}"
-                                    required>
-                            </div>
-
-                        </div>
-                        <div class="mb-4">
-                            <h4 class="mb-1">Lokasi & Tiket</h4>
-                            <div class="text-secondary small">
-                                Informasi lokasi, harga tiket, dan kapasitas peserta.
-                            </div>
-                        </div>
-
-                        <div class="row g-3 mb-4">
-                            <div class="col-md-3">
-                                <label class="form-label">Lokasi</label>
-                                <input type="text"
-                                    name="location"
-                                    class="form-control"
-                                    value="{{ old('location') }}"
-                                    placeholder="Contoh: Hotel Fortuna Grande">
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label">Link Google Maps</label>
-                                <input type="url"
-                                    name="google_maps_url"
-                                    class="form-control"
-                                    value="{{ old('google_maps_url') }}"
-                                    placeholder="https://maps.google.com/...">
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label">Harga Tiket</label>
-                                <input type="number"
-                                    name="price"
-                                    id="price"
-                                    class="form-control"
-                                    min="0"
-                                    step="0.01"
-                                    value="{{ old('price', 0) }}"
-                                    placeholder="0">
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label">Kuota Peserta</label>
-                                <input type="number"
-                                    name="quota"
-                                    class="form-control"
-                                    min="1"
-                                    value="{{ old('quota') }}"
-                                    placeholder="Tidak terbatas">
-                            </div>
-
-                        </div>
-
-                        <div class="mb-4">
-                            <h4 class="mb-1">Audience & Publikasi</h4>
-                            <div class="text-secondary small">
-                                Tentukan siapa yang dapat mengikuti event dan status publikasinya.
+                                </div>
                             </div>
                         </div>
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <div>
+                                    <h4 class="mb-1">Audience & Publikasi</h4>
+                                    <div class="text-secondary small">
+                                        Tentukan siapa yang dapat mengikuti event dan status publikasinya.
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-3 mb-4">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Audience</label>
+                                            <select name="audience_type" class="form-select select2" required>
+                                                @foreach($audiences as $value => $label)
+                                                    <option value="{{ $value }}"
+                                                        {{ old('audience_type', 'public') == $value ? 'selected' : '' }}>
+                                                        {{ $label }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Status Publikasi</label>
+                                        <select name="is_published"
+                                                class="form-select select2"
+                                                required>
 
-                        <div class="row g-3 mb-4">
-
-                            {{-- Audience --}}
-                            <div class="col-md-6">
-                                <label class="form-label">Audience</label>
-                                    <select name="audience_type" class="form-select select2" required>
-                                        @foreach($audiences as $value => $label)
-                                            <option value="{{ $value }}"
-                                                {{ old('audience_type', 'public') == $value ? 'selected' : '' }}>
-                                                {{ $label }}
+                                            <option value="1"
+                                                {{ old('is_published', '0') == '1' ? 'selected' : '' }}>
+                                                Ya, Sudah publish
                                             </option>
-                                        @endforeach
-                                    </select>
+
+                                            <option value="0"
+                                                {{ old('is_published', '0') == '0' ? 'selected' : '' }}>
+                                                Belum Publish
+                                            </option>
+
+                                        </select>
+                                    </div>
+
+                                </div>
                             </div>
-
-                            {{-- Publish --}}
-                            <div class="col-md-6">
-                                <label class="form-label">Status Publikasi</label>
-                                <select name="is_published"
-                                        class="form-select select2"
-                                        required>
-
-                                    <option value="1"
-                                        {{ old('is_published', '0') == '1' ? 'selected' : '' }}>
-                                        Ya, Publish
-                                    </option>
-
-                                    <option value="0"
-                                        {{ old('is_published', '0') == '0' ? 'selected' : '' }}>
-                                        Belum Publish
-                                    </option>
-
-                                </select>
-                            </div>
-
                         </div>
-
                         <div class="mb-4">
                             <h4 class="mb-1">Media Event</h4>
                             <div class="text-secondary small">
@@ -254,8 +279,6 @@
                         </div>
 
                         <div class="row g-3 mb-4">
-
-                            {{-- Poster --}}
                             <div class="col-md-6">
                                 <label class="form-label">Poster</label>
                                 <input type="file"
@@ -267,8 +290,6 @@
                                     Format gambar: JPG, JPEG, PNG, WEBP.
                                 </div>
                             </div>
-
-                            {{-- Thumbnail --}}
                             <div class="col-md-6">
                                 <label class="form-label">Thumbnail</label>
                                 <input type="file"
@@ -351,282 +372,225 @@
 
                             </div>
                         </div>
-                        <div class="mb-4">
-                            <div class="d-flex flex-column flex-sm-row
-                                        justify-content-between
-                                        align-items-sm-center
-                                        gap-2 mb-3">
+                        <div class="card mb-4">
 
+                            <div class="card-header">
                                 <div>
-                                    <h5 class="mb-1">
+                                    <h3 class="card-title mb-1">
                                         Gallery Event
-                                    </h5>
+                                    </h3>
 
                                     <div class="text-secondary small">
                                         Tambahkan foto dokumentasi event.
                                     </div>
                                 </div>
 
-                                <button type="button"
-                                        class="btn btn-primary"
-                                        id="addGalleryButton">
+                                <div class="card-actions">
+                                    <button type="button"
+                                            class="btn btn-primary"
+                                            id="addGalleryButton">
 
-                                    <i class="ti ti-plus me-1"></i>
-                                    Tambah Foto
+                                        <i class="ti ti-plus me-1"></i>
+                                        Tambah Foto
 
-                                </button>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="card-body">
+
+                                <div id="newGalleryContainer"></div>
+
+                                <input
+                                    type="file"
+                                    id="galleryInput"
+                                    name="gallery_images[]"
+                                    accept="image/jpeg,image/png,image/webp"
+                                    multiple
+                                    class="d-none"
+                                >
 
                             </div>
 
-                            <div id="newGalleryContainer"></div>
-                            <input
-                                type="file"
-                                id="galleryInput"
-                                name="gallery_images[]"
-                                accept="image/jpeg,image/png,image/webp"
-                                multiple
-                                class="d-none"
-                            >
                         </div>
-                        <div class="mb-4">
-                            <div class="d-flex flex-column flex-sm-row
-                                        justify-content-between
-                                        align-items-sm-center
-                                        gap-2 mb-3">
+                        <div class="card mb-4">
 
+                            <div class="card-header">
                                 <div>
-                                    <h4 class="mb-1">Rundown Event</h4>
+                                    <h3 class="card-title mb-1">
+                                        Rundown Event
+                                    </h3>
+
                                     <div class="text-secondary small">
                                         Susunan acara berdasarkan waktu pelaksanaan event.
                                     </div>
                                 </div>
 
-                                <button type="button"
-                                        class="btn btn-primary"
-                                        id="addRundownButton">
-                                    <i class="ti ti-plus me-1"></i>
-                                    Tambah Rundown
-                                </button>
+                                <div class="card-actions">
+                                    <button type="button"
+                                            class="btn btn-primary"
+                                            id="addRundownButton">
+
+                                        <i class="ti ti-plus me-1"></i>
+                                        Tambah Rundown
+
+                                    </button>
+                                </div>
                             </div>
 
-                            <div id="newRundownContainer">
+                            <div class="card-body">
 
-                                @php
-                                    $oldRundowns = old('rundowns', []);
-                                @endphp
+                                <div id="newRundownContainer">
 
-                                @if(count($oldRundowns))
+                                    {{-- old rundowns / empty state kamu di sini --}}
 
-                                    @foreach($oldRundowns as $index => $rundown)
+                                </div>
 
-                                        <div class="rundown-create-card mb-2 p-2 border rounded"
-                                            data-rundown-index="{{ $index }}">
-
-                                            <div class="row g-2 align-items-end">
-
-                                                {{-- Tanggal --}}
-                                                <div class="col-md-2">
-                                                    <label class="form-label small mb-1">
-                                                        Tanggal
-                                                    </label>
-
-                                                    <input type="date"
-                                                        name="rundowns[{{ $index }}][rundown_date]"
-                                                        class="form-control form-control-sm"
-                                                        value="{{ $rundown['rundown_date'] ?? '' }}">
-                                                </div>
-
-                                                {{-- Mulai --}}
-                                                <div class="col-md-1">
-                                                    <label class="form-label small mb-1">
-                                                        Mulai
-                                                    </label>
-
-                                                    <input type="time"
-                                                        name="rundowns[{{ $index }}][start_time]"
-                                                        class="form-control form-control-sm"
-                                                        value="{{ $rundown['start_time'] ?? '' }}">
-                                                </div>
-
-                                                {{-- Selesai --}}
-                                                <div class="col-md-1">
-                                                    <label class="form-label small mb-1">
-                                                        Selesai
-                                                    </label>
-
-                                                    <input type="time"
-                                                        name="rundowns[{{ $index }}][end_time]"
-                                                        class="form-control form-control-sm"
-                                                        value="{{ $rundown['end_time'] ?? '' }}">
-                                                </div>
-
-                                                {{-- Aktivitas --}}
-                                                <div class="col-md-3">
-                                                    <label class="form-label small mb-1">
-                                                        Aktivitas
-                                                    </label>
-
-                                                    <input type="text"
-                                                        name="rundowns[{{ $index }}][activity]"
-                                                        class="form-control form-control-sm"
-                                                        value="{{ $rundown['activity'] ?? '' }}"
-                                                        placeholder="Contoh: Registrasi Peserta">
-                                                </div>
-
-                                                {{-- Pembicara --}}
-                                                <div class="col-md-2">
-                                                    <label class="form-label small mb-1">
-                                                        Pembicara/MC
-                                                    </label>
-
-                                                    <input type="text"
-                                                        name="rundowns[{{ $index }}][speaker]"
-                                                        class="form-control form-control-sm"
-                                                        value="{{ $rundown['speaker'] ?? '' }}"
-                                                        placeholder="Nama pembicara / MC">
-                                                </div>
-
-                                                {{-- Lokasi --}}
-                                                <div class="col-md-2">
-                                                    <label class="form-label small mb-1">
-                                                        Lokasi
-                                                    </label>
-
-                                                    <input type="text"
-                                                        name="rundowns[{{ $index }}][location]"
-                                                        class="form-control form-control-sm"
-                                                        value="{{ $rundown['location'] ?? '' }}"
-                                                        placeholder="Lokasi">
-                                                </div>
-
-                                                {{-- Hapus --}}
-                                                <div class="col-md-1">
-                                                    <button type="button"
-                                                            class="btn btn-sm btn-danger w-100 rundown-remove-btn"
-                                                            title="Hapus rundown">
-                                                        <i class="ti ti-trash"></i>
-                                                    </button>
-                                                </div>
-
-                                            </div>
-                                        </div>
-                                    @endforeach
-                                @else
-                                    <div id="rundownEmptyState" class="event-gallery-empty">
-                                        <i class="ti ti-list-details"></i>
-                                        <div class="fw-semibold mt-2">
-                                            Belum ada rundown
-                                        </div>
-                                        <div class="text-secondary small">
-                                            Klik "Tambah Rundown" untuk menambahkan susunan acara.
-                                        </div>
-                                    </div>
-                                @endif
                             </div>
+
                         </div>
 
-                        <div class="mb-4">
+                        <div class="card mb-4">
 
-                            <div class="d-flex flex-column flex-sm-row
-                                        justify-content-between
-                                        align-items-sm-center
-                                        gap-2 mb-3">
-
+                            <div class="card-header">
                                 <div>
-                                    <h4 class="mb-1">FAQ Event</h4>
+                                    <h3 class="card-title mb-1">
+                                        FAQ Event
+                                    </h3>
 
                                     <div class="text-secondary small">
                                         Pertanyaan dan jawaban yang sering ditanyakan peserta.
                                     </div>
                                 </div>
 
-                                <button type="button"
-                                        class="btn btn-primary"
-                                        id="addFaqButton">
+                                <div class="card-actions">
+                                    <button type="button"
+                                            class="btn btn-primary"
+                                            id="addFaqButton">
 
-                                    <i class="ti ti-plus me-1"></i>
+                                        <i class="ti ti-plus me-1"></i>
+                                        Tambah FAQ
 
-                                    Tambah FAQ
-                                </button>
+                                    </button>
+                                </div>
                             </div>
 
+                            <div class="card-body">
 
-                            <div id="faqContainer">
+                                <div id="faqContainer">
 
-                                @php
-                                    $oldFaqs = old('faqs', []);
-                                @endphp
+                                    {{-- old FAQs / empty state kamu di sini --}}
 
+                                </div>
 
-                                @if(count($oldFaqs))
+                            </div>
 
-                                    @foreach($oldFaqs as $index => $faq)
+                        </div>
+                        <div class="card mb-4">
 
-                                        <div class="faq-create-card mb-2 p-3 border rounded"
-                                            data-faq-index="{{ $index }}">
+                            <div class="card-header">
+                                <div>
+                                    <h3 class="card-title mb-1">
+                                        Peluang Amal Shalih
+                                    </h3>
 
-                                            <div class="row g-2">
-                                                <div class="col-md-5">
+                                    <div class="text-secondary small">
+                                        Sponsorship / Dukungan Acara
+                                    </div>
+                                </div>
+                            </div>
 
-                                                    <label class="form-label small mb-1">
-                                                        Pertanyaan
-                                                    </label>
+                            <div class="card-body">
+
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+
+                                        <div class="card card-sm border h-100">
+
+                                            <div class="card-body">
+
+                                                <div class="d-flex align-items-center gap-3 mb-3">
+
+                                                    <span class="avatar avatar-lg bg-success-lt">
+                                                        <i class="ti ti-brand-whatsapp fs-2"></i>
+                                                    </span>
+
+                                                    <div>
+                                                        <div class="fw-semibold">
+                                                            Hubungi WA Admin
+                                                        </div>
+
+                                                        <div class="text-secondary small">
+                                                            Hubungi admin untuk informasi sponsorship
+                                                            dan dukungan acara.
+                                                        </div>
+                                                    </div>
+
+                                                </div>
+
+                                                <div class="input-group">
 
                                                     <input type="text"
-                                                        name="faqs[{{ $index }}][question]"
-                                                        class="form-control form-control-sm"
-                                                        value="{{ $faq['question'] ?? '' }}"
-                                                        placeholder="Contoh: Apakah event ini gratis?">
+                                                        name="sponsorship_whatsapp"
+                                                        class="form-control"
+                                                        value="{{ old('sponsorship_whatsapp') }}"
+                                                        placeholder="Contoh: 628123456789">
+
+                                                    <span class="input-group-text">
+                                                        <i class="ti ti-phone"></i>
+                                                    </span>
 
                                                 </div>
-                                                <div class="col-md-6">
 
-                                                    <label class="form-label small mb-1">
-                                                        Jawaban
-                                                    </label>
-
-                                                    <textarea name="faqs[{{ $index }}][answer]"
-                                                            class="form-control form-control-sm"
-                                                            rows="2"
-                                                            placeholder="Tuliskan jawaban FAQ">{{ $faq['answer'] ?? '' }}</textarea>
-                                                </div>
-
-                                                <div class="col-md-1 d-flex align-items-end">
-
-                                                    <button type="button"
-                                                            class="btn btn-sm btn-danger w-100 faq-remove-btn"
-                                                            title="Hapus FAQ">
-
-                                                        <i class="ti ti-trash"></i>
-
-                                                    </button>
-
+                                                <div class="form-hint">
+                                                    Masukkan nomor WhatsApp admin tanpa tanda +.
                                                 </div>
 
                                             </div>
 
                                         </div>
 
-                                    @endforeach
+                                    </div>
+                                    <div class="col-md-6">
 
-                                @else
+                                        <div class="card card-sm border h-100">
 
-                                    <div id="faqEmptyState"
-                                        class="event-gallery-empty">
+                                            <div class="card-body">
 
-                                        <i class="ti ti-help-circle"></i>
+                                                <div class="d-flex align-items-center gap-3 mb-3">
 
-                                        <div class="fw-semibold mt-2">
-                                            Belum ada FAQ
-                                        </div>
+                                                    <span class="avatar avatar-lg bg-primary-lt">
+                                                        <i class="ti ti-qrcode fs-2"></i>
+                                                    </span>
 
-                                        <div class="text-secondary small">
-                                            Klik "Tambah FAQ" untuk menambahkan pertanyaan dan jawaban.
+                                                    <div>
+                                                        <div class="fw-semibold">
+                                                            QRIS
+                                                        </div>
+
+                                                        <div class="text-secondary small">
+                                                            Upload QRIS untuk dukungan acara.
+                                                        </div>
+                                                    </div>
+
+                                                </div>
+
+                                                <input type="file"
+                                                    name="sponsorship_qris"
+                                                    class="form-control"
+                                                    accept="image/jpeg,image/png,image/webp">
+
+                                                <div class="form-hint">
+                                                    Format JPG, JPEG, PNG, atau WEBP.
+                                                </div>
+
+                                            </div>
+
                                         </div>
 
                                     </div>
 
-                                @endif
+                                </div>
 
                             </div>
 

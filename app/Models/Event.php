@@ -30,7 +30,9 @@ class Event extends Model
         'status',
         'is_published',
         'youtube_url',
-        'google_maps_url'
+        'google_maps_url',
+        'sponsorship_whatsapp',
+        'sponsorship_qris'
     ];
 
     protected $casts = [

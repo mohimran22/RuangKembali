@@ -305,6 +305,8 @@ public function store(Request $request)
         'faqs' => 'nullable|array',
         'faqs.*.question' => 'required|string|max:255',
         'faqs.*.answer' => 'required|string',
+        'sponsorship_whatsapp' => 'nullable|string|max:30',
+        'sponsorship_qris'     => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
     ]);
 
     DB::beginTransaction();
@@ -390,6 +392,11 @@ public function store(Request $request)
                     'sort_order' =>$index + 1,
                 ]);
             }
+        }
+        if ($request->hasFile('sponsorship_qris')) {
+            $event->sponsorship_qris = $request
+                ->file('sponsorship_qris')
+                ->store('events/qris', 'public');
         }
 
         DB::commit();
@@ -521,6 +528,9 @@ public function update(Request $request, Event $event)
 
         'delete_rundown_ids' => 'nullable|array',
         'delete_rundown_ids.*' => 'exists:event_rundowns,id',
+        'sponsorship_whatsapp' => 'nullable|string|max:30',
+        'sponsorship_qris' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+        'remove_sponsorship_qris' => 'nullable|boolean',
     ]);
 
     DB::beginTransaction();
@@ -548,6 +558,7 @@ public function update(Request $request, Event $event)
             'youtube_url' => $request->youtube_url,
             'description' => $request->description,
             'is_published' => $request->boolean('is_published'),
+            'sponsorship_whatsapp' => $request->sponsorship_whatsapp,
         ];
 
         if ($request->hasFile('poster')) {
@@ -581,7 +592,35 @@ public function update(Request $request, Event $event)
                     ->delete($oldThumbnail);
             }
         }
+        /*
+ * QRIS Sponsorship
+ */
+if ($request->hasFile('sponsorship_qris')) {
 
+    $oldQris = $event->sponsorship_qris;
+
+    $qris = $request->file('sponsorship_qris')
+        ->store('events/qris', 'public');
+
+    $newFiles[] = $qris;
+
+    $eventData['sponsorship_qris'] = $qris;
+
+    if ($oldQris) {
+        Storage::disk('public')
+            ->delete($oldQris);
+    }
+
+} elseif ($request->boolean('remove_sponsorship_qris')) {
+
+    if ($event->sponsorship_qris) {
+
+        Storage::disk('public')
+            ->delete($event->sponsorship_qris);
+    }
+
+    $eventData['sponsorship_qris'] = null;
+}
         $event->update($eventData);
         $event->speakers()->sync($request->speaker_ids ?? []);
         if ($request->filled('delete_gallery_ids')) {
