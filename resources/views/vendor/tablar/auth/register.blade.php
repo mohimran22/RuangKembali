@@ -1,5 +1,5 @@
 @extends('tablar::auth.layout')
-@section('title', 'ZH Picture')
+@section('title', 'Ruang Kembali')
 @section('content')
 <style>
     body {

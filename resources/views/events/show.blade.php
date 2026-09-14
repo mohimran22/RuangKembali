@@ -36,7 +36,7 @@
                         Daftar Sekarang
 
                     </a>
-
+                    @can('tambah data event')
                     <div class="dropdown">
                         <button class="btn btn-outline-secondary dropdown-toggle"
                                 data-bs-toggle="dropdown">
@@ -60,7 +60,7 @@
 
                         </div>
                     </div>
-
+                    @endcan
                 </div>
             </div>
 

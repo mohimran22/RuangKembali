@@ -3,15 +3,11 @@
 namespace App\Notifications;
 
 use App\Models\Transaction;
-use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 use Illuminate\Notifications\Messages\MailMessage;
-use Illuminate\Contracts\Queue\ShouldQueue;
 
-class TransactionApprovedNotification extends Notification implements ShouldQueue
+class TransactionApprovedNotification extends Notification
 {
-    use Queueable;
-
     public function __construct(
         public Transaction $transaction
     ) {}
