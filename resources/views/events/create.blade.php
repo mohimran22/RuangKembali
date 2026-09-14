@@ -595,6 +595,82 @@
                             </div>
 
                         </div>
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <div>
+                                    <h3 class="card-title mb-1">
+                                        Akun Keuangan Event
+                                    </h3>
+
+                                    <div class="text-secondary small">
+                                        Tentukan akun yang digunakan untuk pencatatan transaksi event.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card-body">
+                                <div class="row g-3">
+
+                                    <div class="col-md-6">
+                                        <label class="form-label required">
+                                            Akun Kas / Bank
+                                        </label>
+
+                                        <select name="cash_account_id"
+                                                class="form-select select2"
+                                                required>
+
+                                            <option value="">
+                                                Pilih Akun Kas / Bank
+                                            </option>
+
+                                            @foreach($cashAccounts as $account)
+                                                <option value="{{ $account->id }}"
+                                                    {{ old('cash_account_id') == $account->id ? 'selected' : '' }}>
+                                                    {{ $account->account_code }}
+                                                    - {{ $account->account_name }}
+                                                </option>
+                                            @endforeach
+
+                                        </select>
+
+                                        <div class="form-hint">
+                                            Akun yang digunakan untuk menerima pembayaran peserta.
+                                        </div>
+                                    </div>
+
+
+                                    <div class="col-md-6">
+                                        <label class="form-label required">
+                                            Akun Pendapatan
+                                        </label>
+
+                                        <select name="income_account_id"
+                                                class="form-select select2"
+                                                required>
+
+                                            <option value="">
+                                                Pilih Akun Pendapatan
+                                            </option>
+
+                                            @foreach($incomeAccounts as $account)
+                                                <option value="{{ $account->id }}"
+                                                    {{ old('income_account_id') == $account->id ? 'selected' : '' }}>
+                                                    {{ $account->account_code }}
+                                                    - {{ $account->account_name }}
+                                                </option>
+                                            @endforeach
+
+                                        </select>
+
+                                        <div class="form-hint">
+                                            Akun pendapatan khusus untuk event ini.
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
                         <div class="d-flex flex-column flex-sm-row justify-content-end gap-2 pt-3 border-top">
                             <button type="submit"
                                     class="btn btn-primary">

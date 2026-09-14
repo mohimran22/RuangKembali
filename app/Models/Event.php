@@ -32,7 +32,9 @@ class Event extends Model
         'youtube_url',
         'google_maps_url',
         'sponsorship_whatsapp',
-        'sponsorship_qris'
+        'sponsorship_qris',
+        'cash_account_id',
+        'income_account_id',
     ];
 
     protected $casts = [
@@ -85,7 +87,15 @@ public function faqs()
     {
         return $this->hasOne(EventCertificate::class);
     }
+    public function cashAccount()
+{
+    return $this->belongsTo(AccountingAccount::class, 'cash_account_id');
+}
 
+public function incomeAccount()
+{
+    return $this->belongsTo(AccountingAccount::class, 'income_account_id');
+}
     public function getRemainingQuotaAttribute()
     {
         if (is_null($this->quota)) {

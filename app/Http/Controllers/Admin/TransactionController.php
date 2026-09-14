@@ -51,8 +51,7 @@ class TransactionController extends Controller
 
             $transaction->load(['event', 'registrations.user', 'registeredBy']);
 
-    // Kirim ke user yang submit form (pendaftar)
-    $transaction->registeredBy->notify(new TransactionApprovedNotification($transaction));
+        $transaction->registeredBy->notify(new TransactionApprovedNotification($transaction));
 
         return back()->with('success', 'Transaksi berhasil disetujui, status diubah menjadi Lunas.');
     }

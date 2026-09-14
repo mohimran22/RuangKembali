@@ -14,6 +14,7 @@ use App\Models\City;
 use App\Models\District;
 use App\Models\SubDistrict;
 use App\Models\PostalCode;
+use App\Models\AccountingAccount;
 use App\Models\Event;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -256,13 +257,34 @@ public function create()
         'finished' => 'Selesai',
         'cancelled' => 'Dibatalkan',
     ];
+    $cashAccounts = AccountingAccount::where(
+        'license_id',
+        config('app.license_id')
+    )
+    ->where('category', 'AKTIVA')
+    ->where('sub_category', 'Aset Lancar - Kas & Bank')
+    ->where('is_parent', false)
+    ->where('is_active', true)
+    ->orderBy('account_code')
+    ->get();
 
+    $incomeAccounts = AccountingAccount::where(
+        'license_id',
+        config('app.license_id')
+    )
+    ->where('category', 'PENDAPATAN')
+    ->where('is_parent', false)
+    ->where('is_active', true)
+    ->orderBy('account_code')
+    ->get();
     return view('events.create', compact(
         'categories',
         'speakers',
         'eventTypes',
         'audiences',
-        'statuses'
+        'statuses',
+        'cashAccounts',
+        'incomeAccounts'
     ));
 }
 
@@ -283,6 +305,16 @@ public function store(Request $request)
             'nullable',
             'numeric',
             'min:0',
+        ],
+        'cash_account_id' => [
+            'required',
+            'uuid',
+            'exists:accounting_accounts,id',
+        ],
+        'income_account_id' => [
+            'required',
+            'uuid',
+            'exists:accounting_accounts,id',
         ],
         'quota' => 'nullable|integer|min:1',
         'description' => 'nullable|string',
@@ -347,6 +379,8 @@ public function store(Request $request)
             'youtube_url' => $request->youtube_url,
             'description' => $request->description,
             'is_published' => $request->boolean('is_published'),
+            'cash_account_id'   => $request->cash_account_id,
+            'income_account_id' => $request->income_account_id,
         ]);
         $event->speakers()->sync($request->speaker_ids ?? []);
         if ($request->filled('rundowns')) {
@@ -466,13 +500,35 @@ public function edit(Event $event)
         'cancelled' => 'Dibatalkan',
     ];
     $speakers = User::where('is_speakers', true)->get();
+    $cashAccounts = AccountingAccount::where(
+        'license_id',
+        config('app.license_id')
+    )
+    ->where('category', 'AKTIVA')
+    ->where('sub_category', 'Aset Lancar - Kas & Bank')
+    ->where('is_parent', false)
+    ->where('is_active', true)
+    ->orderBy('account_code')
+    ->get();
+
+    $incomeAccounts = AccountingAccount::where(
+        'license_id',
+        config('app.license_id')
+    )
+    ->where('category', 'PENDAPATAN')
+    ->where('is_parent', false)
+    ->where('is_active', true)
+    ->orderBy('account_code')
+    ->get();
     return view('events.edit', compact(
         'event',
         'categories',
         'eventTypes',
         'audiences',
         'statuses',
-        'speakers'
+        'speakers',
+        'cashAccounts',
+        'incomeAccounts'
     ));
 }
 
@@ -523,7 +579,16 @@ public function update(Request $request, Event $event)
         'new_rundowns.*.speaker' => 'nullable|string|max:255',
         'new_rundowns.*.location' => 'nullable|string|max:255',
         'new_rundowns.*.description' => 'nullable|string',
-
+        'cash_account_id' => [
+            'required',
+            'uuid',
+            'exists:accounting_accounts,id',
+        ],
+        'income_account_id' => [
+            'required',
+            'uuid',
+            'exists:accounting_accounts,id',
+        ],
         'delete_rundown_ids' => 'nullable|array',
         'delete_rundown_ids.*' => 'exists:event_rundowns,id',
         'sponsorship_whatsapp' => 'nullable|string|max:30',
@@ -560,6 +625,8 @@ public function update(Request $request, Event $event)
             'description' => $request->description,
             'is_published' => $request->boolean('is_published'),
             'sponsorship_whatsapp' => $request->sponsorship_whatsapp,
+            'cash_account_id'   => $request->cash_account_id,
+            'income_account_id' => $request->income_account_id,
         ];
 
         if ($request->hasFile('poster')) {
@@ -813,7 +880,22 @@ public function show($id)
     $event = Event::with('category', 'galleries')
         ->findOrFail($id);
 
-    return view('events.show', compact('event'));
+    $registrationsQuery = $event->registrations()
+        ->with('user')
+        ->latest();
+
+    // Super-Admin dan Tim → semua peserta
+    // Role lain → hanya peserta miliknya sendiri
+    if (!auth()->user()->hasAnyRole(['Super-Admin', 'Tim'])) {
+        $registrationsQuery->where('user_id', auth()->id());
+    }
+
+    $registrations = $registrationsQuery->get();
+
+    return view('events.show', compact(
+        'event',
+        'registrations'
+    ));
 }
      public function destroy(Event $event) 
     {

@@ -41,78 +41,70 @@
                                         </div>
                                     </div> --}}
 
+                                        <div class="row mb-4">
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">Kode Akun</label>
+                                                <input type="text" id="account_code_preview" class="form-control" readonly>
+                                                <input type="hidden" name="account_code" id="account_code">
+                                            </div>
 
-                                    <div class="row mb-4">
-                                        <div class="col-md-6 mb-3">
-                                            <label class="form-label">Kode Akun</label>
-                                            <input type="text" id="account_code_preview" class="form-control" value="{{ old('account_code') }}" readonly>
-                                            <input type="hidden" name="account_code" id="account_code" value="{{ old('account_code') }}">
-                                        </div>
-
-                                        <div class="col-md-6 mb-3">
-                                            <label class="form-label required">Nama Akun</label>
-                                            <input type="text" name="account_name" class="form-control" value="{{ old('account_name') }}" required>
-                                        </div>
-                                        <div class="col-md-6 mb-3">
-                                            <label class="form-label required">Kategori</label>
-                                            <select name="category" class="form-select select2" required>
-                                                <option value="">-- Pilih Kategori --</option>
-                                                    @foreach ($categories as $cat)
-                                                        <option value="{{ $cat }}"
-                                                            {{ old('category') == $cat ? 'selected' : '' }}>
-                                                            {{ $cat }}
-                                                        </option>
-                                                    @endforeach
-                                            </select>
-                                        </div>
-
-                                        <div class="col-md-6 mb-3">
-                                            <label class="form-label">Sub Kategori</label>
-                                                <select name="sub_category" id="sub_category" class="form-select select2">
-                                                    <option value="">-- Pilih Sub kategori --</option>
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">Nama Akun</label>
+                                                <input type="text" name="account_name" class="form-control" required>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">Kategori</label>
+                                                <select name="category" class="form-select select2" required>
+                                                    <option value="">-- Pilih Kategori --</option>
+                                                        @foreach ($categories as $cat)
+                                                            <option value="{{ $cat }}">{{ $cat }}</option>
+                                                        @endforeach
                                                 </select>
-                                        </div>
-                                    </div>
+                                            </div>
 
-                                    <div class="row mb-4">
-                                        <div class="col-md-6 mb-3">
-                                            <label class="form-label">Saldo Awal</label>
-                                            <input type="number" step="0.01" name="initial_balance" class="form-control" value="{{ old('initial_balance') }}">
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">Sub Kategori</label>
+                                                    <select name="sub_category" id="sub_category" class="form-select select2">
+                                                        <option value="">-- Pilih Sub kategori --</option>
+                                                    </select>
+                                            </div>
                                         </div>
-                                        <div class="col-md-6 mb-3">
-                                            <label class="form-label">User</label>
-                                            <select name="person_type" class="form-select select2" value="{{ old('person_type') }}">
-                                                <option value="">-- Pilih --</option>
-                                                <option value="team" {{ old('person_type', $account->person_type ?? '') == 'team' ? 'selected' : '' }}>Team</option>
-                                                <option value="member" {{ old('person_type', $account->person_type ?? '') == 'member' ? 'selected' : '' }}>Member</option>
-                                                <option value="mitra" {{ old('person_type', $account->person_type ?? '') == 'mitra' ? 'selected' : '' }}>Mitra</option>
-                                            </select>
-                                        </div>
-                                    </div>
+                                        <div class="row mb-4">
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">Apakah Akun Induk?</label>
+                                                <select name="is_parent" class="form-select select2 @error('is_parent') is-invalid @enderror">
+                                                    <option value="">-- Silahkan dipilih --</option>
+                                                    <option value="1" {{ old('is_parent') == '1' ? 'selected' : '' }}>Ya (Akun Induk)</option>
+                                                    <option value="0" {{ old('is_parent') == '0' ? 'selected' : '' }}>Tidak (Akun Anak)</option>
+                                                </select>
+                                            </div>
 
-                                    <div class="row mb-4">
-                                        <div class="col-md-6 mb-3">
-                                            <label class="form-label">Apakah Akun Induk?</label>
-                                            <select name="is_parent" class="form-select select2 @error('is_parent') is-invalid @enderror">
-                                                <option value="">-- Silahkan dipilih --</option>
-                                                <option value="1" {{ old('is_parent') == '1' ? 'selected' : '' }}>Ya (Akun Induk)</option>
-                                                <option value="0" {{ old('is_parent') == '0' ? 'selected' : '' }}>Tidak (Akun Anak)</option>
-                                            </select>
-                                        </div>
-
-                                        <div class="col-md-6 mb-3" id="parent-field">
-                                            <label class="form-label">Akun Induk</label>
-                                            <select name="parent_id" class="form-select select2">
-                                                <option value="">-- Pilih Akun Induk --</option>
+                                            <div class="col-md-6 mb-3" id="parent-field">
+                                                <label class="form-label">Akun Induk</label>
+                                                <select name="parent_id" class="form-select select2">
+                                                    <option value="">-- Pilih Akun Induk --</option>
                                                     @foreach ($parentAccounts as $parent)
-                                                        <option value="{{ $parent->id }}"
-                                                            {{ old('parent_id') == $parent->id ? 'selected' : '' }}>
-                                                            {{ $parent->account_name }}
-                                                        </option>
+                                                        <option value="{{ $parent->id }}">{{ $parent->account_name }}</option>
                                                     @endforeach
-                                            </select>
+                                                </select>
+                                            </div>
                                         </div>
-                                    </div>
+
+                                        <div class="row mb-4">
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">Saldo Awal</label>
+                                                <input type="number" step="0.01" name="initial_balance" class="form-control">
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">User</label>
+                                                <select name="person_type" class="form-select select2" value="{{ old('person_type') }}">
+                                                    <option value="">-- Pilih User --</option>
+                                                    <option value="employee" {{ old('person_type', $account->person_type) == 'employee' ? 'selected' : '' }}>Karyawan</option>
+                                                    <option value="customer" {{ old('person_type', $account->person_type) == 'customer' ? 'selected' : '' }}>Customer</option>
+                                                    <option value="worker" {{ old('person_type', $account->person_type) == 'worker' ? 'selected' : '' }}>Tukang</option>
+                                                </select>
+                                            </div>
+                                        </div>
 
                                         <div class="text-end mt-5">
                                             <button type="submit" class="btn btn-primary px-4">
@@ -137,77 +129,67 @@
 </script>
 <script>
 const subCategories = @json($subCategories);
-const oldSubCategory = @json(old('sub_category'));
 
 $('[name="category"]').on('change', function () {
-
-    let category = $(this).val();
+    let selected = $(this).val();
     let options = '<option value="">-- Pilih Sub kategori --</option>';
 
-    if (subCategories[category]) {
-        subCategories[category].forEach(function(item) {
-            let selected = item === oldSubCategory ? 'selected' : '';
-            options += `<option value="${item}" ${selected}>${item}</option>`;
+    if (subCategories[selected]) {
+        subCategories[selected].forEach(function (item) {
+            options += `<option value="${item}">${item}</option>`;
         });
     }
 
     $('#sub_category').html(options).trigger('change');
 });
-
-$('[name="category"]').trigger('change');
 </script>
 <script>
 $(document).ready(function(){
 
     function generateCode(){
+
         let category = $('[name="category"]').val();
         let parentId = $('[name="parent_id"]').val();
+        let isParent = $('[name="is_parent"]').val();
 
-        if(!category){
+        if (!category) {
+
             $('#account_code_preview').val('');
             $('#account_code').val('');
+
             return;
         }
 
         $('#account_code_preview').val('Generating...');
 
-        fetch(`/accounting/generate-code?category=${encodeURIComponent(category)}&parent_id=${encodeURIComponent(parentId || '')}`)
-            .then(res => res.json())
-            .then(data => {
-                $('#account_code_preview').val(data.code);
-                $('#account_code').val(data.code);
-            });
+        fetch(
+            `/accounting/generate-code?` +
+            `category=${encodeURIComponent(category)}` +
+            `&parent_id=${encodeURIComponent(parentId || '')}` +
+            `&is_parent=${encodeURIComponent(isParent || '')}`
+        )
+        .then(res => res.json())
+        .then(data => {
+
+            $('#account_code_preview').val(data.code);
+            $('#account_code').val(data.code);
+
+        })
+        .catch(error => {
+
+            console.error(error);
+
+            $('#account_code_preview').val('');
+            $('#account_code').val('');
+
+        });
     }
 
     $('[name="category"]').on('change', generateCode);
+
     $('[name="parent_id"]').on('change', generateCode);
-});
-</script>
-<script>
-$(document).ready(function(){
-    const selectIsParent = document.querySelector('[name="is_parent"]');
-    const parentField = document.getElementById('parent-field');
 
-    function toggleParent() {
-
-        if(selectIsParent.value == "1"){
-
-            parentField.style.display = 'none';
-
-            $('[name="parent_id"]')
-                .val('')
-                .trigger('change');
-
-        }else{
-
-            parentField.style.display = 'block';
-
-        }
-
-    }
-
-    toggleParent();
-    $(selectIsParent).on('change', toggleParent);
+    $('[name="is_parent"]').on('change', generateCode);
 });
 </script>
 @endpush
