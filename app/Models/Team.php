@@ -141,13 +141,13 @@ public static function generateNik()
 
     // Ambil angka terakhir dari NIK sebelumnya (misal E-0007 → 7)
     $lastNumber = 0;
-    if ($lastEmployee && preg_match('/E-(\d+)/', $lastEmployee->nik, $matches)) {
+    if ($lastEmployee && preg_match('/T-(\d+)/', $lastEmployee->nik, $matches)) {
         $lastNumber = (int) $matches[1];
     }
 
     // Tambah 1 dan format jadi E-0001
     $newNumber = $lastNumber + 1;
-    return 'E-' . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
+    return 'T-' . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
 }
 
 

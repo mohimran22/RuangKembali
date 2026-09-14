@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Notifications\TransactionApprovedNotification;
+use App\Notifications\TransactionRejectedNotification;
 use App\Models\Transaction;
 use Illuminate\Http\Request;
 
@@ -47,7 +49,10 @@ class TransactionController extends Controller
         // Ikut update status semua registrasi peserta di dalamnya
         $transaction->registrations()->update(['status' => 'paid']);
 
-        // TODO: kirim notifikasi/email ke registered_by & tiap peserta bahwa pembayaran dikonfirmasi
+            $transaction->load(['event', 'registrations.user', 'registeredBy']);
+
+    // Kirim ke user yang submit form (pendaftar)
+    $transaction->registeredBy->notify(new TransactionApprovedNotification($transaction));
 
         return back()->with('success', 'Transaksi berhasil disetujui, status diubah menjadi Lunas.');
     }
@@ -69,7 +74,10 @@ class TransactionController extends Controller
             'rejection_reason' => $validated['rejection_reason'] ?? null,
         ]);
 
-        // TODO: kirim notifikasi/email ke registered_by bahwa bukti transfer ditolak
+
+    $transaction->load(['event', 'registeredBy']);
+
+    $transaction->registeredBy->notify(new TransactionRejectedNotification($transaction));
 
         return back()->with('success', 'Transaksi ditolak, user perlu upload ulang bukti transfer.');
     }

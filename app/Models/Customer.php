@@ -56,9 +56,6 @@ public function scopeLoyalty($query, $level)
         return ucfirst($this->loyalty_level);
     }
 
-    /**
-     * 🔹 Accessor: Status aktif/nonaktif readable
-     */
     public function getStatusTextAttribute()
     {
         return $this->is_active ? 'Aktif' : 'Nonaktif';
@@ -71,7 +68,7 @@ public function scopeLoyalty($query, $level)
 
 public static function generateNic()
 {
-    $lastNumber = self::where('nic', 'like', 'C-%')
+    $lastNumber = self::where('nic', 'like', 'M-%')
         ->selectRaw("
             MAX(
                 CAST(
