@@ -6,7 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Notifications\TransactionApprovedNotification;
 use App\Notifications\TransactionRejectedNotification;
 use App\Models\Transaction;
+use App\Models\AccountingAccount;
+use App\Models\AccountingJournal;
+use App\Models\AccountingJournalDetail;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+use DB;
 
 class TransactionController extends Controller
 {
@@ -33,28 +38,144 @@ class TransactionController extends Controller
         return view('admin.show', compact('transaction'));
     }
 
-    public function approve(Transaction $transaction)
-    {
+public function approve(Transaction $transaction)
+{
+    abort_unless(
+        $transaction->status === 'waiting_confirmation',
+        400,
+        'Transaksi ini tidak dalam status menunggu konfirmasi.'
+    );
+
+    DB::transaction(function () use ($transaction) {
+
+        // Load event beserta COA yang sudah ditentukan pada event
+        $transaction->load('event');
+
+        $event = $transaction->event;
+
         abort_unless(
-            $transaction->status === 'waiting_confirmation',
-            400,
-            'Transaksi ini tidak dalam status menunggu konfirmasi.'
+            $event,
+            404,
+            'Event transaksi tidak ditemukan.'
         );
 
+        // Pastikan Event sudah memiliki COA Kas/Bank
+        abort_unless(
+            $event->cash_account_id,
+            422,
+            'Akun Kas / Bank untuk event ini belum ditentukan.'
+        );
+
+        // Pastikan Event sudah memiliki COA Pendapatan
+        abort_unless(
+            $event->income_account_id,
+            422,
+            'Akun Pendapatan untuk event ini belum ditentukan.'
+        );
+
+        $licenseId = config('app.license_id');
+
+        /*
+         * Ambil COA Kas / Bank dari Event
+         */
+        $akunKas = AccountingAccount::where('id', $event->cash_account_id)
+            ->where('license_id', $licenseId)
+            ->where('is_active', true)
+            ->firstOrFail();
+
+        /*
+         * Ambil COA Pendapatan dari Event
+         */
+        $akunPendapatanEvent = AccountingAccount::where('id', $event->income_account_id)
+            ->where('license_id', $licenseId)
+            ->where('is_active', true)
+            ->firstOrFail();
+
+        /*
+         * Nominal transaksi
+         */
+        $nominal = (float) $transaction->amount;
+
+        /*
+         * Update transaksi menjadi Lunas
+         */
         $transaction->update([
-            'status' => 'paid',
+            'status'  => 'paid',
             'paid_at' => now(),
         ]);
 
-        // Ikut update status semua registrasi peserta di dalamnya
-        $transaction->registrations()->update(['status' => 'paid']);
+        /*
+         * Update seluruh peserta dalam transaksi
+         */
+        $transaction->registrations()->update([
+            'status' => 'paid',
+        ]);
 
-            $transaction->load(['event', 'registrations.user', 'registeredBy']);
+        /*
+         * Generate kode jurnal
+         */
+        $journalCode = 'JEV-' . now()->format('YmdHis')
+            . '-' . strtoupper(Str::random(4));
 
-        $transaction->registeredBy->notify(new TransactionApprovedNotification($transaction));
+        /*
+         * Buat jurnal
+         */
+        $journal = AccountingJournal::create([
+            'license_id'       => $licenseId,
+            'journal_code'     => $journalCode,
+            'transaction_date' => now()->toDateString(),
+            'description'      => 'Penerimaan pembayaran event - '
+                                . ($transaction->transaction_number ?? $transaction->id),
+            'created_by'       => auth()->id(),
+        ]);
 
-        return back()->with('success', 'Transaksi berhasil disetujui, status diubah menjadi Lunas.');
+        /*
+         * DEBIT
+         * Kas / Bank
+         */
+        AccountingJournalDetail::create([
+            'journal_id'  => $journal->id,
+            'account_id'  => $akunKas->id,
+            'person'      => null,
+            'debit'       => $nominal,
+            'credit'      => 0,
+            'description' => 'Penerimaan pembayaran event - ' . $event->name,
+        ]);
+
+        /*
+         * CREDIT
+         * Pendapatan Event
+         */
+        AccountingJournalDetail::create([
+            'journal_id'  => $journal->id,
+            'account_id'  => $akunPendapatanEvent->id,
+            'person'      => null,
+            'debit'       => 0,
+            'credit'      => $nominal,
+            'description' => 'Pendapatan pendaftaran event - ' . $event->name,
+        ]);
+    });
+
+    /*
+     * Load data untuk notification
+     */
+    $transaction->load([
+        'event',
+        'registrations.user',
+        'registeredBy',
+    ]);
+
+    if ($transaction->registeredBy) {
+        $transaction->registeredBy->notify(
+            new TransactionApprovedNotification($transaction)
+        );
     }
+
+    return back()->with(
+        'success',
+        'Transaksi berhasil disetujui, status diubah menjadi Lunas dan jurnal berhasil dibuat.'
+    );
+}
 
     public function reject(Request $request, Transaction $transaction)
     {
