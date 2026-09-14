@@ -55,7 +55,9 @@ class EventRegistrationController extends Controller
             return back()->withInput()->with('error', 'Terdapat peserta yang sama dipilih lebih dari sekali.');
         }
 
-        if (!in_array(auth()->id(), $userIds)) {
+        $mustBeParticipant = !auth()->user()->hasRole('Super-Admin');
+
+        if ($mustBeParticipant && !in_array(auth()->id(), $userIds)) {
             return back()->withInput()->with('error', 'Kamu wajib ikut sebagai salah satu peserta.');
         }
 

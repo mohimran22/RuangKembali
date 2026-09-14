@@ -34,9 +34,9 @@ use App\Http\Controllers\ProductCatalogController;
 use App\Http\Controllers\RoleSwitchController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\EventRegistrationController;
-use App\Http\Controllers\RabPackageController;
+use App\Http\Controllers\Admin\TransactionController as AdminTransactionController;
 use App\Http\Controllers\RabController;
-use App\Http\Controllers\JobCategoryController;
+use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\InvoiceBuildController;
 use App\Http\Controllers\AjaxController;
 use App\Http\Controllers\Api\JournalApiController;
@@ -79,15 +79,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Route::get('/dashboard', [DashboardController::class, 'index'])
     //     ->name('dashboard');
 
-    Route::get(
-        '/events/{event}/register',
-        [EventRegistrationController::class, 'create']
-    )->name('events.register');
-
-    Route::post(
-        '/events/{event}/register',
-        [EventRegistrationController::class, 'store']
-    )->name('events.register.store');
 });
 Route::get('/dashboard', [DashboardController::class, 'index'])
         ->name('dashboard');
@@ -104,7 +95,15 @@ Route::put('/member/profile', [DashboardController::class, 'update'])->name('mem
 Route::get('/affiliators/profile', [DashboardController::class, 'edit'])->name('affiliators.profile');
 Route::put('/affiliators/profile', [DashboardController::class, 'update'])->name('affiliators.updates');
 
+    Route::get(
+        '/events/{event}/register',
+        [EventRegistrationController::class, 'create']
+    )->name('events.register');
 
+    Route::post(
+        '/events/{event}/register',
+        [EventRegistrationController::class, 'store']
+    )->name('events.register.store');
 
 Route::middleware(['auth', 'permission:lihat daftar tim|lihat data tim', 'activerole:Tim'])->group(function () {
     Route::resource('/teams', TeamController::class)->whereUuid('team');
@@ -312,46 +311,32 @@ Route::middleware(['auth', 'permission:lihat daftar event|lihat data event'])->g
     ->name('events.pdf');
 });
 
-Route::resource('design-packages', DesignPackageController::class)
-    ->except(['show']);
+Route::get('/transactions', [TransactionController::class, 'index'])
+    ->name('transactions.index');
+Route::get('/transactions/{transaction}', [TransactionController::class, 'show'])
+    ->name('transactions.show');
 
-// Tambah / update / hapus item
-Route::post('design-packages/{designPackage}/items',
-    [DesignPackageController::class, 'addItem'])->name('design-packages.items.store');
+Route::post('/transactions/{transaction}/upload-proof', [TransactionController::class, 'uploadProof'])
+    ->name('transactions.upload-proof');
 
-Route::put('design-package-items/{item}',
-    [DesignPackageController::class, 'updateItem'])->name('design-packages.items.update');
+Route::prefix('admin')
+    ->middleware(['auth', 'role:Super-Admin|Tim']) // sesuaikan nama role/middleware kamu
+    ->name('admin.')
+    ->group(function () {
 
-Route::delete('design-package-items/{item}',
-    [DesignPackageController::class, 'deleteItem'])->name('design-packages.items.delete');
+        Route::get('/transactions', [AdminTransactionController::class, 'index'])
+            ->name('transactions.index');
 
-// API aman untuk frontend
-Route::get('design-packages/json/{id}',
-    [DesignPackageController::class, 'getPackage'])->name('design-packages.json');
+        Route::get('/transactions/{transaction}', [AdminTransactionController::class, 'show'])
+            ->name('transactions.show');
 
-Route::resource('rab-packages', RabPackageController::class)
-    ->except(['show']);
+        Route::post('/transactions/{transaction}/approve', [AdminTransactionController::class, 'approve'])
+            ->name('transactions.approve');
 
-// Tambah / update / hapus item
-Route::post('rab-packages/{rabPackage}/items',
-    [RabPackageController::class, 'addItem'])->name('rab-packages.items.store');
+        Route::post('/transactions/{transaction}/reject', [AdminTransactionController::class, 'reject'])
+            ->name('transactions.reject');
 
-Route::put('rab-package-items/{item}',
-    [RabPackageController::class, 'updateItem'])->name('rab-packages.items.update');
-
-Route::delete('rab-package-items/{item}',
-    [RabPackageController::class, 'deleteItem'])->name('rab-packages.items.delete');
-
-// API aman untuk frontend
-Route::get('rab-packages/json/{id}',
-    [RabPackageController::class, 'getPackage'])->name('rab-packages.json');
-// Route::get('/job-categories/import-upah', function () {
-//     return view('job-categories.import_upah');
-// })->middleware('auth');
-
-// Route::post('/job-categories/import-upah', [\App\Http\Controllers\UpahImportController::class, 'importUpah'])
-//     ->middleware('auth')
-//     ->name('job-categories.import-upah');
+    });
 Route::post('/job-categories/{id}/duplicate', [JobCategoryController::class, 'duplicate'])
     ->name('job-categories.duplicate');
 Route::resource('/job-categories', JobCategoryController::class)

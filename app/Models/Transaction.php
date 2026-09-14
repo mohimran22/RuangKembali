@@ -36,8 +36,8 @@ class Transaction extends Model
         return $this->belongsTo(User::class, 'registered_by');
     }
 
-    public function registrations()
-    {
-        return $this->hasMany(EventRegistration::class);
-    }
+public function registrations()
+{
+    return $this->hasMany(EventRegistration::class, 'transaction_id');
+}
 }

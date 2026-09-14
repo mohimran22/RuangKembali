@@ -10,7 +10,7 @@
 
             <div class="col">
 
-                <h2 class="page-title">
+                <h2>
                     Pendaftaran Event
                 </h2>
 
@@ -221,6 +221,10 @@
 
                                 <div class="d-flex justify-content-between align-items-center mb-3">
                                     <h3 class="mb-0">Data Peserta</h3>
+                                    <div class="text-end">
+                                        <div class="text-secondary small">No. Transaksi</div>
+                                        <div class="fw-semibold">{{ $transactionCode }}</div>
+                                    </div>
                                 </div>
 
                                 <div class="alert alert-info">
@@ -230,17 +234,19 @@
 
                                 <div id="participantsWrapper">
 
-                                    {{-- Peserta pertama = akun yang login, tidak bisa dihapus --}}
-                                    <div class="card card-sm border mb-3 participant-row" data-user-id="{{ auth()->id() }}">
-                                        <div class="card-body d-flex justify-content-between align-items-center">
-                                            <div>
-                                                <div class="text-secondary small fw-semibold">Kamu (Pendaftar)</div>
-                                                <div class="fw-semibold">{{ auth()->user()->fullname ?? auth()->user()->name }}</div>
-                                                <div class="text-secondary small">{{ auth()->user()->email }}</div>
+                                    @unless(auth()->user()->hasRole('Super-Admin'))
+                                        {{-- Peserta pertama = akun yang login, tidak bisa dihapus --}}
+                                        <div class="card card-sm border mb-3 participant-row" data-user-id="{{ auth()->id() }}">
+                                            <div class="card-body d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <div class="text-secondary small fw-semibold">Kamu (Pendaftar)</div>
+                                                    <div class="fw-semibold">{{ auth()->user()->fullname ?? auth()->user()->name }}</div>
+                                                    <div class="text-secondary small">{{ auth()->user()->email }}</div>
+                                                </div>
                                             </div>
+                                            <input type="hidden" name="participants[0][user_id]" value="{{ auth()->id() }}">
                                         </div>
-                                        <input type="hidden" name="participants[0][user_id]" value="{{ auth()->id() }}">
-                                    </div>
+                                    @endunless
 
                                 </div>
 
@@ -255,22 +261,6 @@
                                     <div class="list-group position-absolute w-100 bg-white shadow-sm rounded border"
                                         id="participantSearchResults"
                                         style="z-index: 1000; display: none; max-height: 250px; overflow-y: auto; top: 100%;">
-                                    </div>
-
-                                </div>
-
-                            </div>
-                            <div class="mb-4">
-
-                                <div class="card card-sm border">
-
-                                    <div class="card-body d-flex justify-content-between align-items-center">
-                                        <div class="text-secondary">
-                                            No. Transaksi
-                                        </div>
-                                        <div class="fw-semibold">
-                                            {{ $transactionCode }}
-                                        </div>
                                     </div>
 
                                 </div>
@@ -362,12 +352,15 @@
                                                     name="payment_method"
                                                     value="gateway"
                                                     class="form-selectgroup-input"
-                                                    required>
-                                                <div class="form-selectgroup-label d-flex align-items-center p-3">
+                                                    disabled>
+                                                <div class="form-selectgroup-label d-flex align-items-center p-3 opacity-50">
                                                     <i class="ti ti-credit-card me-2 fs-2"></i>
                                                     <div>
-                                                        <div class="fw-semibold">Payment Gateway</div>
-                                                        <div class="text-secondary small">QRIS, e-wallet, kartu, dll</div>
+                                                        <div class="fw-semibold">
+                                                            Payment Gateway
+                                                            <span class="badge bg-secondary-lt ms-1">Segera Hadir</span>
+                                                        </div>
+                                                        <div class="text-secondary small">QRIS, e-wallet, kartu, dll — belum tersedia</div>
                                                     </div>
                                                 </div>
                                             </label>
@@ -542,6 +535,18 @@
             searchResults.style.display = 'none';
         }
     });
+    const form = document.getElementById('registrationForm');
+
+    form.addEventListener('submit', function (e) {
+        const rows = wrapper.querySelectorAll('.participant-row');
+
+        if (rows.length === 0) {
+            e.preventDefault();
+            alert('Tambahkan minimal 1 peserta sebelum mendaftar.');
+            searchInput.focus();
+        }
+    });
+    renumberParticipants();
 })();
 </script> 
 @endpush

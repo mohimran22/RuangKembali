@@ -16,6 +16,7 @@ class EventRegistration extends Model
         'event_id',
         'user_id',
         'registered_by',
+        'transaction_id',   // tambahkan ini
         'ticket_code',
         'status',
         'price',

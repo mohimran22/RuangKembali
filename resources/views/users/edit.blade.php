@@ -171,7 +171,12 @@
                                         </div>
                                         <div class="col-md-4">
                                             <label class="form-label">Kata sandi</label>
-                                            <input type="password" name="password" class="form-control @error('password') is-invalid @enderror" placeholder="Kosongkan jika tidak ingin mengubah password">
+                                            <div class="password-input-wrapper">
+                                                <input type="password" name="password" class="form-control @error('password') is-invalid @enderror" placeholder="Kosongkan jika tidak ingin mengubah password">
+                                                <button type="button" class="btn btn-light border toggle-password"">
+                                                    <i class="ti ti-eye"></i>
+                                                </button>
+                                            </div>
                                             @error('password')
                                                 <div class="invalid-feedback">{{ $message }}</div>
                                             @enderror
@@ -279,7 +284,6 @@
 @push('js')
 <script>
 $('.select2').select2({
-            placeholder: "-- Pilih --",
             width: '100%'
         });
 </script>
@@ -344,6 +348,22 @@ $('.select2').select2({
         }
     });
 </script>
+    <script>
+        document.querySelectorAll('.toggle-password').forEach(button => {
+            button.addEventListener('click', function () {
+
+                const input = this.closest('.password-input-wrapper').querySelector('input');
+
+                const type = input.type === 'password' ? 'text' : 'password';
+
+                input.type = type;
+
+                this.innerHTML = type === 'password'
+                    ? '<i class="ti ti-eye"></i>'
+                    : '<i class="ti ti-eye-off"></i>';
+            });
+        });
+    </script>
     <script>
         document.getElementById('photo').addEventListener('change', function (event) {
         const input = event.target;

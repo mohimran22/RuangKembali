@@ -166,8 +166,8 @@
                                         </div>
                                         <div class="col-md-4">
                                             <label class="form-label required" for="password">Kata sandi </label>
-                                            <div class="input-group">
-                                                <span class="input-group-text bg-transparent border-end-0">
+                                            <div class="password-input-wrapper">
+                                                <span class="password-input-wrapper-text bg-transparent border-end-0">
                                                     <i class="ti ti-lock"></i>
                                                 </span>
                                                 <input type="password" class="form-control @error('password') is-invalid @enderror" name="password" value="{{ old('password') }}" placeholder="Kata sandi min. 8 karakter" required>
@@ -338,7 +338,7 @@ $('.select2').select2({
         document.querySelectorAll('.toggle-password').forEach(button => {
             button.addEventListener('click', function () {
 
-                const input = this.closest('.input-group').querySelector('input');
+                const input = this.closest('.password-input-wrapper').querySelector('input');
 
                 const type = input.type === 'password' ? 'text' : 'password';
 
