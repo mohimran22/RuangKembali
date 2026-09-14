@@ -18,6 +18,7 @@
         "laravolt/indonesia": "^0.36.0",
         "mpdf/mpdf": "^8.3",
         "phpoffice/phpspreadsheet": "^5.3",
+        "resend/resend-laravel": "^1.4",
         "spatie/laravel-permission": "^6.18",
         "takielias/tablar": "^12",
         "yajra/laravel-datatables-oracle": "^12.3"
