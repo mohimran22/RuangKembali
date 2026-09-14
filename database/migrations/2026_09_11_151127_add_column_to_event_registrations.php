@@ -12,9 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('event_registrations', function (Blueprint $table) {
-            $table->foreignUuid('registered_by')->nullable()->constrained('users');
-            $table->string('payment_method')->nullable();
-            $table->decimal('price', 12, 2)->default(0); // snapshot harga saat mendaftar
+            $table->foreignUuid('transaction_id')->nullable()->constrained('transactions');
         });
     }
 

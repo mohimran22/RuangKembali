@@ -5,27 +5,25 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
-class EventRegistration extends Model
+class Transaction extends Model
 {
     use HasUuids;
 
-    protected $table = 'event_registrations';
-
     protected $fillable = [
         'id',
+        'transaction_code',
         'event_id',
-        'user_id',
         'registered_by',
-        'ticket_code',
-        'status',
-        'price',
+        'total_amount',
         'payment_method',
-        'registered_at',
+        'proof_of_payment',
+        'status',
+        'paid_at',
     ];
 
     protected $casts = [
-        'registered_at' => 'datetime',
-        'price' => 'decimal:2',
+        'total_amount' => 'decimal:2',
+        'paid_at' => 'datetime',
     ];
 
     public function event()
@@ -33,18 +31,13 @@ class EventRegistration extends Model
         return $this->belongsTo(Event::class);
     }
 
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
-
     public function registeredBy()
     {
         return $this->belongsTo(User::class, 'registered_by');
     }
 
-    public function transaction()
-{
-    return $this->belongsTo(Transaction::class);
-}
+    public function registrations()
+    {
+        return $this->hasMany(EventRegistration::class);
+    }
 }

@@ -6,7 +6,7 @@ use App\Models\EventCategory;
 use App\Models\EventGallery;
 use App\Models\Customer;
 use App\Models\Affiliator;
-use App\Models\Eventfaq;
+use App\Models\EventFaq;
 use App\Models\Invoice;
 use App\Models\EventRundown;
 use App\Models\Province;
