@@ -16,12 +16,14 @@ class EventRegistration extends Model
         'event_id',
         'user_id',
         'registered_by',
-        'transaction_id',   // tambahkan ini
+        'transaction_id',
         'ticket_code',
         'status',
         'price',
         'payment_method',
         'registered_at',
+        'checked_in_at',
+        'checked_in_by'
     ];
 
     protected $casts = [

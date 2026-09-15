@@ -155,7 +155,7 @@ class EventRegistrationController extends Controller
     private function generateTicketCode(): string
     {
         do {
-            $code = 'TKT-' . strtoupper(Str::random(10));
+            $code = strtoupper(Str::random(6));
         } while (EventRegistration::where('ticket_code', $code)->exists());
 
         return $code;

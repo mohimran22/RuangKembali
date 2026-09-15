@@ -75,51 +75,30 @@ public function approve(Transaction $transaction)
 
         $licenseId = config('app.license_id');
 
-        /*
-         * Ambil COA Kas / Bank dari Event
-         */
         $akunKas = AccountingAccount::where('id', $event->cash_account_id)
             ->where('license_id', $licenseId)
             ->where('is_active', true)
             ->firstOrFail();
 
-        /*
-         * Ambil COA Pendapatan dari Event
-         */
         $akunPendapatanEvent = AccountingAccount::where('id', $event->income_account_id)
             ->where('license_id', $licenseId)
             ->where('is_active', true)
             ->firstOrFail();
 
-        /*
-         * Nominal transaksi
-         */
         $nominal = (float) $transaction->amount;
 
-        /*
-         * Update transaksi menjadi Lunas
-         */
         $transaction->update([
             'status'  => 'paid',
             'paid_at' => now(),
         ]);
 
-        /*
-         * Update seluruh peserta dalam transaksi
-         */
         $transaction->registrations()->update([
             'status' => 'paid',
         ]);
 
-        /*
-         * Generate kode jurnal
-         */
         $journalCode = 'JEV-' . now()->format('YmdHis')
             . '-' . strtoupper(Str::random(4));
 
-        /*
-         * Buat jurnal
-         */
         $journal = AccountingJournal::create([
             'license_id'       => $licenseId,
             'journal_code'     => $journalCode,
@@ -129,10 +108,6 @@ public function approve(Transaction $transaction)
             'created_by'       => auth()->id(),
         ]);
 
-        /*
-         * DEBIT
-         * Kas / Bank
-         */
         AccountingJournalDetail::create([
             'journal_id'  => $journal->id,
             'account_id'  => $akunKas->id,
@@ -142,10 +117,7 @@ public function approve(Transaction $transaction)
             'description' => 'Penerimaan pembayaran event - ' . $event->name,
         ]);
 
-        /*
-         * CREDIT
-         * Pendapatan Event
-         */
+
         AccountingJournalDetail::create([
             'journal_id'  => $journal->id,
             'account_id'  => $akunPendapatanEvent->id,
@@ -156,9 +128,6 @@ public function approve(Transaction $transaction)
         ]);
     });
 
-    /*
-     * Load data untuk notification
-     */
     $transaction->load([
         'event',
         'registrations.user',

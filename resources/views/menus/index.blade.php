@@ -50,7 +50,7 @@
                                     <th>URL / Route Name</th>
                                     <th>Parent</th>
                                     <th>Urutan</th>
-                                    <th>Status Aktif?</th>
+                                    <th>Ikon Menu</th>
                                     <th>Permission</th>
                                     <th>Aksi</th>
                                 </tr>
@@ -108,7 +108,7 @@
                     { data: 'url' },
                     { data: 'parent_name' },
                     { data: 'order' },
-                    { data: 'active_badge', orderable:false, searchable:false },
+                    { data: 'icon', orderable:false, searchable:false },
                     { data: 'permission_name' },
                     { data: 'actions', orderable:false, searchable:false },
                 ],
@@ -204,48 +204,3 @@
     </script>
     @endif
 @endpush
-{{-- @push('js')
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-
-$('#menuTable').DataTable({
-    processing: true,
-    serverSide: true,
-    ajax: "{{ route('menus.index') }}",
-
-    columns: [
-        { data: 'DT_RowIndex', orderable:false, searchable:false },
-        { data: 'text' },
-        { data: 'url' },
-        { data: 'parent_name' },
-        { data: 'order' },
-        { data: 'active_badge', orderable:false, searchable:false },
-        { data: 'permission_name' },
-        { data: 'actions', orderable:false, searchable:false },
-    ],
-                language: {
-                    search: "",
-                    searchPlaceholder: "Cari menu...",
-                    lengthMenu: "Tampilkan _MENU_ data",
-                    info: "Menampilkan _START_ - _END_ dari _TOTAL_ data",
-                    infoEmpty: "Tidak ada data",
-                    infoFiltered: "(difilter dari _MAX_ total data)",
-                    zeroRecords: "Data tidak ditemukan",
-                    paginate: {
-                        first: "Awal",
-                        last: "Akhir",
-                        next: "›",
-                        previous: "‹"
-                    }
-                },
-
-                initComplete: function () {
-                    const input = $('.dt-search input');
-                    input.removeClass('form-control-sm')
-                        .addClass('form-control');
-                }
-});
-
-});
-</script>
-@endpush --}}

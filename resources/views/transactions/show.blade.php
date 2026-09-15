@@ -7,7 +7,7 @@
     <div class="page-header d-print-none mb-4">
         <div class="row align-items-center">
             <div class="col">
-                <h2 class="page-title">
+                <h2>
                     Detail Transaksi
                 </h2>
                 <div class="text-secondary">

@@ -306,9 +306,16 @@ Route::middleware(['auth', 'permission:lihat daftar event|lihat data event'])->g
     [EventController::class, 'continue'])
     ->name('events.continue');
 
-    Route::resource('/events', EventController::class)->except(['edit, update, show']);
+    Route::resource('/events', EventController::class);
     Route::get('events/{event}/pdf', [EventController::class, 'pdf'])
     ->name('events.pdf');
+Route::get('/events/{event}/participants/lookup', [EventController::class, 'lookupParticipant'])
+    ->name('events.participants.lookup')
+    ->middleware(['auth', 'role:Tim|Super-Admin']);
+
+Route::post('/events/{event}/participants/checkin-scan', [EventController::class, 'checkinScan'])
+    ->name('events.participants.checkinScan')
+    ->middleware(['auth', 'role:Tim|Super-Admin']);
 });
 
 Route::get('/transactions', [TransactionController::class, 'index'])

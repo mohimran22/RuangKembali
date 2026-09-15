@@ -16,6 +16,7 @@ use App\Models\SubDistrict;
 use App\Models\PostalCode;
 use App\Models\AccountingAccount;
 use App\Models\Event;
+use App\Models\EventRegistration;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -563,22 +564,9 @@ public function update(Request $request, Event $event)
         'gallery_captions.*' =>  'nullable|string|max:255',
         'speaker_ids' => 'nullable|array',
         'speaker_ids.*' => 'exists:users,id',
-        'existing_rundowns' => 'nullable|array',
-        'existing_rundowns.*.rundown_date' => 'required_with:existing_rundowns|date',
-        'existing_rundowns.*.start_time' => 'required_with:existing_rundowns',
-        'existing_rundowns.*.end_time' => 'required_with:existing_rundowns',
-        'existing_rundowns.*.activity' => 'required_with:existing_rundowns|string|max:255',
-        'existing_rundowns.*.speaker' => 'nullable|string|max:255',
-        'existing_rundowns.*.location' => 'nullable|string|max:255',
+
         'google_maps_url' => 'nullable|url|max:2048',
-        'new_rundowns' => 'nullable|array',
-        'new_rundowns.*.rundown_date' => 'required_with:new_rundowns|date',
-        'new_rundowns.*.start_time' => 'required_with:new_rundowns',
-        'new_rundowns.*.end_time' => 'required_with:new_rundowns',
-        'new_rundowns.*.activity' => 'required_with:new_rundowns|string|max:255',
-        'new_rundowns.*.speaker' => 'nullable|string|max:255',
-        'new_rundowns.*.location' => 'nullable|string|max:255',
-        'new_rundowns.*.description' => 'nullable|string',
+
         'cash_account_id' => [
             'required',
             'uuid',
@@ -589,6 +577,47 @@ public function update(Request $request, Event $event)
             'uuid',
             'exists:accounting_accounts,id',
         ],
+        'rundowns' => 'nullable|array',
+
+        'rundowns.*.id' => [
+            'nullable',
+            'uuid',
+            'exists:event_rundowns,id',
+        ],
+
+        'rundowns.*.rundown_date' => [
+            'required',
+            'date',
+        ],
+
+        'rundowns.*.start_time' => [
+            'required',
+            'date_format:H:i',
+        ],
+
+        'rundowns.*.end_time' => [
+            'required',
+            'date_format:H:i',
+        ],
+
+        'rundowns.*.activity' => [
+            'required',
+            'string',
+            'max:255',
+        ],
+
+        'rundowns.*.speaker' => [
+            'nullable',
+            'string',
+            'max:255',
+        ],
+
+        'rundowns.*.location' => [
+            'nullable',
+            'string',
+            'max:255',
+        ],
+
         'delete_rundown_ids' => 'nullable|array',
         'delete_rundown_ids.*' => 'exists:event_rundowns,id',
         'sponsorship_whatsapp' => 'nullable|string|max:30',
@@ -598,6 +627,54 @@ public function update(Request $request, Event $event)
         'faqs.*.question' => 'required|string|max:255',
         'faqs.*.answer' => 'required|string',
     ]);
+
+    $eventStart = Carbon::parse($request->start_at);
+    $eventEnd   = Carbon::parse($request->end_at);
+
+    foreach ($request->input('rundowns', []) as $index => $rundown) {
+
+        if (
+            empty($rundown['rundown_date']) ||
+            empty($rundown['start_time']) ||
+            empty($rundown['end_time'])
+        ) {
+            continue;
+        }
+
+        $rundownStart = Carbon::parse(
+            $rundown['rundown_date'] . ' ' . $rundown['start_time']
+        );
+
+        $rundownEnd = Carbon::parse(
+            $rundown['rundown_date'] . ' ' . $rundown['end_time']
+        );
+
+        if ($rundownEnd->lte($rundownStart)) {
+
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                "rundowns.$index.end_time" =>
+                    'Jam selesai rundown harus lebih besar dari jam mulai.',
+            ]);
+        }
+
+        if ($rundownStart->lt($eventStart)) {
+
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                "rundowns.$index.start_time" =>
+                    'Rundown tidak boleh dimulai sebelum event dimulai pada '
+                    . $eventStart->format('d/m/Y H:i') . '.',
+            ]);
+        }
+
+        if ($rundownEnd->gt($eventEnd)) {
+
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                "rundowns.$index.end_time" =>
+                    'Rundown tidak boleh berakhir setelah event selesai pada '
+                    . $eventEnd->format('d/m/Y H:i') . '.',
+            ]);
+        }
+    }
 
     DB::beginTransaction();
 
@@ -723,42 +800,65 @@ public function update(Request $request, Event $event)
                     ]);
             }
         }
-        // Hapus rundown yang ditandai
+        
         if ($request->filled('delete_rundown_ids')) {
+
             EventRundown::where('event_id', $event->id)
                 ->whereIn('id', $request->delete_rundown_ids)
                 ->delete();
         }
 
-        if ($request->filled('existing_rundowns')) {
-            foreach ($request->existing_rundowns as $rundownId => $data) {
-                EventRundown::where('id', $rundownId)
-                    ->where('event_id', $event->id)
-                    ->update([
-                        'rundown_date' => $data['rundown_date'],
-                        'start_time' => $data['start_time'],
-                        'end_time' => $data['end_time'],
-                        'activity' => $data['activity'],
-                        'speaker' => $data['speaker'] ?? null,
-                        'location' => $data['location'] ?? null,
+        $rundowns = $request->input('rundowns', []);
+
+        if (!empty($rundowns)) {
+
+            $lastOrder = EventRundown::where('event_id', $event->id)
+                ->max('sort_order') ?? 0;
+
+            $newIndex = 0;
+
+            foreach ($rundowns as $data) {
+
+                // Lewati baris kosong
+                if (
+                    empty($data['rundown_date']) &&
+                    empty($data['start_time']) &&
+                    empty($data['end_time']) &&
+                    empty($data['activity'])
+                ) {
+                    continue;
+                }
+
+                if (!empty($data['id'])) {
+
+                    EventRundown::where('id', $data['id'])
+                        ->where('event_id', $event->id)
+                        ->update([
+                            'rundown_date' => $data['rundown_date'],
+                            'start_time'   => $data['start_time'],
+                            'end_time'     => $data['end_time'],
+                            'activity'     => $data['activity'],
+                            'speaker'      => $data['speaker'] ?? null,
+                            'location'     => $data['location'] ?? null,
+                        ]);
+
+                }
+
+                else {
+
+                    EventRundown::create([
+                        'event_id'      => $event->id,
+                        'rundown_date'  => $data['rundown_date'],
+                        'start_time'    => $data['start_time'],
+                        'end_time'      => $data['end_time'],
+                        'activity'      => $data['activity'],
+                        'speaker'       => $data['speaker'] ?? null,
+                        'location'      => $data['location'] ?? null,
+                        'sort_order'    => $lastOrder + $newIndex + 1,
                     ]);
-            }
-        }
 
-        if ($request->filled('new_rundowns')) {
-            $lastOrder = EventRundown::where('event_id', $event->id)->max('sort_order') ?? 0;
-
-            foreach ($request->new_rundowns as $index => $data) {
-                EventRundown::create([
-                    'event_id' => $event->id,
-                    'rundown_date' => $data['rundown_date'],
-                    'start_time' => $data['start_time'],
-                    'end_time' => $data['end_time'],
-                    'activity' => $data['activity'],
-                    'speaker' => $data['speaker'] ?? null,
-                    'location' => $data['location'] ?? null,
-                    'sort_order' => $lastOrder + $index + 1,
-                ]);
+                    $newIndex++;
+                }
             }
         }
         if ($request->hasFile('gallery_images')) {
@@ -884,8 +984,6 @@ public function show($id)
         ->with('user')
         ->latest();
 
-    // Super-Admin dan Tim → semua peserta
-    // Role lain → hanya peserta miliknya sendiri
     if (!auth()->user()->hasAnyRole(['Super-Admin', 'Tim'])) {
         $registrationsQuery->where('user_id', auth()->id());
     }
@@ -906,5 +1004,86 @@ public function show($id)
 
         return response()->json(['status' => 'failed', 'message' => 'Unable to delete']);
     }
+
+    public function lookupParticipant(Request $request, Event $event)
+{
+    $validated = $request->validate([
+        'ticket_code' => ['required', 'string'],
+    ]);
+
+    $registration = EventRegistration::where('event_id', $event->id)
+        ->where('ticket_code', $validated['ticket_code'])
+        ->with('user:id,fullname,email')
+        ->first();
+
+    if (!$registration) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Kode tiket tidak ditemukan untuk event ini.',
+        ], 404);
+    }
+
+    return response()->json([
+        'success' => true,
+        'participant' => [
+            'name'   => $registration->user->fullname ?? '-',
+            'email'  => $registration->user->email ?? '-',
+            'status' => $registration->status,
+        ],
+    ]);
+}
+
+public function checkinScan(Request $request, Event $event)
+{
+    $validated = $request->validate([
+        'ticket_code' => ['required', 'string'],
+    ]);
+
+    $registration = EventRegistration::where('event_id', $event->id)
+        ->where('ticket_code', $validated['ticket_code'])
+        ->with('user:id,fullname,email')
+        ->first();
+
+    if (!$registration) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Kode tiket tidak ditemukan untuk event ini.',
+        ], 404);
+    }
+
+    $participantData = [
+        'name'   => $registration->user->fullname ?? '-',
+        'email'  => $registration->user->email ?? '-',
+        'status' => $registration->status,
+    ];
+
+    if ($registration->status === 'attended') {
+        return response()->json([
+            'success'     => false,
+            'message'     => 'Peserta ini sudah check-in sebelumnya.',
+            'participant' => $participantData,
+        ], 422);
+    }
+
+    if (!in_array($registration->status, ['paid', 'confirmed'])) {
+        return response()->json([
+            'success'     => false,
+            'message'     => 'Peserta belum menyelesaikan pembayaran/konfirmasi.',
+            'participant' => $participantData,
+        ], 422);
+    }
+
+    $registration->update([
+        'status'         => 'attended',
+        'checked_in_at'  => now(),
+        'checked_in_by'  => auth()->id(),
+    ]);
+
+    return response()->json([
+        'success'     => true,
+        'message'     => $registration->user->fullname . ' berhasil di-check-in.',
+        'participant' => array_merge($participantData, ['status' => 'attended']),
+    ]);
+}
 
 }

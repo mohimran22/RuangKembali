@@ -1135,95 +1135,95 @@
 
                             </div>
                             <div class="card mb-4">
-    <div class="card-header">
-        <div>
-            <h3 class="card-title mb-1">
-                Akun Keuangan Event
-            </h3>
+                            <div class="card-header">
+                                    <div>
+                                        <h3 class="card-title mb-1">
+                                            Akun Keuangan Event
+                                        </h3>
 
-            <div class="text-secondary small">
-                Tentukan akun yang digunakan untuk pencatatan transaksi event.
-            </div>
-        </div>
-    </div>
+                                        <div class="text-secondary small">
+                                            Tentukan akun yang digunakan untuk pencatatan transaksi event.
+                                        </div>
+                                    </div>
+                            </div>
 
-    <div class="card-body">
-        <div class="row g-3">
+                            <div class="card-body">
+                                <div class="row g-3">
 
-            {{-- AKUN KAS / BANK --}}
-            <div class="col-md-6">
-                <label class="form-label required">
-                    Akun Kas / Bank
-                </label>
+                                    {{-- AKUN KAS / BANK --}}
+                                    <div class="col-md-6">
+                                        <label class="form-label required">
+                                            Akun Kas / Bank
+                                        </label>
 
-                <select name="cash_account_id"
-                        class="form-select select2"
-                        required>
+                                        <select name="cash_account_id"
+                                                class="form-select select2"
+                                                required>
 
-                    <option value="">
-                        Pilih Akun Kas / Bank
-                    </option>
+                                            <option value="">
+                                                Pilih Akun Kas / Bank
+                                            </option>
 
-                    @foreach($cashAccounts as $account)
-                        <option value="{{ $account->id }}"
-                            {{ old('cash_account_id', $event->cash_account_id) == $account->id ? 'selected' : '' }}>
-                            {{ $account->account_code }}
-                            - {{ $account->account_name }}
-                        </option>
-                    @endforeach
+                                            @foreach($cashAccounts as $account)
+                                                <option value="{{ $account->id }}"
+                                                    {{ old('cash_account_id', $event->cash_account_id) == $account->id ? 'selected' : '' }}>
+                                                    {{ $account->account_code }}
+                                                    - {{ $account->account_name }}
+                                                </option>
+                                            @endforeach
 
-                </select>
+                                        </select>
 
-                <div class="form-hint">
-                    Akun yang digunakan untuk menerima pembayaran peserta.
-                </div>
+                                        <div class="form-hint">
+                                            Akun yang digunakan untuk menerima pembayaran peserta.
+                                        </div>
 
-                @error('cash_account_id')
-                    <div class="text-danger small mt-1">
-                        {{ $message }}
-                    </div>
-                @enderror
-            </div>
+                                        @error('cash_account_id')
+                                            <div class="text-danger small mt-1">
+                                                {{ $message }}
+                                            </div>
+                                        @enderror
+                                    </div>
 
 
-            {{-- AKUN PENDAPATAN --}}
-            <div class="col-md-6">
-                <label class="form-label required">
-                    Akun Pendapatan
-                </label>
+                                    {{-- AKUN PENDAPATAN --}}
+                                    <div class="col-md-6">
+                                        <label class="form-label required">
+                                            Akun Pendapatan
+                                        </label>
 
-                <select name="income_account_id"
-                        class="form-select select2"
-                        required>
+                                        <select name="income_account_id"
+                                                class="form-select select2"
+                                                required>
 
-                    <option value="">
-                        Pilih Akun Pendapatan
-                    </option>
+                                            <option value="">
+                                                Pilih Akun Pendapatan
+                                            </option>
 
-                    @foreach($incomeAccounts as $account)
-                        <option value="{{ $account->id }}"
-                            {{ old('income_account_id', $event->income_account_id) == $account->id ? 'selected' : '' }}>
-                            {{ $account->account_code }}
-                            - {{ $account->account_name }}
-                        </option>
-                    @endforeach
+                                            @foreach($incomeAccounts as $account)
+                                                <option value="{{ $account->id }}"
+                                                    {{ old('income_account_id', $event->income_account_id) == $account->id ? 'selected' : '' }}>
+                                                    {{ $account->account_code }}
+                                                    - {{ $account->account_name }}
+                                                </option>
+                                            @endforeach
 
-                </select>
+                                        </select>
 
-                <div class="form-hint">
-                    Akun pendapatan khusus untuk event ini.
-                </div>
+                                        <div class="form-hint">
+                                            Akun pendapatan khusus untuk event ini.
+                                        </div>
 
-                @error('income_account_id')
-                    <div class="text-danger small mt-1">
-                        {{ $message }}
-                    </div>
-                @enderror
-            </div>
+                                        @error('income_account_id')
+                                            <div class="text-danger small mt-1">
+                                                {{ $message }}
+                                            </div>
+                                        @enderror
+                                    </div>
 
-        </div>
-    </div>
-</div>
+                                </div>
+                            </div>
+                            </div>
                             <div class="d-flex flex-column
                                         flex-sm-row
                                         justify-content-end
@@ -1770,24 +1770,24 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const container = document.getElementById('newRundownContainer');
     const addButton = document.getElementById('addRundownButton');
+    const form = container ? container.closest('form') : null;
 
-    if (!container || !addButton) {
+    if (!container || !addButton || !form) {
         return;
     }
 
     let rundownIndex = getNextIndex();
 
-
-    /**
-     * Ambil index berikutnya berdasarkan element
-     * yang sudah ada di halaman.
-     */
     function getNextIndex() {
-        const cards = container.querySelectorAll('.rundown-create-card');
+
+        const cards = container.querySelectorAll(
+            '.rundown-create-card'
+        );
 
         let maxIndex = -1;
 
         cards.forEach(card => {
+
             const index = parseInt(
                 card.dataset.rundownIndex,
                 10
@@ -1801,11 +1801,8 @@ document.addEventListener('DOMContentLoaded', function () {
         return maxIndex + 1;
     }
 
-
-    /**
-     * Hapus empty state jika ada.
-     */
     function removeEmptyState() {
+
         const emptyState = document.getElementById('rundownEmptyState');
 
         if (emptyState) {
@@ -1814,26 +1811,24 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
 
-    /**
-     * Tampilkan empty state jika tidak ada rundown.
-     */
     function showEmptyState() {
 
-        const cards = container.querySelectorAll(
-            '.rundown-create-card'
-        );
+        const cards = container.querySelectorAll('.rundown-create-card');
 
         if (cards.length > 0) {
             return;
         }
 
-        if (document.getElementById('rundownEmptyState')) {
+        if (
+            document.getElementById('rundownEmptyState')
+        ) {
             return;
         }
 
         const emptyState = document.createElement('div');
 
         emptyState.id = 'rundownEmptyState';
+
         emptyState.className = 'event-gallery-empty';
 
         emptyState.innerHTML = `
@@ -1850,30 +1845,27 @@ document.addEventListener('DOMContentLoaded', function () {
 
         container.appendChild(emptyState);
     }
-
-
-    /**
-     * Template rundown baru.
-     */
     function createRundown(index) {
 
         const card = document.createElement('div');
 
-        card.className =
-            'rundown-create-card mb-2 p-2 border rounded';
+        card.className = 'rundown-create-card mb-2 p-2 border rounded';
 
         card.dataset.rundownIndex = index;
 
         card.innerHTML = `
             <div class="row g-2 align-items-end">
+
                 <div class="col-md-2">
                     <label class="form-label small mb-1">
                         Tanggal
                     </label>
 
-                    <input type="date"
-                           name="rundowns[${index}][rundown_date]"
-                           class="form-control form-control-sm">
+                    <input
+                        type="date"
+                        name="rundowns[${index}][rundown_date]"
+                        class="form-control form-control-sm"
+                    >
                 </div>
 
                 <div class="col-md-1">
@@ -1881,9 +1873,11 @@ document.addEventListener('DOMContentLoaded', function () {
                         Mulai
                     </label>
 
-                    <input type="time"
-                           name="rundowns[${index}][start_time]"
-                           class="form-control form-control-sm">
+                    <input
+                        type="time"
+                        name="rundowns[${index}][start_time]"
+                        class="form-control form-control-sm"
+                    >
                 </div>
 
                 <div class="col-md-1">
@@ -1891,9 +1885,11 @@ document.addEventListener('DOMContentLoaded', function () {
                         Selesai
                     </label>
 
-                    <input type="time"
-                           name="rundowns[${index}][end_time]"
-                           class="form-control form-control-sm">
+                    <input
+                        type="time"
+                        name="rundowns[${index}][end_time]"
+                        class="form-control form-control-sm"
+                    >
                 </div>
 
                 <div class="col-md-3">
@@ -1901,39 +1897,50 @@ document.addEventListener('DOMContentLoaded', function () {
                         Aktivitas
                     </label>
 
-                    <input type="text"
-                           name="rundowns[${index}][activity]"
-                           class="form-control form-control-sm"
-                           placeholder="Contoh: Registrasi Peserta">
+                    <input
+                        type="text"
+                        name="rundowns[${index}][activity]"
+                        class="form-control form-control-sm"
+                        placeholder="Contoh: Registrasi Peserta"
+                    >
                 </div>
+
                 <div class="col-md-2">
                     <label class="form-label small mb-1">
                         Pembicara/MC
                     </label>
 
-                    <input type="text"
-                           name="rundowns[${index}][speaker]"
-                           class="form-control form-control-sm"
-                           placeholder="Nama pembicara / MC">
+                    <input
+                        type="text"
+                        name="rundowns[${index}][speaker]"
+                        class="form-control form-control-sm"
+                        placeholder="Nama pembicara / MC"
+                    >
                 </div>
+
                 <div class="col-md-2">
                     <label class="form-label small mb-1">
                         Lokasi
                     </label>
 
-                    <input type="text"
-                           name="rundowns[${index}][location]"
-                           class="form-control form-control-sm"
-                           placeholder="Lokasi">
+                    <input
+                        type="text"
+                        name="rundowns[${index}][location]"
+                        class="form-control form-control-sm"
+                        placeholder="Lokasi"
+                    >
                 </div>
+
                 <div class="col-md-1">
-                    <button type="button"
-                            class="btn btn-sm btn-danger w-100 rundown-remove-btn"
-                            title="Hapus rundown">
 
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-danger w-100 rundown-remove-btn"
+                        title="Hapus rundown"
+                    >
                         <i class="ti ti-trash"></i>
-
                     </button>
+
                 </div>
 
             </div>
@@ -1941,70 +1948,65 @@ document.addEventListener('DOMContentLoaded', function () {
 
         return card;
     }
-    addButton.addEventListener('click', function () {
 
-        removeEmptyState();
-
-        const card = createRundown(rundownIndex);
-
-        container.appendChild(card);
-
-        rundownIndex++;
-    });
-    container.addEventListener('click', function (event) {
-
-        const removeButton =
-            event.target.closest('.rundown-remove-btn');
-
-        if (!removeButton) {
-            return;
+    addButton.addEventListener(
+        'click',
+        function () {
+            removeEmptyState();
+            const card = createRundown(rundownIndex);
+            container.appendChild(card);
+            rundownIndex++;
         }
+    );
 
-        const card =
-            removeButton.closest('.rundown-create-card');
+    container.addEventListener(
+        'click',
+        function (event) {
 
-        if (!card) {
-            return;
-        }
+            const removeButton =
+                event.target.closest(
+                    '.rundown-remove-btn'
+                );
 
-        card.remove();
+            if (!removeButton) {
+                return;
+            }
 
-        showEmptyState();
-    });
-
-    const form = container.closest('form');
-
-    if (form) {
-
-        form.addEventListener('submit', function () {
-
-            const cards =
-                container.querySelectorAll(
+            const card =
+                removeButton.closest(
                     '.rundown-create-card'
                 );
 
-            cards.forEach((card, newIndex) => {
+            if (!card) {
+                return;
+            }
 
-                card.dataset.rundownIndex = newIndex;
+            const idInput =
+                card.querySelector(
+                    'input[type="hidden"][name$="[id]"]'
+                );
 
-                const inputs =
-                    card.querySelectorAll(
-                        'input[name^="rundowns["]'
-                    );
+            if (
+                idInput &&
+                idInput.value
+            ) {
 
-                inputs.forEach(input => {
+                const deleteInput = document.createElement('input');
 
-                    input.name = input.name.replace(
-                        /rundowns\[\d+\]/,
-                        `rundowns[${newIndex}]`
-                    );
+                deleteInput.type = 'hidden';
 
-                });
+                deleteInput.name = 'delete_rundown_ids[]';
 
-            });
+                deleteInput.value = idInput.value;
 
-        });
-    }
+                form.appendChild(deleteInput);
+            }
+
+            card.remove();
+
+            showEmptyState();
+        }
+    );
 
 });
 </script>

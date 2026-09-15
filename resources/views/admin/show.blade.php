@@ -5,7 +5,7 @@
 <div class="container-xl">
 
     <div class="page-header d-print-none mb-4">
-        <h2 class="page-title">Detail Transaksi</h2>
+        <h2>Detail Transaksi</h2>
         <div class="text-secondary">{{ $transaction->transaction_code }}</div>
     </div>
 

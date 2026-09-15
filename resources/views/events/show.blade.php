@@ -7,16 +7,16 @@
         <div class="row align-items-center">
 
             <div class="col">
-                <div class="d-flex align-items-center gap-2">
+                <div class="d-flex align-items-center gap-3">
 
                     <a href="{{ route('events.index') }}"
-                       class="btn btn-icon btn-outline-secondary"
+                       class="btn btn-icon btn-secondary"
                        title="Kembali">
                         <i class="ti ti-arrow-left"></i>
                     </a>
 
                     <div>
-                        <h2 class="page-title mb-1">
+                        <h2 class="mb-1">
                             Detail Event
                         </h2>
                     </div>
@@ -1064,160 +1064,183 @@
 
         </div>
         </div>
-<div class="tab-pane fade"
-     id="participants-pane"
-     role="tabpanel"
-     aria-labelledby="participants-tab"
-     tabindex="0">
+        <div class="tab-pane fade"
+            id="participants-pane"
+            role="tabpanel"
+            aria-labelledby="participants-tab"
+            tabindex="0">
 
-    <div class="card">
+            <div class="card">
 
-        <div class="card-header">
-            <div>
-                <h3 class="card-title mb-1">
-                    <i class="ti ti-users me-2"></i>
-                    Daftar Peserta Event
-                </h3>
+                <div class="card-header">
+                    <div>
+                        <h3 class="card-title mb-1">
+                            <i class="ti ti-users me-2"></i>
+                            Daftar Peserta Event
+                        </h3>
 
-                <div class="text-secondary small">
-                    Peserta yang telah melakukan pendaftaran pada event ini.
+                        <div class="text-secondary small">
+                            Peserta yang telah melakukan pendaftaran pada event ini.
+                        </div>
+                    </div>
+
+                    <div class="ms-auto d-flex align-items-center gap-2">
+
+                        @hasanyrole(['Tim', 'Super-Admin'])
+
+                            <button type="button"
+                                    class="btn btn-success btn-sm"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#checkinModal">
+                                <i class="ti ti-scan me-1"></i>
+                                Check-in Peserta
+                            </button>
+
+                        @endhasanyrole
+
+                        <span class="badge bg-primary-lt">
+                            {{ $registrations->count() }} Peserta
+                        </span>
+                    </div>
                 </div>
-            </div>
 
-            <div class="ms-auto">
-                <span class="badge bg-primary-lt">
-                    {{ $registrations->count() }} Peserta
-                </span>
-            </div>
-        </div>
+                <div class="card-body">
 
-        <div class="card-body">
+                    @if($registrations->count())
 
-            @if($registrations->count())
+                        <div class="table-responsive">
 
-                <div class="table-responsive">
+                            <table class="table table-vcenter">
 
-                    <table class="table table-vcenter">
+                                <thead>
+                                    <tr>
+                                        <th width="60">No</th>
+                                        <th>Peserta</th>
+                                        <th>Pembayaran</th>
+                                        <th>Waktu terdaftar</th>
+                                        <th>Status Check-in</th>
+                                    </tr>
+                                </thead>
 
-                        <thead>
-                            <tr>
-                                <th width="60">No</th>
-                                <th>Peserta</th>
-                                <th>Email</th>
-                                <th>No. WhatsApp</th>
-                                <th>Status</th>
-                                <th>Terdaftar</th>
-                            </tr>
-                        </thead>
+                                <tbody>
 
-                        <tbody>
+                                    @foreach($registrations as $index => $registration)
 
-                            @foreach($registrations as $index => $registration)
+                                        <tr data-registration-id="{{ $registration->id }}"
+                                            data-ticket-code="{{ $registration->ticket_code }}">
 
-                                <tr>
+                                            <td>
+                                                {{ $index + 1 }}
+                                            </td>
 
-                                    <td>
-                                        {{ $index + 1 }}
-                                    </td>
+                                            <td>
+                                                <div class="d-flex align-items-center">
 
-                                    <td>
-                                        <div class="d-flex align-items-center">
+                                                    <span class="avatar me-2">
+                                                        <i class="ti ti-user"></i>
+                                                    </span>
 
-                                            <span class="avatar me-2">
-                                                <i class="ti ti-user"></i>
-                                            </span>
+                                                    <div>
+                                                        <div class="fw-semibold">
+                                                            {{ $registration->user->fullname ?? '-' }}
+                                                        </div>
+                                                    </div>
 
-                                            <div>
-                                                <div class="fw-semibold">
-                                                    {{ $registration->user->fullname ?? '-' }}
                                                 </div>
-                                            </div>
+                                            </td>
+                                            <td>
 
-                                        </div>
-                                    </td>
+                                                @if($registration->status === 'confirmed')
 
-                                    <td>
-                                        {{ $registration->user->email ?? '-' }}
-                                    </td>
+                                                    <span class="badge bg-success-lt">
+                                                        <i class="ti ti-circle-check me-1"></i>
+                                                        Confirmed
+                                                    </span>
 
-                                    <td>
-                                        {{ $registration->user->phone ?? '-' }}
-                                    </td>
+                                                @elseif($registration->status === 'pending')
 
-                                    <td>
+                                                    <span class="badge bg-warning-lt">
+                                                        <i class="ti ti-clock me-1"></i>
+                                                        Pending
+                                                    </span>
 
-                                        @if($registration->status === 'confirmed')
+                                                @elseif($registration->status === 'cancelled')
 
-                                            <span class="badge bg-success-lt">
-                                                <i class="ti ti-circle-check me-1"></i>
-                                                Confirmed
-                                            </span>
+                                                    <span class="badge bg-danger-lt">
+                                                        <i class="ti ti-circle-x me-1"></i>
+                                                        Cancelled
+                                                    </span>
 
-                                        @elseif($registration->status === 'pending')
+                                                @else
 
-                                            <span class="badge bg-warning-lt">
-                                                <i class="ti ti-clock me-1"></i>
-                                                Pending
-                                            </span>
+                                                    <span class="badge bg-secondary-lt">
+                                                        {{ ucfirst($registration->status ?? '-') }}
+                                                    </span>
 
-                                        @elseif($registration->status === 'cancelled')
+                                                @endif
 
-                                            <span class="badge bg-danger-lt">
-                                                <i class="ti ti-circle-x me-1"></i>
-                                                Cancelled
-                                            </span>
+                                            </td>
 
-                                        @else
+                                            <td>
+                                                {{ $registration->created_at?->translatedFormat('d F Y') }}
 
-                                            <span class="badge bg-secondary-lt">
-                                                {{ ucfirst($registration->status ?? '-') }}
-                                            </span>
+                                                <div class="text-secondary small">
+                                                    {{ $registration->created_at?->format('H:i') }} WIB
+                                                </div>
+                                            </td>
 
-                                        @endif
+                                            <td class="checkin-status-cell">
 
-                                    </td>
+                                                @if($registration->status === 'attended')
 
-                                    <td>
-                                        {{ $registration->created_at?->translatedFormat('d F Y') }}
+                                                    <span class="badge bg-success-lt">
+                                                        <i class="ti ti-shield-check me-1"></i>
+                                                        Sudah Check-in
+                                                    </span>
 
-                                        <div class="text-secondary small">
-                                            {{ $registration->created_at?->format('H:i') }} WIB
-                                        </div>
-                                    </td>
+                                                @else
 
-                                </tr>
+                                                    <span class="badge bg-secondary-lt">
+                                                        Belum Check-in
+                                                    </span>
 
-                            @endforeach
+                                                @endif
 
-                        </tbody>
+                                            </td>
 
-                    </table>
+                                        </tr>
+
+                                    @endforeach
+
+                                </tbody>
+
+                            </table>
+
+                        </div>
+
+                    @else
+
+                        <div class="event-gallery-empty">
+
+                            <i class="ti ti-users-off"></i>
+
+                            <div class="fw-semibold mt-2">
+                                Belum ada peserta
+                            </div>
+
+                            <div class="text-secondary small">
+                                Belum ada pendaftaran peserta untuk event ini.
+                            </div>
+
+                        </div>
+
+                    @endif
 
                 </div>
 
-            @else
-
-                <div class="event-gallery-empty">
-
-                    <i class="ti ti-users-off"></i>
-
-                    <div class="fw-semibold mt-2">
-                        Belum ada peserta
-                    </div>
-
-                    <div class="text-secondary small">
-                        Belum ada pendaftaran peserta untuk event ini.
-                    </div>
-
-                </div>
-
-            @endif
+            </div>
 
         </div>
-
-    </div>
-
-</div>
     </div>
 
     <form id="delete-form"
@@ -1229,6 +1252,271 @@
         @method('DELETE')
 
     </form>
+    @hasanyrole(['Tim', 'Super-Admin'])
+
+        <div class="modal modal-blur fade" id="checkinModal" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="ti ti-scan me-2"></i>
+                            Check-in Peserta
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+
+                    <div class="modal-body">
+
+                        <div class="mb-3">
+                            <label class="form-label">Kode Tiket</label>
+                            <div class="input-group">
+                                <input type="text"
+                                       class="form-control"
+                                       id="checkinTicketInput"
+                                       placeholder="Contoh: TKT-9F3K2A"
+                                       autocomplete="off"
+                                       autofocus>
+                                <button type="button" class="btn btn-outline-secondary" id="checkinSearchBtn">
+                                    <i class="ti ti-search me-1"></i>
+                                    Cari
+                                </button>
+                            </div>
+                            <div class="form-text">
+                                Masukkan atau scan kode tiket, lalu tekan Enter atau klik Cari untuk menampilkan data peserta.
+                            </div>
+                        </div>
+
+                        {{-- Kartu preview peserta hasil pencarian --}}
+                        <div id="checkinParticipantCard" class="card card-sm border d-none">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center">
+                                    <span class="avatar me-3">
+                                        <i class="ti ti-user"></i>
+                                    </span>
+                                    <div>
+                                        <div class="fw-semibold" id="checkinParticipantName">-</div>
+                                        <div class="text-secondary small" id="checkinParticipantEmail">-</div>
+                                    </div>
+                                    <div class="ms-auto">
+                                        <span class="badge" id="checkinParticipantStatusBadge">-</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="checkinResultBox" class="d-none mt-3">
+
+                            <div class="alert" id="checkinResultAlert" role="alert">
+                                <div class="d-flex">
+                                    <i class="ti me-2" id="checkinResultIcon"></i>
+                                    <div>
+                                        <div class="fw-semibold" id="checkinResultTitle"></div>
+                                        <div class="text-secondary small" id="checkinResultMessage"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">
+                            Tutup
+                        </button>
+                        <button type="button" class="btn btn-success" id="checkinSubmitBtn" disabled>
+                            <i class="ti ti-check me-1"></i>
+                            Check-in
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        @push('js')
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+
+                const modalEl = document.getElementById('checkinModal');
+                const ticketInput = document.getElementById('checkinTicketInput');
+                const searchBtn = document.getElementById('checkinSearchBtn');
+                const submitBtn = document.getElementById('checkinSubmitBtn');
+
+                const participantCard = document.getElementById('checkinParticipantCard');
+                const participantName = document.getElementById('checkinParticipantName');
+                const participantEmail = document.getElementById('checkinParticipantEmail');
+                const participantStatusBadge = document.getElementById('checkinParticipantStatusBadge');
+
+                const resultBox = document.getElementById('checkinResultBox');
+                const resultAlert = document.getElementById('checkinResultAlert');
+                const resultIcon = document.getElementById('checkinResultIcon');
+                const resultTitle = document.getElementById('checkinResultTitle');
+                const resultMessage = document.getElementById('checkinResultMessage');
+
+                let foundTicketCode = null;
+                let foundEligible = false;
+
+                function resetModalState() {
+                    ticketInput.value = '';
+                    participantCard.classList.add('d-none');
+                    resultBox.classList.add('d-none');
+                    submitBtn.disabled = true;
+                    foundTicketCode = null;
+                    foundEligible = false;
+                }
+
+                function hideResult() {
+                    resultBox.classList.add('d-none');
+                }
+
+                function showResult(success, title, message) {
+                    resultBox.classList.remove('d-none');
+                    resultAlert.className = 'alert ' + (success ? 'alert-success' : 'alert-danger');
+                    resultIcon.className = 'ti me-2 ' + (success ? 'ti-circle-check' : 'ti-alert-circle');
+                    resultTitle.textContent = title;
+                    resultMessage.textContent = message;
+                }
+
+                function showParticipantCard(participant) {
+                    participantCard.classList.remove('d-none');
+                    participantName.textContent = participant.name ?? '-';
+                    participantEmail.textContent = participant.email ?? '';
+
+                    const statusMap = {
+                        attended: { label: 'Sudah Check-in', class: 'bg-success-lt' },
+                        paid: { label: 'Paid', class: 'bg-primary-lt' },
+                        confirmed: { label: 'Confirmed', class: 'bg-primary-lt' },
+                        pending: { label: 'Pending', class: 'bg-warning-lt' },
+                        cancelled: { label: 'Cancelled', class: 'bg-danger-lt' },
+                    };
+                    const info = statusMap[participant.status] ?? { label: participant.status ?? '-', class: 'bg-secondary-lt' };
+
+                    participantStatusBadge.textContent = info.label;
+                    participantStatusBadge.className = 'badge ' + info.class;
+                }
+
+                function updateRowStatus(ticketCode) {
+                    const row = document.querySelector('tr[data-ticket-code="' + CSS.escape(ticketCode) + '"]');
+                    if (!row) return;
+
+                    const cell = row.querySelector('.checkin-status-cell');
+                    if (!cell) return;
+
+                    cell.innerHTML = '<span class="badge bg-success-lt"><i class="ti ti-shield-check me-1"></i> Sudah Check-in</span>';
+                }
+
+                async function searchTicket() {
+                    const ticketCode = ticketInput.value.trim();
+
+                    hideResult();
+                    participantCard.classList.add('d-none');
+                    submitBtn.disabled = true;
+                    foundTicketCode = null;
+                    foundEligible = false;
+
+                    if (!ticketCode) {
+                        showResult(false, 'Kode tiket kosong', 'Masukkan kode tiket terlebih dahulu.');
+                        return;
+                    }
+
+                    searchBtn.disabled = true;
+
+                    try {
+                        const response = await fetch('{{ route("events.participants.lookup", $event->id) }}?ticket_code=' + encodeURIComponent(ticketCode), {
+                            method: 'GET',
+                            headers: {
+                                'Accept': 'application/json',
+                            },
+                        });
+
+                        const data = await response.json();
+
+                        if (response.ok && data.success) {
+                            showParticipantCard(data.participant);
+                            foundTicketCode = ticketCode;
+
+                            if (data.participant.status === 'attended') {
+                                showResult(false, 'Sudah Check-in', 'Peserta ini sudah check-in sebelumnya.');
+                                foundEligible = false;
+                            } else if (['paid', 'confirmed'].includes(data.participant.status)) {
+                                foundEligible = true;
+                            } else {
+                                showResult(false, 'Belum Bisa Check-in', 'Peserta belum menyelesaikan pembayaran/konfirmasi.');
+                                foundEligible = false;
+                            }
+                        } else {
+                            showResult(false, 'Tidak Ditemukan', data.message ?? 'Kode tiket tidak ditemukan untuk event ini.');
+                        }
+
+                    } catch (error) {
+                        showResult(false, 'Terjadi Kesalahan', 'Gagal menghubungi server. Coba lagi.');
+                    } finally {
+                        searchBtn.disabled = false;
+                        submitBtn.disabled = !foundEligible;
+                    }
+                }
+
+                async function submitCheckin() {
+                    if (!foundTicketCode || !foundEligible) return;
+
+                    submitBtn.disabled = true;
+
+                    try {
+                        const response = await fetch('{{ route("events.participants.checkinScan", $event->id) }}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            },
+                            body: JSON.stringify({ ticket_code: foundTicketCode }),
+                        });
+
+                        const data = await response.json();
+
+                        if (response.ok && data.success) {
+                            showResult(true, 'Check-in Berhasil', data.message ?? (data.participant?.name ?? 'Peserta') + ' berhasil di-check-in.');
+                            updateRowStatus(foundTicketCode);
+
+                            if (data.participant) {
+                                showParticipantCard(data.participant);
+                            }
+
+                            foundEligible = false;
+                        } else {
+                            showResult(false, 'Check-in Gagal', data.message ?? 'Kode tiket tidak valid atau sudah check-in.');
+                        }
+
+                    } catch (error) {
+                        showResult(false, 'Terjadi Kesalahan', 'Gagal menghubungi server. Coba lagi.');
+                    } finally {
+                        submitBtn.disabled = true;
+                    }
+                }
+
+                searchBtn.addEventListener('click', searchTicket);
+                submitBtn.addEventListener('click', submitCheckin);
+
+                ticketInput.addEventListener('keydown', function (e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        searchTicket();
+                    }
+                });
+
+                if (modalEl) {
+                    modalEl.addEventListener('shown.bs.modal', function () {
+                        resetModalState();
+                        ticketInput.focus();
+                    });
+                }
+            });
+        </script>
+        @endpush
+
+    @endhasanyrole
 </div>
 
 @endsection
