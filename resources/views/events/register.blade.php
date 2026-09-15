@@ -61,7 +61,6 @@
 
                 @endif
 
-
                 <div class="card-body">
 
                     <div class="text-secondary small mb-2">
@@ -71,7 +70,6 @@
                     <h2 class="mb-3">
                         {{ $event->name }}
                     </h2>
-
 
                     <div class="mb-3">
 
@@ -136,8 +134,6 @@
 
         </div>
 
-
-        {{-- Form Pendaftaran --}}
         <div class="col-lg-7">
 
             <div class="card">
@@ -264,7 +260,29 @@
                                     </div>
 
                                 </div>
+                                <div class="mb-2">
+    <button type="button" class="btn btn-sm btn-link px-0" id="toggleGuestFormBtn">
+        <i class="ti ti-user-plus me-1"></i>
+        Peserta belum punya akun? Tambahkan manual
+    </button>
+</div>
 
+<div id="guestFormBox" class="card card-sm border mb-3" style="display: none;">
+    <div class="card-body">
+        <div class="row g-2">
+            <div class="col-md-5">
+                <input type="text" class="form-control form-control-sm" id="guestNameInput" placeholder="Nama lengkap">
+            </div>
+            <div class="col-md-5">
+                <input type="email" class="form-control form-control-sm" id="guestEmailInput" placeholder="Email">
+            </div>
+            <div class="col-md-2">
+                <button type="button" class="btn btn-sm btn-primary w-100" id="addGuestBtn">Tambah</button>
+            </div>
+        </div>
+        <div class="text-secondary small mt-2" id="guestFormError" style="display:none;"></div>
+    </div>
+</div>
                             </div>
 
                             {{-- Hidden input transaction_code: selalu ikut ke-submit, terlepas jenis event --}}
@@ -420,18 +438,97 @@
         return Array.from(wrapper.querySelectorAll('.participant-row'))
             .map(row => row.dataset.userId);
     }
+    function isValidEmail(email) {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    }
+
+    function getSelectedGuestEmails() {
+        return Array.from(wrapper.querySelectorAll('.participant-row[data-guest="true"]'))
+            .map(row => row.dataset.guestEmail?.toLowerCase());
+    }
+
+    function addGuestParticipant(name, email) {
+        const errorBox = document.getElementById('guestFormError');
+        errorBox.style.display = 'none';
+
+        if (!name || !email) {
+            errorBox.textContent = 'Nama dan email wajib diisi.';
+            errorBox.style.display = 'block';
+            return;
+        }
+        if (!isValidEmail(email)) {
+            errorBox.textContent = 'Format email tidak valid.';
+            errorBox.style.display = 'block';
+            return;
+        }
+        if (getSelectedUserIds().length && getSelectedUserIds().includes(email)) {
+            return;
+        }
+        if (getSelectedGuestEmails().includes(email.toLowerCase())) {
+            errorBox.textContent = 'Peserta dengan email ini sudah ditambahkan.';
+            errorBox.style.display = 'block';
+            return;
+        }
+
+        const row = document.createElement('div');
+        row.className = 'card card-sm border mb-3 participant-row';
+        row.dataset.guest = 'true';
+        row.dataset.guestEmail = email;
+
+        row.innerHTML = `
+            <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="fw-semibold">${name}</div>
+                    <div class="text-secondary small">${email}</div>
+                    <span class="badge bg-orange-lt small">Belum punya akun</span>
+                </div>
+                <button type="button" class="btn btn-sm btn-link text-danger removeParticipantBtn">
+                    <i class="ti ti-trash"></i>
+                </button>
+            </div>
+            <input type="hidden" class="guest-name-input" name="participants[__index__][name]" value="${name}">
+            <input type="hidden" class="guest-email-input" name="participants[__index__][email]" value="${email}">
+        `;
+
+        wrapper.appendChild(row);
+        renumberParticipants();
+    }
 
     function renumberParticipants() {
         const rows = wrapper.querySelectorAll('.participant-row');
 
         rows.forEach(function (row, index) {
-            const hiddenInput = row.querySelector('input[type="hidden"]');
-            hiddenInput.name = `participants[${index}][user_id]`;
+            row.querySelectorAll('input[type="hidden"]').forEach(function (input) {
+                if (input.name.includes('[user_id]')) {
+                    input.name = `participants[${index}][user_id]`;
+                } else if (input.name.includes('[name]')) {
+                    input.name = `participants[${index}][name]`;
+                } else if (input.name.includes('[email]')) {
+                    input.name = `participants[${index}][email]`;
+                }
+            });
         });
 
         updateTotalPrice(rows.length);
     }
+    const toggleGuestFormBtn = document.getElementById('toggleGuestFormBtn');
+    const guestFormBox = document.getElementById('guestFormBox');
+    if (toggleGuestFormBtn) {
+        toggleGuestFormBtn.addEventListener('click', function () {
+            guestFormBox.style.display = guestFormBox.style.display === 'none' ? 'block' : 'none';
+        });
+    }
 
+    const addGuestBtn = document.getElementById('addGuestBtn');
+    if (addGuestBtn) {
+        addGuestBtn.addEventListener('click', function () {
+            const nameInput = document.getElementById('guestNameInput');
+            const emailInput = document.getElementById('guestEmailInput');
+            addGuestParticipant(nameInput.value.trim(), emailInput.value.trim());
+            nameInput.value = '';
+            emailInput.value = '';
+        });
+    }
     function updateTotalPrice(count) {
         const total = pricePerParticipant * count;
 

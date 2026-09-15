@@ -48,11 +48,12 @@
                         </div>
 
                         {{-- INFO BOX --}}
+{{-- INFO BOX --}}
                         <div class="row mb-4">
                             <div class="col-md-3">
                                 <div class="card bg-light border-0">
                                     <div class="card-body">
-                                        <div class="text-muted small">No. Transaksi</div>
+                                        <div class="text-muted small">Kode Jurnal</div>
                                         <div class="fw-bold">{{ $journal->journal_code }}</div>
                                     </div>
                                 </div>
@@ -68,6 +69,30 @@
                                     </div>
                                 </div>
                             </div>
+
+                            @if($journal->reference_code)
+                                <div class="col-md-3">
+                                    @if($journal->transaction_id)
+                                        <a href="{{ route('admin.transactions.show', $journal->transaction_id) }}"
+                                        class="card bg-light border-0 text-decoration-none text-reset d-block">
+                                            <div class="card-body">
+                                                <div class="text-muted small">No. Transaksi</div>
+                                                <div class="fw-bold text-primary">
+                                                    {{ $journal->reference_code }}
+                                                    <i class="ti ti-external-link ms-1 fs-6"></i>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    @else
+                                        <div class="card bg-light border-0">
+                                            <div class="card-body">
+                                                <div class="text-muted small">No. Transaksi</div>
+                                                <div class="fw-bold">{{ $journal->reference_code }}</div>
+                                            </div>
+                                        </div>
+                                    @endif
+                                </div>
+                            @endif
                         </div>
 
                         <div class="table-responsive mb-4">

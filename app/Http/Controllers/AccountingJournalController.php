@@ -249,7 +249,7 @@ public function show(AccountingJournal $journal)
         abort(403);
     }
 
-    $journal->load(['details.account', 'creator']);
+    $journal->load(['details.account', 'creator', 'transaction']);
 
     return view('journals.show', compact('journal'));
 }

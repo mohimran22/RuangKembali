@@ -1142,7 +1142,7 @@
 
                                                     <div>
                                                         <div class="fw-semibold">
-                                                            {{ $registration->user->fullname ?? '-' }}
+                                                            {{ $registration->participant_name }}
                                                         </div>
                                                     </div>
 

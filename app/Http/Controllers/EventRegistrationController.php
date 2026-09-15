@@ -41,23 +41,38 @@ class EventRegistrationController extends Controller
 
         $validated = $request->validate([
             'participants' => ['required', 'array', 'min:1'],
-            'participants.*.user_id' => ['required', 'uuid', 'exists:users,id'],
+            'participants.*.user_id' => ['nullable', 'uuid', 'exists:users,id'],
+            'participants.*.name' => ['nullable', 'string', 'max:255'],
+            'participants.*.email' => ['nullable', 'email', 'max:255'],
             'payment_method' => [
                 $event->event_type !== 'free' ? 'required' : 'nullable',
                 'in:transfer,gateway',
             ],
             'transaction_code' => ['nullable', 'string'],
         ]);
+        foreach ($validated['participants'] as $p) {
+            $hasUserId = !empty($p['user_id']);
+            $hasGuestInfo = !empty($p['name']) && !empty($p['email']);
 
-        $userIds = array_column($validated['participants'], 'user_id');
+            if (!$hasUserId && !$hasGuestInfo) {
+                return back()->withInput()->with('error', 'Setiap peserta harus berupa user terdaftar atau diisi nama & email.');
+            }
+        }
+        $userIds = array_values(array_filter(array_column($validated['participants'], 'user_id')));
+        $guestEmails = array_values(array_filter(array_map(
+            fn($p) => !empty($p['email']) ? strtolower($p['email']) : null,
+            $validated['participants']
+        )));
 
         if (count($userIds) !== count(array_unique($userIds))) {
             return back()->withInput()->with('error', 'Terdapat peserta yang sama dipilih lebih dari sekali.');
         }
 
-        $mustBeParticipant = !auth()->user()->hasRole('Super-Admin');
+        if (count($guestEmails) !== count(array_unique($guestEmails))) {
+            return back()->withInput()->with('error', 'Terdapat email peserta manual yang sama, cek kembali.');
+        }
 
-        if ($mustBeParticipant && !in_array(auth()->id(), $userIds)) {
+        if (!auth()->user()->hasRole('Super-Admin') && !in_array(auth()->id(), $userIds)) {
             return back()->withInput()->with('error', 'Kamu wajib ikut sebagai salah satu peserta.');
         }
 
@@ -71,6 +86,8 @@ class EventRegistrationController extends Controller
             return back()->withInput()->with('error', "Peserta berikut sudah terdaftar di event ini: {$names}");
         }
 
+        $totalParticipants = count($validated['participants']);
+
         if ($event->quota) {
             $registeredCount = EventRegistration::where('event_id', $event->id)
                 ->whereIn('status', ['pending', 'paid', 'attended'])
@@ -78,13 +95,13 @@ class EventRegistrationController extends Controller
 
             $remainingQuota = $event->quota - $registeredCount;
 
-            if (count($userIds) > $remainingQuota) {
-                return back()->withInput()->with('error', "Kuota tersisa hanya {$remainingQuota} peserta, kamu mencoba mendaftarkan " . count($userIds) . " peserta.");
+            if ($totalParticipants > $remainingQuota) {
+                return back()->withInput()->with('error', "Kuota tersisa hanya {$remainingQuota} peserta, kamu mencoba mendaftarkan {$totalParticipants} peserta.");
             }
         }
 
         $pricePerParticipant = $event->event_type === 'free' ? 0 : $event->price;
-        $totalAmount = $pricePerParticipant * count($userIds);
+        $totalAmount = $pricePerParticipant * $totalParticipants;
         $transactionCode = $request->transaction_code;
 
         if (!$transactionCode || Transaction::where('transaction_code', $transactionCode)->exists()) {
@@ -107,11 +124,14 @@ class EventRegistrationController extends Controller
             ]);
 
             // 2. Buat registrasi per peserta, link ke transaksi
-            foreach ($userIds as $userId) {
+            foreach ($validated['participants'] as $p) {
+                $isGuest = empty($p['user_id']);
                 EventRegistration::create([
                     'id' => (string) Str::uuid(),
                     'event_id' => $event->id,
-                    'user_id' => $userId,
+                    'user_id' => $isGuest ? null : $p['user_id'],
+                    'guest_name' => $isGuest ? $p['name'] : null,
+                    'guest_email' => $isGuest ? $p['email'] : null,
                     'registered_by' => auth()->id(),
                     'transaction_id' => $transaction->id,
                     'ticket_code' => $this->generateTicketCode(),
@@ -141,7 +161,6 @@ class EventRegistrationController extends Controller
             return back()->withInput()->with('error', 'Gagal melakukan pendaftaran: ' . $e->getMessage());
         }
     }
-
 
     private function generateTransactionCode(): string
     {

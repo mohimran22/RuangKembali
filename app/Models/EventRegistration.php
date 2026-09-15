@@ -23,7 +23,9 @@ class EventRegistration extends Model
         'payment_method',
         'registered_at',
         'checked_in_at',
-        'checked_in_by'
+        'checked_in_by',
+        'guest_name',
+        'guest_email'
     ];
 
     protected $casts = [
@@ -49,5 +51,15 @@ class EventRegistration extends Model
     public function transaction()
 {
     return $this->belongsTo(Transaction::class);
+}
+
+public function getParticipantNameAttribute()
+{
+    return $this->user?->fullname ?? $this->user?->name ?? $this->guest_name;
+}
+
+public function getParticipantEmailAttribute()
+{
+    return $this->user?->email ?? $this->guest_email;
 }
 }

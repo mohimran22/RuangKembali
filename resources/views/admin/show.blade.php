@@ -58,8 +58,12 @@
                             <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
                                 <div>
                                     <div class="fw-semibold">
-                                        {{ $registration->user->fullname ?? $registration->user->name }}
+                                        {{ $registration->participant_name }}
+                                        @if(!$registration->user_id)
+                                            <span class="badge bg-orange-lt ms-1">Belum punya akun</span>
+                                        @endif
                                     </div>
+                                    <div class="text-secondary small">{{ $registration->participant_email }}</div>
                                     <div class="text-secondary small">{{ $registration->ticket_code }}</div>
                                 </div>
                                 <div class="text-secondary small">

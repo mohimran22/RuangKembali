@@ -38,140 +38,142 @@ class TransactionController extends Controller
         return view('admin.show', compact('transaction'));
     }
 
-public function approve(Transaction $transaction)
-{
-    abort_unless(
-        $transaction->status === 'waiting_confirmation',
-        400,
-        'Transaksi ini tidak dalam status menunggu konfirmasi.'
-    );
-
-    DB::transaction(function () use ($transaction) {
-
-        // Load event beserta COA yang sudah ditentukan pada event
-        $transaction->load('event');
-
-        $event = $transaction->event;
-
+    public function approve(Transaction $transaction)
+    {
         abort_unless(
-            $event,
-            404,
-            'Event transaksi tidak ditemukan.'
+            $transaction->status === 'waiting_confirmation',
+            400,
+            'Transaksi ini tidak dalam status menunggu konfirmasi.'
         );
 
-        // Pastikan Event sudah memiliki COA Kas/Bank
-        abort_unless(
-            $event->cash_account_id,
-            422,
-            'Akun Kas / Bank untuk event ini belum ditentukan.'
-        );
+        DB::transaction(function () use ($transaction) {
 
-        // Pastikan Event sudah memiliki COA Pendapatan
-        abort_unless(
-            $event->income_account_id,
-            422,
-            'Akun Pendapatan untuk event ini belum ditentukan.'
-        );
+            // Load event beserta COA yang sudah ditentukan pada event
+            $transaction->load('event');
 
-        $licenseId = config('app.license_id');
+            $event = $transaction->event;
 
-        $akunKas = AccountingAccount::where('id', $event->cash_account_id)
-            ->where('license_id', $licenseId)
-            ->where('is_active', true)
-            ->firstOrFail();
+            abort_unless(
+                $event,
+                404,
+                'Event transaksi tidak ditemukan.'
+            );
 
-        $akunPendapatanEvent = AccountingAccount::where('id', $event->income_account_id)
-            ->where('license_id', $licenseId)
-            ->where('is_active', true)
-            ->firstOrFail();
+            // Pastikan Event sudah memiliki COA Kas/Bank
+            abort_unless(
+                $event->cash_account_id,
+                422,
+                'Akun Kas / Bank untuk event ini belum ditentukan.'
+            );
 
-        $totalPeserta = $transaction->registrations->sum(function ($registration) {
-            return (float) $registration->price;
+            // Pastikan Event sudah memiliki COA Pendapatan
+            abort_unless(
+                $event->income_account_id,
+                422,
+                'Akun Pendapatan untuk event ini belum ditentukan.'
+            );
+
+            $licenseId = config('app.license_id');
+
+            $akunKas = AccountingAccount::where('id', $event->cash_account_id)
+                ->where('license_id', $licenseId)
+                ->where('is_active', true)
+                ->firstOrFail();
+
+            $akunPendapatanEvent = AccountingAccount::where('id', $event->income_account_id)
+                ->where('license_id', $licenseId)
+                ->where('is_active', true)
+                ->firstOrFail();
+
+            $totalPeserta = $transaction->registrations->sum(function ($registration) {
+                return (float) $registration->price;
+            });
+
+            $nominalTransaksi = (float) $transaction->total_amount;
+
+            abort_unless(
+                bccomp((string) $totalPeserta, (string) $nominalTransaksi, 2) === 0,
+                422,
+                'Total pembayaran peserta tidak sesuai dengan nominal transaksi.'
+            );
+
+            $transaction->update([
+                'status'  => 'paid',
+                'paid_at' => now(),
+            ]);
+
+            $transaction->registrations()->update([
+                'status' => 'paid',
+            ]);
+
+            $journalCode = $this->generateNextJournalCode();
+
+            $journal = AccountingJournal::create([
+                'license_id'       => $licenseId,
+                'journal_code'     => $journalCode,
+                'transaction_date' => now()->toDateString(),
+                'description'      => 'Penerimaan pembayaran event - '
+                                    . ($transaction->event->name),
+                'created_by'       => auth()->id(),
+                'reference_code'   => $transaction->transaction_code,
+                'transaction_id'   => $transaction->id,
+            ]);
+
+            foreach ($transaction->registrations as $registration) {
+
+                $registration->loadMissing('user');
+
+                $person = $registration->user->fullname
+                    ?? $registration->guest_name
+                    ?? $registration->ticket_code;
+
+                $nominalPeserta = (float) $registration->price;
+
+                // Debit Kas / Bank
+                AccountingJournalDetail::create([
+                    'journal_id'  => $journal->id,
+                    'account_id'  => $akunKas->id,
+                    'person'      => $person,
+                    'debit'       => $nominalPeserta,
+                    'credit'      => 0,
+                    'description' => 'Penerimaan pembayaran event - '
+                                    . $event->name
+                                    . ' - '
+                                    . $registration->ticket_code,
+                ]);
+
+                // Kredit Pendapatan Event
+                AccountingJournalDetail::create([
+                    'journal_id'  => $journal->id,
+                    'account_id'  => $akunPendapatanEvent->id,
+                    'person'      => $person,
+                    'debit'       => 0,
+                    'credit'      => $nominalPeserta,
+                    'description' => 'Pendapatan pendaftaran event - '
+                                    . $event->name
+                                    . ' - '
+                                    . $registration->ticket_code,
+                ]);
+            }
         });
 
-        $nominalTransaksi = (float) $transaction->total_amount;
-
-        abort_unless(
-            bccomp((string) $totalPeserta, (string) $nominalTransaksi, 2) === 0,
-            422,
-            'Total pembayaran peserta tidak sesuai dengan nominal transaksi.'
-        );
-
-        $transaction->update([
-            'status'  => 'paid',
-            'paid_at' => now(),
+        $transaction->load([
+            'event',
+            'registrations.user',
+            'registeredBy',
         ]);
 
-        $transaction->registrations()->update([
-            'status' => 'paid',
-        ]);
-
-        $journalCode = $this->generateNextJournalCode();
-
-        $journal = AccountingJournal::create([
-            'license_id'       => $licenseId,
-            'journal_code'     => $journalCode,
-            'transaction_date' => now()->toDateString(),
-            'description'      => 'Penerimaan pembayaran event - '
-                                . ($transaction->transaction_number ?? $transaction->event->name),
-            'created_by'       => auth()->id(),
-        ]);
-
-        foreach ($transaction->registrations as $registration) {
-
-            $registration->loadMissing('user');
-
-            $person = $registration->user->fullname
-                ?? $registration->user->name
-                ?? $registration->ticket_code;
-
-            $nominalPeserta = (float) $registration->price;
-
-            // Debit Kas / Bank
-            AccountingJournalDetail::create([
-                'journal_id'  => $journal->id,
-                'account_id'  => $akunKas->id,
-                'person'      => $person,
-                'debit'       => $nominalPeserta,
-                'credit'      => 0,
-                'description' => 'Penerimaan pembayaran event - '
-                                . $event->name
-                                . ' - '
-                                . $registration->ticket_code,
-            ]);
-
-            // Kredit Pendapatan Event
-            AccountingJournalDetail::create([
-                'journal_id'  => $journal->id,
-                'account_id'  => $akunPendapatanEvent->id,
-                'person'      => $person,
-                'debit'       => 0,
-                'credit'      => $nominalPeserta,
-                'description' => 'Pendapatan pendaftaran event - '
-                                . $event->name
-                                . ' - '
-                                . $registration->ticket_code,
-            ]);
+        if ($transaction->registeredBy) {
+            $transaction->registeredBy->notify(
+                new TransactionApprovedNotification($transaction)
+            );
         }
-    });
 
-    $transaction->load([
-        'event',
-        'registrations.user',
-        'registeredBy',
-    ]);
-
-    if ($transaction->registeredBy) {
-        $transaction->registeredBy->notify(
-            new TransactionApprovedNotification($transaction)
+        return back()->with(
+            'success',
+            'Transaksi berhasil disetujui, status diubah menjadi Lunas dan jurnal berhasil dibuat.'
         );
     }
-
-    return back()->with(
-        'success',
-        'Transaksi berhasil disetujui, status diubah menjadi Lunas dan jurnal berhasil dibuat.'
-    );
-}
 
     public function reject(Request $request, Transaction $transaction)
     {

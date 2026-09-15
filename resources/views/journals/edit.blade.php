@@ -110,10 +110,12 @@
 
                                                     <td>
                                                         <select name="details[{{ $i }}][person]" 
-                                                                class="form-select select2 user-select" 
+                                                                class="form-select user-select" 
                                                                 data-row="{{ $i }}" 
-                                                                data-selected="{{ $detail->person ?? '' }}">
+                                                                data-selected="{{ $detail->person ?? '' }}"
+                                                                data-selected-label="{{ $detail->person_name ?? '' }}">
                                                             <option value="">-- Pilih User --</option>
+                                                        </select>
                                                             @php
                                                                 if ($detail->person_type === 'team') {
                                                                     $users = $teams;
@@ -350,7 +352,7 @@ $(document).ready(function () {
             .attr('title', selectedText);
     }
 
-    function renderUserOptions($select, personType, selected = null) {
+    function renderUserOptions($select, personType, selected = null, selectedLabel = null) {
 
         if ($select.hasClass("select2-hidden-accessible")) {
             $select.select2('destroy');
@@ -372,11 +374,10 @@ $(document).ready(function () {
                 );
             });
 
-            // kalau "selected" tidak ketemu di list (berarti input manual / teks bebas)
+            const label = selectedLabel || selected;
+
             if (selected && !data.some(u => u.id == selected)) {
-                $select.append(
-                    `<option value="${selected}" selected>${selected}</option>`
-                );
+                $select.append(`<option value="${selected}" selected>${label}</option>`);
             }
 
             $select.select2({
@@ -460,9 +461,11 @@ $(document).ready(function () {
         const accountCode = String($(this).find(':selected').data('code') || '');
         const personType  = $(this).find(':selected').data('person-type');
         const $userSelect = $row.find('.user-select');
-        const selectedUser = $userSelect.data('selected');
 
-        renderUserOptions($userSelect, personType, selectedUser);
+        const selectedUser  = $userSelect.data('selected');
+        const selectedLabel = $userSelect.data('selected-label'); // <-- tambahkan ini
+
+        renderUserOptions($userSelect, personType, selectedUser, selectedLabel); // <-- tambah param ke-4
 
         applyDebitCreditRule($row, accountCode);
     });
@@ -497,10 +500,7 @@ $(document).ready(function () {
 
         renderAccountOptions($newRow.find('.account-select'));
 
-        $newRow.find('.user-select').select2({
-            placeholder: "-- Pilih User --",
-            width: '100%'
-        });
+        renderUserOptions($newRow.find('.user-select'), null);
     });
 
     $(document).on('click', '.remove-row', function () {

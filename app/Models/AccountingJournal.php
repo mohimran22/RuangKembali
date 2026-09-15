@@ -20,6 +20,8 @@ class AccountingJournal extends Model
         'description',
         'enclosure',
         'created_by',
+        'reference_code',
+        'transaction_id'
     ];
 
     public function license()
@@ -39,5 +41,10 @@ class AccountingJournal extends Model
     public function enclosures()
 {
     return $this->hasMany(AccountingJournalEnclosure::class, 'journal_id');
+}
+
+public function transaction()
+{
+    return $this->belongsTo(Transaction::class);
 }
 }
