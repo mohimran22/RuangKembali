@@ -744,7 +744,7 @@
 
             </div>
 
-        </div>{{-- /#detail-pane --}}
+        </div>
 
         <div class="tab-pane fade"
             id="rundown-pane"
@@ -757,7 +757,7 @@
                 <div class="card-header">
                     <h3 class="card-title">
                         <i class="ti ti-list-details me-2"></i>
-                        Rundown Acara
+                        Rundown Acara {{ $event->name }}
                     </h3>
                 </div>
 
@@ -1076,7 +1076,7 @@
                     <div>
                         <h3 class="card-title mb-1">
                             <i class="ti ti-users me-2"></i>
-                            Daftar Peserta Event
+                            Daftar Peserta Event {{ $event->name }}
                         </h3>
 
                         <div class="text-secondary small">

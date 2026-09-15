@@ -268,28 +268,27 @@ public function edit(AccountingJournal $journal)
         ->get()
         ->map(fn($emp) => [
             'id'   => $emp->id,
-            'name' => $emp->user?->fullname ?? '-',
+            'fullname' => $emp->user?->fullname ?? '-',
         ]);
 
     $members = Customer::with('user')
         ->get()
         ->map(fn($cus) => [
             'id'   => $cus->id,
-            'name' => $cus->user?->fullname ?? '-',
+            'fullname' => $cus->user?->fullname ?? '-',
         ]);
 
     $partners = Partner::with('user')
         ->get()
         ->map(fn($work) => [
             'id'   => $work->id,
-            'name' => $work->user?->fullname ?? '-',
+            'fullname' => $work->user?->fullname ?? '-',
         ]);
 
     $journal->load(['details.account']);
 
     return view('journals.edit', compact('journal', 'accounts', 'teams', 'members', 'partners'));
 }
-
 
 public function update(UpdateAccountingJournalRequest $request, AccountingJournal $journal)
 {

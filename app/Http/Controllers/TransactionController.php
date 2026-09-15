@@ -10,12 +10,21 @@ class TransactionController extends Controller
 {
 public function index(Request $request)
 {
-    $query = Transaction::with(['event', 'registeredBy','registrations.user:id,fullname'])
-        ->withCount('registrations')
-        ->latest();
+    $query = Transaction::with([
+        'event',
+        'registeredBy',
+        'registrations.user:id,fullname'
+    ])
+    ->withCount('registrations')
+    ->latest();
 
-    if (!auth()->user()->hasRole('Super-Admin')) {
-        $query->where('registered_by', auth()->id());
+    if (!auth()->user()->hasAnyRole(['Super-Admin', 'Tim'])) {
+        $query->where(function ($q) {
+            $q->where('registered_by', auth()->id())
+              ->orWhereHas('registrations', function ($registrationQuery) {
+                  $registrationQuery->where('user_id', auth()->id());
+              });
+        });
     }
 
     $transactions = $query->paginate(10);
@@ -23,45 +32,71 @@ public function index(Request $request)
     return view('transactions.index', compact('transactions'));
 }
 
-    public function show(Transaction $transaction)
-    {
-        // Pastikan user cuma bisa lihat transaksinya sendiri
-        abort_unless(
-            $transaction->registered_by === auth()->id(),
-            403,
-            'Kamu tidak memiliki akses ke transaksi ini.'
-        );
+public function show(Transaction $transaction)
+{
+    $user = auth()->user();
 
-        $transaction->load(['event', 'registrations.user']);
+    $hasAccess = $user->hasAnyRole(['Super-Admin', 'Tim'])
+        || $transaction->registered_by === $user->id
+        || $transaction->registrations()
+            ->where('user_id', $user->id)
+            ->exists();
 
-        return view('transactions.show', compact('transaction'));
-    }
+    abort_unless(
+        $hasAccess,
+        403,
+        'Kamu tidak memiliki akses ke transaksi ini.'
+    );
 
-    public function uploadProof(Request $request, Transaction $transaction)
-    {
-        abort_unless(
-            $transaction->registered_by === auth()->id(),
-            403,
-            'Kamu tidak memiliki akses ke transaksi ini.'
-        );
+    $transaction->load([
+        'event',
+        'registrations.user'
+    ]);
 
-        abort_unless(
-            $transaction->status === 'pending',
-            400,
-            'Transaksi ini sudah tidak bisa diupload buktinya.'
-        );
+    return view('transactions.show', compact('transaction'));
+}
 
-        $request->validate([
-            'proof_of_payment' => ['required', 'image', 'max:5120'], // max 5MB
-        ]);
+public function uploadProof(Request $request, Transaction $transaction)
+{
+    $user = auth()->user();
 
-        $path = $request->file('proof_of_payment')->store('proof-of-payments', 'public');
+    $hasAccess = $user->hasAnyRole(['Super-Admin', 'Tim'])
+        || $transaction->registered_by === $user->id
+        || $transaction->registrations()
+            ->where('user_id', $user->id)
+            ->exists();
 
-        $transaction->update([
-            'proof_of_payment' => $path,
-            'status' => 'waiting_confirmation',
-        ]);
+    abort_unless(
+        $hasAccess,
+        403,
+        'Kamu tidak memiliki akses ke transaksi ini.'
+    );
 
-        return back()->with('success', 'Bukti transfer berhasil diupload, menunggu konfirmasi admin.');
-    }
+    abort_unless(
+        $transaction->status === 'pending',
+        400,
+        'Transaksi ini sudah tidak bisa diupload buktinya.'
+    );
+
+    $request->validate([
+        'proof_of_payment' => [
+            'required',
+            'image',
+            'max:5120',
+        ],
+    ]);
+
+    $path = $request->file('proof_of_payment')
+        ->store('proof-of-payments', 'public');
+
+    $transaction->update([
+        'proof_of_payment' => $path,
+        'status' => 'waiting_confirmation',
+    ]);
+
+    return back()->with(
+        'success',
+        'Bukti transfer berhasil diupload, menunggu konfirmasi admin.'
+    );
+}
 }

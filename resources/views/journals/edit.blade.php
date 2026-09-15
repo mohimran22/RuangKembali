@@ -119,7 +119,7 @@
                                                                     $users = $teams;
                                                                 } elseif ($detail->person_type === 'member') {
                                                                     $users = $members;
-                                                                } elseif ($detail->person_type === 'partner') {
+                                                                } elseif ($detail->person_type === 'mitra') {
                                                                     $users = $partners;
                                                                 } else {
                                                                     $users = collect();
@@ -351,9 +351,12 @@ $(document).ready(function () {
     }
 
     function renderUserOptions($select, personType, selected = null) {
-        $select.empty().append('<option value="">-- Pilih User --</option>');
 
-        if (!personType) return;
+        if ($select.hasClass("select2-hidden-accessible")) {
+            $select.select2('destroy');
+        }
+
+        $select.empty().append('<option value="">-- Pilih User --</option>');
 
         let urlMap = {
             team: '/get-teams',
@@ -362,16 +365,34 @@ $(document).ready(function () {
             vendor: '/get-vendors'
         };
 
-        if (!urlMap[personType]) return;
-
-        $.get(urlMap[personType], function (data) {
+        const finishInit = (data = []) => {
             $.each(data, function (_, user) {
                 $select.append(
-                    `<option value="${user.id}" ${selected == user.id ? 'selected' : ''}>
-                        ${user.name}
-                     </option>`
+                    `<option value="${user.id}" ${selected == user.id ? 'selected' : ''}>${user.name}</option>`
                 );
             });
+
+            // kalau "selected" tidak ketemu di list (berarti input manual / teks bebas)
+            if (selected && !data.some(u => u.id == selected)) {
+                $select.append(
+                    `<option value="${selected}" selected>${selected}</option>`
+                );
+            }
+
+            $select.select2({
+                placeholder: "-- Input manual jika tidak ada User --",
+                width: '100%',
+                tags: true,
+            });
+        };
+
+        if (!personType || !urlMap[personType]) {
+            finishInit([]);
+            return;
+        }
+
+        $.get(urlMap[personType], function (data) {
+            finishInit(data);
         });
     }
 

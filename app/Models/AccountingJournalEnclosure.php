@@ -16,9 +16,6 @@ class AccountingJournalEnclosure extends Model
         'file_name',
     ];
 
-    /**
-     * Relasi ke jurnal.
-     */
     public function journal()
     {
         return $this->belongsTo(AccountingJournal::class, 'journal_id');

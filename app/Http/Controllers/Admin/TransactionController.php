@@ -85,7 +85,17 @@ public function approve(Transaction $transaction)
             ->where('is_active', true)
             ->firstOrFail();
 
-        $nominal = (float) $transaction->amount;
+        $totalPeserta = $transaction->registrations->sum(function ($registration) {
+            return (float) $registration->price;
+        });
+
+        $nominalTransaksi = (float) $transaction->total_amount;
+
+        abort_unless(
+            bccomp((string) $totalPeserta, (string) $nominalTransaksi, 2) === 0,
+            422,
+            'Total pembayaran peserta tidak sesuai dengan nominal transaksi.'
+        );
 
         $transaction->update([
             'status'  => 'paid',
@@ -96,36 +106,53 @@ public function approve(Transaction $transaction)
             'status' => 'paid',
         ]);
 
-        $journalCode = 'JEV-' . now()->format('YmdHis')
-            . '-' . strtoupper(Str::random(4));
+        $journalCode = $this->generateNextJournalCode();
 
         $journal = AccountingJournal::create([
             'license_id'       => $licenseId,
             'journal_code'     => $journalCode,
             'transaction_date' => now()->toDateString(),
             'description'      => 'Penerimaan pembayaran event - '
-                                . ($transaction->transaction_number ?? $transaction->id),
+                                . ($transaction->transaction_number ?? $transaction->event->name),
             'created_by'       => auth()->id(),
         ]);
 
-        AccountingJournalDetail::create([
-            'journal_id'  => $journal->id,
-            'account_id'  => $akunKas->id,
-            'person'      => null,
-            'debit'       => $nominal,
-            'credit'      => 0,
-            'description' => 'Penerimaan pembayaran event - ' . $event->name,
-        ]);
+        foreach ($transaction->registrations as $registration) {
 
+            $registration->loadMissing('user');
 
-        AccountingJournalDetail::create([
-            'journal_id'  => $journal->id,
-            'account_id'  => $akunPendapatanEvent->id,
-            'person'      => null,
-            'debit'       => 0,
-            'credit'      => $nominal,
-            'description' => 'Pendapatan pendaftaran event - ' . $event->name,
-        ]);
+            $person = $registration->user->fullname
+                ?? $registration->user->name
+                ?? $registration->ticket_code;
+
+            $nominalPeserta = (float) $registration->price;
+
+            // Debit Kas / Bank
+            AccountingJournalDetail::create([
+                'journal_id'  => $journal->id,
+                'account_id'  => $akunKas->id,
+                'person'      => $person,
+                'debit'       => $nominalPeserta,
+                'credit'      => 0,
+                'description' => 'Penerimaan pembayaran event - '
+                                . $event->name
+                                . ' - '
+                                . $registration->ticket_code,
+            ]);
+
+            // Kredit Pendapatan Event
+            AccountingJournalDetail::create([
+                'journal_id'  => $journal->id,
+                'account_id'  => $akunPendapatanEvent->id,
+                'person'      => $person,
+                'debit'       => 0,
+                'credit'      => $nominalPeserta,
+                'description' => 'Pendapatan pendaftaran event - '
+                                . $event->name
+                                . ' - '
+                                . $registration->ticket_code,
+            ]);
+        }
     });
 
     $transaction->load([
@@ -170,4 +197,32 @@ public function approve(Transaction $transaction)
 
         return back()->with('success', 'Transaksi ditolak, user perlu upload ulang bukti transfer.');
     }
+
+    private function generateNextJournalCode()
+{
+    $licenseId = config('app.license_id');
+
+    $lastJournalNumber = AccountingJournal::where('license_id', $licenseId)
+        ->where('journal_code', 'ILIKE', 'IJ-%')
+        ->selectRaw("
+            MAX(
+                CAST(
+                    REGEXP_REPLACE(journal_code, '^.*-', '') AS INTEGER
+                )
+            ) as last_number
+        ")
+        ->value('last_number');
+
+    $lastJournalNumber = $lastJournalNumber ?? 0;
+
+    do {
+        $nextNumber = str_pad($lastJournalNumber + 1, 4, '0', STR_PAD_LEFT);
+        $journalCode = 'IJ-' . $nextNumber;
+
+        $exists = AccountingJournal::where('journal_code', $journalCode)->exists();
+        $lastJournalNumber++;
+    } while ($exists);
+
+    return $journalCode;
+}
 }

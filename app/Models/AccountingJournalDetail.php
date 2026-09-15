@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Traits\HasUuid;
+use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
 
 class AccountingJournalDetail extends Model
@@ -32,28 +33,35 @@ class AccountingJournalDetail extends Model
     {
         return $this->belongsTo(AccountingAccount::class, 'account_id');
     }
-
     public function getPersonNameAttribute()
-{
-    // Daftar kode akun otomatis pusat
-    $akunOtomatisPusat = ['K 0026', 'K 0027', 'K 0031', 'K 0032'];
+    {
+        $akunOtomatisPusat = ['K 0026', 'K 0027', 'K 0031', 'K 0032'];
 
-    // Kalau account_code masuk list akun otomatis pusat
-    if (in_array($this->account->account_code ?? '', $akunOtomatisPusat)) {
-        // $pusatUserId = '961d4be4-c284-455a-896c-08795e258f6d'; // ID user pusat
-        return \App\Models\User::find($this->person)?->name ?? '-';
+        if (in_array($this->account->account_code ?? '', $akunOtomatisPusat)) {
+            return \App\Models\User::find($this->person)?->fullname ?: '-';
+        }
+
+        $result = match ($this->account->person_type) {
+            'member' => Str::isUuid($this->person)
+                ? Customer::find($this->person)?->displayName
+                : $this->person,
+
+            'team' => Str::isUuid($this->person)
+                ? Team::find($this->person)?->displayName
+                : $this->person,
+
+            'mitra' => Str::isUuid($this->person)
+                ? Partner::find($this->person)?->displayName
+                : $this->person,
+
+            'license' => Str::isUuid($this->person)
+                ? License::find($this->person)?->name
+                : $this->person,
+
+            default => $this->person,
+        };
+
+        return blank($result) ? '-' : $result;
     }
-
-    // Kalau ada data person di DB, langsung proses sesuai type
-     return match ($this->account->person_type) {
-        'member'       => \App\Models\Customer::find($this->person)?->user?->fullname ?? '-',
-        'team'      => \App\Models\Team::find($this->person)?->user?->fullname ?? '-',
-        'mitra' => \App\Models\Partner::find($this->person)?->user?->fullname ?? '-',
-        'license'       => Str::isUuid($this->person)
-                                ? \App\Models\License::find($this->person)?->name
-                                : $this->person,
-         default         => $this->person ?? '-', // ⬅️ fallback ke kolom langsung
-    };
-}
 
 }
