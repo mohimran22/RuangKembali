@@ -1071,39 +1071,7 @@
             tabindex="0">
 
             <div class="card">
-{{-- 
-                <div class="card-header">
-                    <div>
-                        <h3 class="card-title mb-1">
-                            <i class="ti ti-users me-2"></i>
-                            Daftar Peserta Event {{ $event->name }}
-                        </h3>
-
-                        <div class="text-secondary small">
-                            Peserta yang telah melakukan pendaftaran pada event ini.
-                        </div>
-                    </div>
-
-                    <div class="ms-auto d-flex align-items-center gap-2">
-
-                        @hasanyrole(['Tim', 'Super-Admin'])
-
-                            <button type="button"
-                                    class="btn btn-success btn-sm"
-                                    data-bs-toggle="modal"
-                                    data-bs-target="#checkinModal">
-                                <i class="ti ti-scan me-1"></i>
-                                Check-in Peserta
-                            </button>
-
-                        @endhasanyrole
-
-                        <span class="badge bg-primary-lt">
-                            {{ $registrations->count() }} Peserta
-                        </span>
-                    </div>
-                </div> --}}
-                <div class="card-header flex-column flex-md-row align-items-start align-items-md-center gap-2">
+<div class="card-header event-participants-header">
 
     <div>
         <h3 class="card-title mb-1">
@@ -1116,7 +1084,7 @@
         </div>
     </div>
 
-    <div class="w-100 w-md-auto ms-md-auto d-flex align-items-center justify-content-between gap-2">
+    <div class="header-actions">
 
         @hasanyrole(['Tim', 'Super-Admin'])
 
