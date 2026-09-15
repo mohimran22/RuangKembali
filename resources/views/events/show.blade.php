@@ -66,66 +66,66 @@
 
         </div>
     </div>
+    <div class="event-tabs-wrapper">
+        <ul class="nav nav-tabs mb-4" id="eventDetailTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active"
+                        id="detail-tab"
+                        data-bs-toggle="tab"
+                        data-bs-target="#detail-pane"
+                        type="button"
+                        role="tab"
+                        aria-controls="detail-pane"
+                        aria-selected="true">
+                    <i class="ti ti-info-circle me-1"></i>
+                    Detail Event
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link"
+                        id="rundown-tab"
+                        data-bs-toggle="tab"
+                        data-bs-target="#rundown-pane"
+                        type="button"
+                        role="tab"
+                        aria-controls="rundown-pane"
+                        aria-selected="false">
+                    <i class="ti ti-list-details me-1"></i>
+                    Rundown
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link"
+                        id="sponsorship-tab"
+                        data-bs-toggle="tab"
+                        data-bs-target="#sponsorship-pane"
+                        type="button"
+                        role="tab"
+                        aria-controls="sponsorship-pane"
+                        aria-selected="false">
 
-    <ul class="nav nav-tabs mb-4" id="eventDetailTabs" role="tablist">
-        <li class="nav-item" role="presentation">
-            <button class="nav-link active"
-                    id="detail-tab"
-                    data-bs-toggle="tab"
-                    data-bs-target="#detail-pane"
-                    type="button"
-                    role="tab"
-                    aria-controls="detail-pane"
-                    aria-selected="true">
-                <i class="ti ti-info-circle me-1"></i>
-                Detail Event
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link"
-                    id="rundown-tab"
-                    data-bs-toggle="tab"
-                    data-bs-target="#rundown-pane"
-                    type="button"
-                    role="tab"
-                    aria-controls="rundown-pane"
-                    aria-selected="false">
-                <i class="ti ti-list-details me-1"></i>
-                Rundown
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link"
-                    id="sponsorship-tab"
-                    data-bs-toggle="tab"
-                    data-bs-target="#sponsorship-pane"
-                    type="button"
-                    role="tab"
-                    aria-controls="sponsorship-pane"
-                    aria-selected="false">
+                    <i class="ti ti-heart-handshake me-1"></i>
+                    Sponsorship / Dukungan
 
-                <i class="ti ti-heart-handshake me-1"></i>
-                Sponsorship / Dukungan
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link"
+                        id="participants-tab"
+                        data-bs-toggle="tab"
+                        data-bs-target="#participants-pane"
+                        type="button"
+                        role="tab"
+                        aria-controls="participants-pane"
+                        aria-selected="false">
 
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link"
-                    id="participants-tab"
-                    data-bs-toggle="tab"
-                    data-bs-target="#participants-pane"
-                    type="button"
-                    role="tab"
-                    aria-controls="participants-pane"
-                    aria-selected="false">
+                    <i class="ti ti-users me-1"></i>
+                    Daftar Peserta
 
-                <i class="ti ti-users me-1"></i>
-                Daftar Peserta
-
-            </button>
-        </li>
-    </ul>
-
+                </button>
+            </li>
+        </ul>
+    </div>
     <div class="tab-content" id="eventDetailTabsContent">
 
         <div class="tab-pane fade show active"
@@ -1071,7 +1071,7 @@
             tabindex="0">
 
             <div class="card">
-
+{{-- 
                 <div class="card-header">
                     <div>
                         <h3 class="card-title mb-1">
@@ -1102,7 +1102,41 @@
                             {{ $registrations->count() }} Peserta
                         </span>
                     </div>
-                </div>
+                </div> --}}
+                <div class="card-header flex-column flex-md-row align-items-start align-items-md-center gap-2">
+
+    <div>
+        <h3 class="card-title mb-1">
+            <i class="ti ti-users me-2"></i>
+            Daftar Peserta Event {{ $event->name }}
+        </h3>
+
+        <div class="text-secondary small">
+            Peserta yang telah melakukan pendaftaran pada event ini.
+        </div>
+    </div>
+
+    <div class="w-100 w-md-auto ms-md-auto d-flex align-items-center justify-content-between gap-2">
+
+        @hasanyrole(['Tim', 'Super-Admin'])
+
+            <button type="button"
+                    class="btn btn-success btn-sm"
+                    data-bs-toggle="modal"
+                    data-bs-target="#checkinModal">
+                <i class="ti ti-scan me-1"></i>
+                Check-in Peserta
+            </button>
+
+        @endhasanyrole
+
+        <span class="badge bg-primary-lt">
+            {{ $registrations->count() }} Peserta
+        </span>
+
+    </div>
+
+</div>
 
                 <div class="card-body">
 

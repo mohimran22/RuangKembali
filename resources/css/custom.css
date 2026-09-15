@@ -1727,6 +1727,56 @@ input[type=number]::-webkit-outer-spin-button {
 .password-input-wrapper .toggle-password i {
     font-size: 20px;
 }
+
+/* Tab navigation: scrollable di mobile */
+#eventDetailTabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    white-space: nowrap;
+}
+
+#eventDetailTabs .nav-item {
+    flex-shrink: 0;
+}
+
+#eventDetailTabs .nav-link {
+    white-space: nowrap;
+}
+
+/* Scrollbar custom biar tipis & rapi (opsional, tapi bikin lebih rapi) */
+#eventDetailTabs::-webkit-scrollbar {
+    height: 4px;
+}
+
+#eventDetailTabs::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+}
+
+#eventDetailTabs::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+/* Fade indicator di kanan, kasih hint kalau masih ada tab lain */
+.event-tabs-wrapper {
+    position: relative;
+}
+
+@media (max-width: 767.98px) {
+    .event-tabs-wrapper::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        height: 100%;
+        width: 24px;
+        background: linear-gradient(to right, transparent, var(--tblr-body-bg, #fff));
+        pointer-events: none;
+    }
+}
 @media (max-width: 991.98px) {
 
     .event-poster-wrapper {
