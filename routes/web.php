@@ -324,7 +324,7 @@ Route::post('/transactions/{transaction}/upload-proof', [TransactionController::
     ->name('transactions.upload-proof');
 
 Route::prefix('admin')
-    ->middleware(['auth', 'role:Super-Admin|Tim']) // sesuaikan nama role/middleware kamu
+    ->middleware(['auth', 'role:Super-Admin|Tim'])
     ->name('admin.')
     ->group(function () {
 
@@ -339,16 +339,14 @@ Route::prefix('admin')
 
         Route::post('/transactions/{transaction}/reject', [AdminTransactionController::class, 'reject'])
             ->name('transactions.reject');
+        Route::get('/transactions/{transaction}/edit', [TransactionController::class, 'edit'])
+            ->name('transactions.edit');
 
-        Route::get('transactions/{transaction}/edit', [TransactionController::class, 'edit'])
-            ->name('admin.transactions.edit');
+        Route::put('/transactions/{transaction}', [TransactionController::class, 'update'])
+            ->name('transactions.update');
 
-        Route::put('transactions/{transaction}', [TransactionController::class, 'update'])
-            ->name('admin.transactions.update');
-
-        Route::delete('transactions/{transaction}', [TransactionController::class, 'destroy'])
-            ->name('admin.transactions.destroy');
-
+        Route::delete('/transactions/{transaction}', [TransactionController::class, 'destroy'])
+            ->name('transactions.destroy');
     });
 Route::post('/job-categories/{id}/duplicate', [JobCategoryController::class, 'duplicate'])
     ->name('job-categories.duplicate');

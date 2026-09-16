@@ -162,4 +162,33 @@ $(function () {
 
 });
 </script>
+<script>
+$(document).on('click', '.btn-delete-transaction', function () {
+    const transactionId = $(this).data('id');
+
+    Swal.fire({
+        title: 'Yakin hapus transaksi ini?',
+        text: 'Data yang sudah dihapus tidak bisa dikembalikan.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Ya, hapus',
+        cancelButtonText: 'Batal',
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: `/admin/transactions/${transactionId}`,
+                type: 'DELETE',
+                data: { _token: $('meta[name="csrf-token"]').attr('content') },
+                success: function (res) {
+                    Swal.fire('Terhapus!', res.message, 'success');
+                    $('#transactions-table').DataTable().ajax.reload(null, false);
+                },
+                error: function () {
+                    Swal.fire('Gagal', 'Terjadi kesalahan saat menghapus transaksi.', 'error');
+                }
+            });
+        }
+    });
+});
+</script>
 @endpush

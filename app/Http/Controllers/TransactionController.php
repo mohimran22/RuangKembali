@@ -175,12 +175,12 @@ public function index(Request $request)
 
                     $html .= '
                         <a href="' . $editRoute . '"
-                        class="btn btn-sm btn-outline-secondary"
+                        class="btn btn-sm btn-secondary"
                         title="Edit Transaksi">
                             <i class="ti ti-edit"></i>
                         </a>
                         <button type="button"
-                                class="btn btn-sm btn-outline-danger btn-delete-transaction"
+                                class="btn btn-sm btn-danger btn-delete-transaction"
                                 data-id="' . $transaction->id . '"
                                 title="Hapus Transaksi">
                             <i class="ti ti-trash"></i>
@@ -269,6 +269,55 @@ public function uploadProof(Request $request, Transaction $transaction)
     return back()->with(
         'success',
         'Bukti transfer berhasil diupload, menunggu konfirmasi admin.'
+    );
+}
+
+public function edit(Transaction $transaction)
+{
+    $this->authorizeAdminOrTim();
+
+    $transaction->load(['event', 'registeredBy', 'registrations.user']);
+
+    return view('transactions.edit', compact('transaction'));
+}
+
+public function update(Request $request, Transaction $transaction)
+{
+    $this->authorizeAdminOrTim();
+
+    $validated = $request->validate([
+        'status' => 'required|in:pending,waiting_confirmation,paid,rejected,expired',
+        'total_amount' => 'required|numeric|min:0',
+    ]);
+
+    $transaction->update($validated);
+
+    return redirect()
+        ->route('admin.transactions.index')
+        ->with('success', 'Transaksi berhasil diperbarui.');
+}
+
+public function destroy(Transaction $transaction)
+{
+    $this->authorizeAdminOrTim();
+
+    \DB::transaction(function () use ($transaction) {
+        $transaction->registrations()->delete();
+        $transaction->delete();
+    });
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Transaksi berhasil dihapus.',
+    ]);
+}
+
+private function authorizeAdminOrTim(): void
+{
+    abort_unless(
+        auth()->user()->hasAnyRole(['Super-Admin', 'Tim']),
+        403,
+        'Kamu tidak memiliki akses untuk melakukan aksi ini.'
     );
 }
 }

@@ -121,28 +121,21 @@ public function index(Request $request)
 
             ->addColumn('action', function ($transaction) {
 
-                $showRoute = route(
-                    'admin.transactions.show',
-                    $transaction->id
-                );
+                $showRoute = route('admin.transactions.show', $transaction->id);
+                $editRoute = route('admin.transactions.edit', $transaction->id);
+                $deleteRoute = route('admin.transactions.destroy', $transaction->id);
 
-                $deleteRoute = route(
-                    'admin.transactions.destroy',
-                    $transaction->id
-                );
+                $html = '<div class="btn-list flex-nowrap">';
 
-                $html = '
-                    <div class="btn-list flex-nowrap">
-
-                        <a href="' . $showRoute . '"
-                        class="btn btn-sm btn-primary"
-                        title="Lihat Detail">
-                            <i class="ti ti-eye"></i>
-                        </a>
+                $html .= '
+                    <a href="' . $showRoute . '"
+                    class="btn btn-sm btn-primary"
+                    title="Lihat Detail">
+                        <i class="ti ti-eye"></i>
+                    </a>
                 ';
 
                 if ($transaction->status === 'waiting_confirmation') {
-
                     $html .= '
                         <a href="' . $showRoute . '"
                         class="btn btn-sm btn-outline-warning"
@@ -152,11 +145,20 @@ public function index(Request $request)
                     ';
                 }
 
+                // Edit: boleh Super-Admin & Tim (samakan dengan izin route index/show)
+                $html .= '
+                    <a href="' . $editRoute . '"
+                    class="btn btn-sm btn-outline-secondary"
+                    title="Edit Transaksi">
+                        <i class="ti ti-edit"></i>
+                    </a>
+                ';
+
+                // Delete: hanya Super-Admin & status bukan paid
                 if (
                     auth()->user()->hasRole('Super-Admin')
                     && $transaction->status !== 'paid'
                 ) {
-
                     $html .= '
                         <button type="button"
                                 class="btn btn-sm btn-outline-danger btn-delete-transaction"
@@ -167,9 +169,7 @@ public function index(Request $request)
                     ';
                 }
 
-                $html .= '
-                    </div>
-                ';
+                $html .= '</div>';
 
                 return $html;
             })
@@ -381,5 +381,47 @@ public function index(Request $request)
     } while ($exists);
 
     return $journalCode;
+}
+
+public function edit(Transaction $transaction)
+{
+    $transaction->load(['event', 'registeredBy', 'registrations.user']);
+
+    return view('admin.transactions.edit', compact('transaction'));
+}
+
+public function update(Request $request, Transaction $transaction)
+{
+    $validated = $request->validate([
+        'status' => 'required|in:pending,waiting_confirmation,paid,rejected,expired',
+        'total_amount' => 'required|numeric|min:0',
+        'notes' => 'nullable|string|max:1000',
+    ]);
+
+    $transaction->update($validated);
+
+    return redirect()
+        ->route('admin.transactions.index')
+        ->with('success', 'Transaksi berhasil diperbarui.');
+}
+
+public function destroy(Transaction $transaction)
+{
+    if ($transaction->status === 'paid') {
+        return response()->json([
+            'success' => false,
+            'message' => 'Transaksi yang sudah lunas tidak dapat dihapus.',
+        ], 422);
+    }
+
+    // Hapus relasi terkait dulu jika belum ada cascade di migration
+    // $transaction->registrations()->delete();
+
+    $transaction->delete();
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Transaksi berhasil dihapus.',
+    ]);
 }
 }

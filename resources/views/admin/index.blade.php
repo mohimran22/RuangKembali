@@ -58,6 +58,8 @@
     </div>
 
 </div>
+@endsection
+@push('js')
 <script>
 $(function () {
 
@@ -68,7 +70,7 @@ $(function () {
         serverSide: true,
 
         ajax: {
-            url: "{{ route('admin.transactions.index') }}",
+            url: "{{ route('transactions.index') }}",
             type: "GET",
 
             data: function (d) {
@@ -249,4 +251,4 @@ $(document).on('click', '.btn-delete-transaction', function () {
 
 });
 </script>
-@endsection
+@endpush
