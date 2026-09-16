@@ -388,6 +388,54 @@
     font-size:12px;
     color:#888;
 }
+.join-section{
+    padding:0 5% 100px;
+    max-width:1500px;
+    margin:auto;
+}
+
+.join-card{
+    background:linear-gradient(135deg, #DCCBA8, #C9AF7C);
+    border-radius:24px;
+    padding:70px 40px;
+    text-align:center;
+    color:#2b2318;
+}
+
+.join-card h2{
+    font-size:30px;
+    font-weight:700;
+    margin-bottom:14px;
+    color:#1f1a12;
+}
+
+.join-card p{
+    font-size:15px;
+    color:#3d3423;
+    max-width:520px;
+    margin:0 auto 28px;
+    line-height:1.6;
+}
+
+.btn-join{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    background:#1f1a12;
+    color:#fff;
+    font-weight:600;
+    font-size:14px;
+    padding:14px 32px;
+    border-radius:12px;
+    text-decoration:none;
+    transition:.25s;
+}
+
+.btn-join:hover{
+    background:#332a1d;
+    color:#fff;
+}
+
 @media (min-width: 992px) and (max-width: 1200px) {
     .hero-content {
         gap: 40px;
@@ -475,6 +523,13 @@
     }
     .footer-info-grid{
         grid-template-columns:1fr;
+    }
+    .join-card{
+        padding:50px 24px;
+    }
+
+    .join-card h2{
+        font-size:24px;
     }
 }
 </style>
@@ -588,6 +643,18 @@
         @empty
             <p class="event-empty">Belum ada event tersedia saat ini.</p>
         @endforelse
+    </div>
+</section>
+<section class="join-section">
+    <div class="join-card">
+        <h2>Bergabung Bersama Kami</h2>
+        <p>
+            Jadilah bagian dari Ruang Kembali — ikuti kajian, event, dan program
+            kebaikan yang membantu kamu terus bertumbuh.
+        </p>
+        <a href="{{ route('register') }}" class="btn-join">
+            Bergabung Sekarang <i class="ti ti-arrow-right"></i>
+        </a>
     </div>
 </section>
 @endsection
