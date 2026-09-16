@@ -16,86 +16,107 @@ class EventCategoryController extends Controller
         $eventcategory = EventCategory::all();
         return view('categories.index', compact('eventcategory'));
     }
-
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
          return view('categories.create');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string|max:255',
-            'is_active' => 'required|boolean',
-        ]);
+public function store(Request $request)
+{
+    $request->validate([
+        'name' => 'required|string|max:255',
+        'slug' => 'nullable|string|max:255',
+        'description' => 'nullable|string|max:255',
+        'is_active' => 'required|boolean',
+    ]);
 
-        EventCategory::create([
-            'name' => $request->name,
-            'slug' => uniqueSlug($request->name, EventCategory::class),
-            'description' => $request->description,
-            'is_active' => $request->is_active,
-        ]);
+    $slug = $request->filled('slug')
+        ? Str::slug($request->slug)
+        : Str::slug($request->name);
 
-        return redirect()->route('event_categories.index')
-            ->with('success', 'Kategori event berhasil ditambahkan.');
+    // Pastikan slug unik
+    $originalSlug = $slug;
+    $counter = 2;
+
+    while (EventCategory::where('slug', $slug)->exists()) {
+        $slug = $originalSlug . '-' . $counter;
+        $counter++;
     }
 
-    /**
-     * Display the specified resource.
-     */
+    EventCategory::create([
+        'name' => $request->name,
+        'slug' => $slug,
+        'description' => $request->description,
+        'is_active' => $request->is_active,
+    ]);
+
+    return redirect()
+        ->route('event_categories.index')
+        ->with('success', 'Kategori event berhasil ditambahkan.');
+}
+
     public function show(Piece $piece)
     {
         return view('pieces.show', compact('piece'));
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(EventCategory $event_category)
     {
         return view('categories.edit', compact('event_category'));
     }
 
+public function update(Request $request, EventCategory $event_category)
+{
+    $request->validate([
+        'name' => 'required|string|max:255',
+        'slug' => 'nullable|string|max:255',
+        'description' => 'nullable|string|max:255',
+        'is_active' => 'required|boolean',
+    ]);
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, EventCategory $event_category)
-    {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string|max:255',
-            'is_active' => 'required|boolean',
-        ]);
+    // Gunakan slug dari form jika diisi,
+    // jika kosong otomatis dari nama
+    $slug = $request->filled('slug')
+        ? Str::slug($request->slug)
+        : Str::slug($request->name);
 
-        $event_category->update([
-            'name' => $request->name,
-            'slug' => uniqueSlug($request->name, EventCategory::class, $event_category->id),
-            'is_active' => $request->is_active,
-            'description' => $request->description,
+    // Pastikan slug unik, tetapi abaikan kategori yang sedang diedit
+    $originalSlug = $slug;
+    $counter = 2;
 
-        ]);
-
-        return redirect()->route('event_categories.index')
-            ->with('success', 'Kategori event diperbarui.');
+    while (
+        EventCategory::where('slug', $slug)
+            ->where('id', '!=', $event_category->id)
+            ->exists()
+    ) {
+        $slug = $originalSlug . '-' . $counter;
+        $counter++;
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(EventCategory $event_category)
-    {
-        $event_category->delete();
+    $event_category->update([
+        'name' => $request->name,
+        'slug' => $slug,
+        'is_active' => $request->is_active,
+        'description' => $request->description,
+    ]);
 
-        return redirect()->route('event_categories.index')
-            ->with('success', 'Kategori event berhasil dihapus.');
+    return redirect()
+        ->route('event_categories.index')
+        ->with('success', 'Kategori event diperbarui.');
+}
 
+public function destroy(EventCategory $event_category)
+{
+    if ($event_category->events()->exists()) {
+        return redirect()
+            ->route('event_categories.index')
+            ->with('error', 'Kategori event tidak dapat dihapus karena masih digunakan oleh event.');
     }
+
+    $event_category->delete();
+
+    return redirect()
+        ->route('event_categories.index')
+        ->with('success', 'Kategori event berhasil dihapus.');
+}
 }

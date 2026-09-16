@@ -65,21 +65,23 @@
                                                 title="Edit">
                                                     <i class="ti ti-edit"></i>
                                                 </a>
+<form
+    action="{{ route('event_categories.destroy', $cat) }}"
+    method="POST"
+    class="d-inline-block delete-category-form"
+    data-name="{{ $cat->name }}"
+>
+    @csrf
+    @method('DELETE')
 
-                                                <form action="{{ route('event_categories.destroy', $cat) }}"
-                                                    method="POST"
-                                                    class="d-inline-block">
-                                                    @csrf
-                                                    @method('DELETE')
-
-                                                    <button
-                                                        type="submit"
-                                                        onclick="return confirm('Hapus data kategori ini?')"
-                                                        class="btn btn-sm btn-danger"
-                                                        title="Hapus">
-                                                        <i class="ti ti-trash"></i>
-                                                    </button>
-                                                </form>
+    <button
+        type="submit"
+        class="btn btn-sm btn-danger"
+        title="Hapus"
+    >
+        <i class="ti ti-trash"></i>
+    </button>
+</form>
                                             </td>
                                         </tr>
                                     @endforeach
@@ -91,4 +93,29 @@
         </div>
     </div>
 </div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.delete-category-form').forEach(function (form) {
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const categoryName = form.dataset.name;
+
+            Swal.fire({
+                title: 'Hapus Kategori?',
+                html: `Kategori <strong>${categoryName}</strong> akan dihapus.`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Ya, Hapus',
+                cancelButtonText: 'Batal',
+                reverseButtons: true
+            }).then(function (result) {
+                if (result.isConfirmed) {
+                    form.submit();
+                }
+            });
+        });
+    });
+});
+</script>
 @endsection

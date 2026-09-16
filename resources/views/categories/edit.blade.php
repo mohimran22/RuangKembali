@@ -72,11 +72,33 @@
                                     </div>
                                     <div class="col-md-4 mb-3">
                                         <label class="form-label">Kategori Aktif</label>
-                                        <select name="is_active" class="form-select">
-                                            <option value="">-- Pilih Tipe --</option>
-                                            <option value="1">Aktif</option>
-                                            <option value="0">Tidak Aktif</option>
-                                        </select>
+<select
+    name="is_active"
+    class="form-select @error('is_active') is-invalid @enderror"
+    required
+>
+    <option value="">-- Pilih Status --</option>
+
+    <option
+        value="1"
+        {{ old('is_active', $event_category->is_active) == 1 ? 'selected' : '' }}
+    >
+        Aktif
+    </option>
+
+    <option
+        value="0"
+        {{ old('is_active', $event_category->is_active) == 0 ? 'selected' : '' }}
+    >
+        Tidak Aktif
+    </option>
+</select>
+
+@error('is_active')
+    <div class="invalid-feedback">
+        {{ $message }}
+    </div>
+@enderror
                                     </div>
 
                                     {{-- Deskripsi --}}

@@ -14,6 +14,7 @@ class EventCategory extends Model
         'name',
         'slug',
         'description',
+        'is_active'
     ];
 
     public function events()

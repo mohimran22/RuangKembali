@@ -33,69 +33,134 @@
         </div>
 
         <div class="table-responsive">
-            <table class="table card-table table-vcenter">
+            <table
+                id="transactions-table"
+                class="table card-table table-vcenter"
+                style="width: 100%;"
+            >
                 <thead>
                     <tr>
+                        <th>#</th>
                         <th>No. Transaksi</th>
                         <th>Event</th>
-                        <th>Pendaftar</th>
-                        <th>Peserta</th>
+                        <th>Didaftarkan Oleh</th>
+                        <th>Jumlah Peserta</th>
                         <th>Total Harga</th>
-                        <th>Metode</th>
                         <th>Status</th>
                         <th></th>
                     </tr>
                 </thead>
-                <tbody>
-                    @forelse($transactions as $transaction)
-                        <tr>
-                            <td>{{ $transaction->transaction_code }}</td>
-                            <td>{{ $transaction->event->name }}</td>
-                            <td>{{ $transaction->registeredBy->fullname ?? $transaction->registeredBy->name }}</td>
-                            <td>{{ $transaction->registrations_count }}</td>
-                            <td>Rp {{ number_format($transaction->total_amount, 0, ',', '.') }}</td>
-                            <td class="text-capitalize">{{ $transaction->payment_method }}</td>
-                            <td>
-                                @php
-                                    $statusMap = [
-                                        'pending' => ['label' => 'Menunggu Pembayaran', 'class' => 'bg-warning-lt'],
-                                        'waiting_confirmation' => ['label' => 'Menunggu Konfirmasi', 'class' => 'bg-blue-lt'],
-                                        'paid' => ['label' => 'Lunas', 'class' => 'bg-success-lt'],
-                                        'rejected' => ['label' => 'Ditolak', 'class' => 'bg-danger-lt'],
-                                        'expired' => ['label' => 'Kadaluarsa', 'class' => 'bg-secondary-lt'],
-                                    ];
-                                    $currentStatus = $statusMap[$transaction->status] ?? ['label' => $transaction->status, 'class' => 'bg-secondary-lt'];
-                                @endphp
-                                <span class="badge {{ $currentStatus['class'] }}">
-                                    {{ $currentStatus['label'] }}
-                                </span>
-                            </td>
-                            <td>
-                                <a href="{{ route('admin.transactions.show', $transaction->id) }}"
-                                   class="btn btn-sm btn-outline-primary">
-                                    Detail
-                                </a>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="8" class="text-center text-secondary py-4">
-                                Tidak ada transaksi.
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
+
+                <tbody></tbody>
             </table>
         </div>
-
-        @if($transactions->hasPages())
-            <div class="card-footer">
-                {{ $transactions->links() }}
-            </div>
-        @endif
 
     </div>
 
 </div>
+<script>
+$(function () {
 
+    $('#transactions-table').DataTable({
+
+        processing: true,
+
+        serverSide: true,
+
+        ajax: {
+            url: "{{ route('admin.transactions.index') }}",
+            type: "GET",
+
+            data: function (d) {
+                d.status = "{{ $status }}";
+            }
+        },
+
+        columns: [
+            {
+                data: 'DT_RowIndex',
+                name: 'DT_RowIndex',
+                orderable: false,
+                searchable: false
+            },
+            {
+                data: 'transaction_code',
+                name: 'transaction_code'
+            },
+            {
+                data: 'event_name',
+                name: 'event.name',
+                orderable: false
+            },
+            {
+                data: 'registered_by_name',
+                name: 'registeredBy.fullname',
+                orderable: false
+            },
+            {
+                data: 'participants',
+                name: 'registrations_count',
+                orderable: false,
+                searchable: false
+            },
+            {
+                data: 'total_amount',
+                name: 'total_amount'
+            },
+            {
+                data: 'status_badge',
+                name: 'status',
+                orderable: false
+            },
+            {
+                data: 'action',
+                name: 'action',
+                orderable: false,
+                searchable: false
+            }
+        ],
+
+        order: [
+            [1, 'desc']
+        ],
+
+        pageLength: 15,
+
+        lengthMenu: [
+            [15, 25, 50, 100],
+            [15, 25, 50, 100]
+        ],
+
+        language: {
+            processing: 'Memuat data...',
+            search: 'Cari:',
+            lengthMenu: 'Tampilkan _MENU_ data',
+            info: 'Menampilkan _START_ sampai _END_ dari _TOTAL_ transaksi',
+            infoEmpty: 'Tidak ada transaksi',
+            zeroRecords: 'Transaksi tidak ditemukan',
+            emptyTable: 'Belum ada transaksi',
+            paginate: {
+                first: 'Pertama',
+                last: 'Terakhir',
+                next: '›',
+                previous: '‹'
+            }
+        },
+
+        drawCallback: function () {
+
+            document
+                .querySelectorAll('[data-bs-toggle="tooltip"]')
+                .forEach(function (element) {
+
+                    new bootstrap.Tooltip(element);
+
+                });
+
+        }
+
+    });
+
+});
+</script>
 @endsection
