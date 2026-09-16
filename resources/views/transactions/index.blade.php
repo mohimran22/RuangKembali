@@ -18,96 +18,148 @@
     <div class="card">
 
         <div class="table-responsive">
-            <table class="table card-table table-vcenter">
+            <table
+                id="transactions-table"
+                class="table card-table table-vcenter"
+                style="width: 100%;"
+            >
                 <thead>
                     <tr>
                         <th>#</th>
                         <th>No. Transaksi</th>
                         <th>Event</th>
+
                         @if(auth()->user()->hasRole('Super-Admin'))
                             <th>Didaftarkan Oleh</th>
                         @endif
+
                         <th>Jumlah Peserta</th>
                         <th>Total Harga</th>
                         <th>Status</th>
                         <th></th>
                     </tr>
                 </thead>
+
                 <tbody>
-                    @forelse($transactions as $transaction)
-                        <tr>
-                            <td>{{ $loop->iteration }}</td>
-                            <td>{{ $transaction->transaction_code }}</td>
-                            <td>{{ $transaction->event->name }}</td>
-                            @if(auth()->user()->hasRole('Super-Admin'))
-                                <td>{{ $transaction->registeredBy->fullname ?? $transaction->registeredBy->name ?? '-' }}</td>
-                            @endif
-                            <td>
-                                {{ $transaction->registrations_count }}
-                                @if($transaction->registrations_count > 0)
-                                    <i class="ti ti-info-circle text-secondary ms-1"
-                                    data-bs-toggle="tooltip"
-                                    title="{{ $transaction->registrations->pluck('user.fullname')->implode(', ') }}"></i>
-                                @endif
-                            </td>
-                            <td>Rp {{ number_format($transaction->total_amount, 0, ',', '.') }}</td>
-                            <td>
-                                @php
-                                    $statusMap = [
-                                        'pending' => ['label' => 'Menunggu Pembayaran', 'class' => 'bg-warning-lt'],
-                                        'waiting_confirmation' => ['label' => 'Menunggu Konfirmasi', 'class' => 'bg-blue-lt'],
-                                        'paid' => ['label' => 'Lunas', 'class' => 'bg-success-lt'],
-                                        'rejected' => ['label' => 'Ditolak', 'class' => 'bg-danger-lt'],
-                                        'expired' => ['label' => 'Kadaluarsa', 'class' => 'bg-secondary-lt'],
-                                    ];
-                                    $currentStatus = $statusMap[$transaction->status] ?? ['label' => $transaction->status, 'class' => 'bg-secondary-lt'];
-                                @endphp
-                                <span class="badge {{ $currentStatus['class'] }}">
-                                    {{ $currentStatus['label'] }}
-                                </span>
-                            </td>
-                            <td>
-                                <div class="btn-list flex-nowrap">
-
-                                    <a href="{{ auth()->user()->hasAnyRole(['Super-Admin', 'Tim'])
-                                            ? route('admin.transactions.show', $transaction->id)
-                                            : route('transactions.show', $transaction->id) }}"
-                                    class="btn btn-sm btn-primary"
-                                    title="Lihat Detail">
-                                        <i class="ti ti-eye"></i>
-                                    </a>
-
-                                    {{-- Tombol cepat ke halaman approve/reject: cuma admin/team, cuma kalau sudah upload bukti --}}
-                                    @if(auth()->user()->hasAnyRole(['Super-Admin', 'Tim']) && $transaction->status === 'waiting_confirmation')
-                                        <a href="{{ route('admin.transactions.show', $transaction->id) }}"
-                                        class="btn btn-sm btn-outline-warning"
-                                        title="Perlu Verifikasi">
-                                            <i class="ti ti-clock-check"></i>
-                                        </a>
-                                    @endif
-
-                                </div>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="6" class="text-center text-secondary py-4">
-                                Belum ada transaksi.
-                            </td>
-                        </tr>
-                    @endforelse
                 </tbody>
             </table>
         </div>
 
-        @if($transactions->hasPages())
-            <div class="card-footer">
-                {{ $transactions->links() }}
-            </div>
-        @endif
-
     </div>
-
 </div>
 
 @endsection
+@push('js')
+<script>
+$(function () {
+
+    const isSuperAdmin = @json(
+        auth()->user()->hasRole('Super-Admin')
+    );
+
+    let columns = [
+        {
+            data: 'DT_RowIndex',
+            name: 'DT_RowIndex',
+            orderable: false,
+            searchable: false
+        },
+        {
+            data: 'transaction_code',
+            name: 'transaction_code'
+        },
+        {
+            data: 'event_name',
+            name: 'event.name',
+            orderable: false
+        }
+    ];
+    if (isSuperAdmin) {
+        columns.push({
+            data: 'registered_by_name',
+            name: 'registeredBy.fullname',
+            orderable: false
+        });
+    }
+
+    columns.push(
+        {
+            data: 'participants',
+            name: 'registrations_count',
+            orderable: false,
+            searchable: false
+        },
+        {
+            data: 'total_amount',
+            name: 'total_amount'
+        },
+        {
+            data: 'status_badge',
+            name: 'status',
+            orderable: false
+        },
+        {
+            data: 'action',
+            name: 'action',
+            orderable: false,
+            searchable: false
+        }
+    );
+
+    const table = $('#transactions-table').DataTable({
+
+        processing: true,
+
+        serverSide: true,
+
+        ajax: {
+            url: "{{ route('transactions.index') }}",
+            type: "GET"
+        },
+
+        columns: columns,
+
+        order: [
+            [1, 'desc']
+        ],
+
+        pageLength: 10,
+
+        lengthMenu: [
+            [10, 25, 50, 100],
+            [10, 25, 50, 100]
+        ],
+
+        language: {
+            processing: 'Memuat data...',
+            search: 'Cari:',
+            lengthMenu: 'Tampilkan _MENU_ data',
+            info: 'Menampilkan _START_ sampai _END_ dari _TOTAL_ transaksi',
+            infoEmpty: 'Tidak ada transaksi',
+            zeroRecords: 'Transaksi tidak ditemukan',
+            emptyTable: 'Belum ada transaksi',
+            paginate: {
+                first: 'Pertama',
+                last: 'Terakhir',
+                next: '›',
+                previous: '‹'
+            }
+        },
+
+        drawCallback: function () {
+
+            document
+                .querySelectorAll('[data-bs-toggle="tooltip"]')
+                .forEach(function (element) {
+
+                    new bootstrap.Tooltip(element);
+
+                });
+
+        }
+
+    });
+
+});
+</script>
+@endpush

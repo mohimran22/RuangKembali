@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Transaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Yajra\DataTables\Facades\DataTables;
 
 class TransactionController extends Controller
 {
@@ -104,34 +105,34 @@ public function index(Request $request)
                 $statusMap = [
                     'pending' => [
                         'label' => 'Menunggu Pembayaran',
-                        'class' => 'bg-warning-lt',
+                        'class' => 'bg-warning',
                     ],
 
                     'waiting_confirmation' => [
                         'label' => 'Menunggu Konfirmasi',
-                        'class' => 'bg-blue-lt',
+                        'class' => 'bg-blue',
                     ],
 
                     'paid' => [
                         'label' => 'Lunas',
-                        'class' => 'bg-success-lt',
+                        'class' => 'bg-success',
                     ],
 
                     'rejected' => [
                         'label' => 'Ditolak',
-                        'class' => 'bg-danger-lt',
+                        'class' => 'bg-danger',
                     ],
 
                     'expired' => [
                         'label' => 'Kadaluarsa',
-                        'class' => 'bg-secondary-lt',
+                        'class' => 'bg-secondary',
                     ],
                 ];
 
                 $currentStatus = $statusMap[$transaction->status]
                     ?? [
                         'label' => $transaction->status,
-                        'class' => 'bg-secondary-lt',
+                        'class' => 'bg-secondary',
                     ];
 
                 return '<span class="badge '
