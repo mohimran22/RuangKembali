@@ -8,12 +8,35 @@ use Illuminate\Support\Facades\Storage;
 
 class TransactionController extends Controller
 {
+// public function index(Request $request)
+// {
+//     $query = Transaction::with([
+//         'event',
+//         'registeredBy',
+//         'registrations.user:id,fullname'
+//     ])
+//     ->withCount('registrations')
+//     ->latest();
+
+//     if (!auth()->user()->hasAnyRole(['Super-Admin', 'Tim'])) {
+//         $query->where(function ($q) {
+//             $q->where('registered_by', auth()->id())
+//               ->orWhereHas('registrations', function ($registrationQuery) {
+//                   $registrationQuery->where('user_id', auth()->id());
+//               });
+//         });
+//     }
+
+//     $transactions = $query->paginate(10);
+
+//     return view('transactions.index', compact('transactions'));
+// }
 public function index(Request $request)
 {
     $query = Transaction::with([
         'event',
         'registeredBy',
-        'registrations.user:id,fullname'
+        'registrations.user:id,fullname',
     ])
     ->withCount('registrations')
     ->latest();
@@ -22,16 +45,161 @@ public function index(Request $request)
         $query->where(function ($q) {
             $q->where('registered_by', auth()->id())
               ->orWhereHas('registrations', function ($registrationQuery) {
-                  $registrationQuery->where('user_id', auth()->id());
+                  $registrationQuery->where(
+                      'user_id',
+                      auth()->id()
+                  );
               });
         });
     }
 
-    $transactions = $query->paginate(10);
+    if ($request->ajax()) {
 
-    return view('transactions.index', compact('transactions'));
+        return DataTables::eloquent($query)
+
+            ->addIndexColumn()
+
+            ->addColumn('event_name', function ($transaction) {
+                return e($transaction->event->name ?? '-');
+            })
+
+            ->addColumn('registered_by_name', function ($transaction) {
+                return e(
+                    $transaction->registeredBy->fullname
+                    ?? $transaction->registeredBy->name
+                    ?? '-'
+                );
+            })
+
+            ->addColumn('participants', function ($transaction) {
+
+                if ($transaction->registrations_count == 0) {
+                    return '0';
+                }
+
+                $names = $transaction->registrations
+                    ->map(function ($registration) {
+                        return $registration->user->fullname ?? '-';
+                    })
+                    ->filter()
+                    ->implode(', ');
+
+                return $transaction->registrations_count
+                    . ' <i class="ti ti-info-circle text-secondary ms-1"
+                            data-bs-toggle="tooltip"
+                            title="' . e($names) . '"></i>';
+            })
+
+            ->editColumn('total_amount', function ($transaction) {
+                return 'Rp ' . number_format(
+                    $transaction->total_amount,
+                    0,
+                    ',',
+                    '.'
+                );
+            })
+
+            ->addColumn('status_badge', function ($transaction) {
+
+                $statusMap = [
+                    'pending' => [
+                        'label' => 'Menunggu Pembayaran',
+                        'class' => 'bg-warning-lt',
+                    ],
+
+                    'waiting_confirmation' => [
+                        'label' => 'Menunggu Konfirmasi',
+                        'class' => 'bg-blue-lt',
+                    ],
+
+                    'paid' => [
+                        'label' => 'Lunas',
+                        'class' => 'bg-success-lt',
+                    ],
+
+                    'rejected' => [
+                        'label' => 'Ditolak',
+                        'class' => 'bg-danger-lt',
+                    ],
+
+                    'expired' => [
+                        'label' => 'Kadaluarsa',
+                        'class' => 'bg-secondary-lt',
+                    ],
+                ];
+
+                $currentStatus = $statusMap[$transaction->status]
+                    ?? [
+                        'label' => $transaction->status,
+                        'class' => 'bg-secondary-lt',
+                    ];
+
+                return '<span class="badge '
+                    . $currentStatus['class']
+                    . '">'
+                    . e($currentStatus['label'])
+                    . '</span>';
+            })
+
+            ->addColumn('action', function ($transaction) {
+
+                $showRoute = auth()->user()->hasAnyRole([
+                    'Super-Admin',
+                    'Tim'
+                ])
+                    ? route(
+                        'admin.transactions.show',
+                        $transaction->id
+                    )
+                    : route(
+                        'transactions.show',
+                        $transaction->id
+                    );
+
+                $html = '
+                    <div class="btn-list flex-nowrap">
+
+                        <a href="' . $showRoute . '"
+                           class="btn btn-sm btn-primary"
+                           title="Lihat Detail">
+                            <i class="ti ti-eye"></i>
+                        </a>
+                ';
+                if (
+                    auth()->user()->hasAnyRole([
+                        'Super-Admin',
+                        'Tim'
+                    ])
+                    && $transaction->status === 'waiting_confirmation'
+                ) {
+
+                    $html .= '
+                        <a href="' . $showRoute . '"
+                           class="btn btn-sm btn-outline-warning"
+                           title="Perlu Verifikasi">
+                            <i class="ti ti-clock-check"></i>
+                        </a>
+                    ';
+                }
+
+                $html .= '
+                    </div>
+                ';
+
+                return $html;
+            })
+
+            ->rawColumns([
+                'participants',
+                'status_badge',
+                'action',
+            ])
+
+            ->make(true);
+    }
+
+    return view('transactions.index');
 }
-
 public function show(Transaction $transaction)
 {
     $user = auth()->user();

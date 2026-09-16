@@ -9,21 +9,33 @@
         <nav class="website-menu" id="websiteMenu">
             <a href="/">HOME</a>
             <a href="#">ARTIKEL</a>
-            <a href="#">PRODUK</a>
-            <div class="menu-dropdown">
-                <button type="button" class="menu-link">
-                    EVENT
-                    <i class="ti ti-chevron-down"></i>
-                </button>
-                <div class="mega-menu">
-                    <a href="#">Bisik Lirih</a>
-                    <a href="#">Bukti Cinta Sang Idola</a>
-                    <a href="#">The 30 Days Race</a>
-                    <a href="#">Bisik Lirih Podcast</a>
-                    <a href="#">Ruka Movement</a>
-                    <a href="#">Ruka Bazaar</a>
-                </div>
+            {{-- <a href="#">PRODUK</a> --}}
+<div class="menu-dropdown">
+    <button type="button" class="menu-link">
+        EVENT
+        <i class="ti ti-chevron-down"></i>
+    </button>
+<div class="mega-menu">
+    @forelse ($eventCategories as $category)
+        <div class="mega-menu-item">
+            <a href="#" class="mega-menu-category">
+                {{ $category->name }}
+                <i class="ti ti-chevron-right"></i>
+            </a>
+
+            <div class="mega-submenu">
+                @foreach ($category->events as $event)
+                    <a href="{{ route('events.show', $event->event_code) }}">
+                        {{ $event->name }}
+                    </a>
+                @endforeach
             </div>
+        </div>
+    @empty
+        <span class="mega-menu-empty">Belum ada event tersedia</span>
+    @endforelse
+</div>
+</div>
             <a href="{{ route('register') }}">BERGABUNG</a>
             <a href="#">TENTANG KAMI</a>
         </nav>

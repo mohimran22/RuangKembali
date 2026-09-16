@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\URL;
 use App\Helpers\ActiveRole;
 use TakiElias\Tablar\Tablar;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\View;
+use App\View\Composers\NavbarComposer;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -37,5 +39,6 @@ class AppServiceProvider extends ServiceProvider
             return ActiveRole::hasPermission($permission);
         });
         Carbon::setLocale('id');
+        View::composer('partials.navbar', NavbarComposer::class);
     }
 }

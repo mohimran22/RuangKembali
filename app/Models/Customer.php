@@ -81,7 +81,7 @@ public static function generateNic()
 
     $newNumber = ($lastNumber ?? 0) + 1;
 
-    return 'C-' . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
+    return 'M-' . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
 }
 
 

@@ -302,9 +302,7 @@ Route::post('/warehouse/products/store', [SupplierCatalogController::class, 'sto
 
 Route::middleware(['auth', 'permission:lihat daftar event|lihat data event'])->group(function () {
 
-    Route::get('/events/{event}/continue', 
-    [EventController::class, 'continue'])
-    ->name('events.continue');
+    Route::get('/events/{event:event_code}', [EventController::class, 'show'])->name('events.show');
 
     Route::resource('/events', EventController::class);
     Route::get('events/{event}/pdf', [EventController::class, 'pdf'])
@@ -316,6 +314,7 @@ Route::get('/events/{event}/participants/lookup', [EventController::class, 'look
 Route::post('/events/{event}/participants/checkin-scan', [EventController::class, 'checkinScan'])
     ->name('events.participants.checkinScan')
     ->middleware(['auth', 'role:Tim|Super-Admin']);
+    Route::get('/events/{event:event_code}', [EventController::class, 'show'])->name('events.show');
 });
 
 Route::get('/transactions', [TransactionController::class, 'index'])

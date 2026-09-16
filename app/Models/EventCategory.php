@@ -16,9 +16,9 @@ class EventCategory extends Model
         'description',
     ];
 
-    public function category()
+    public function events()
     {
-        return $this->belongsTo(EventCategory::class, 'event_category_id');
+        return $this->hasMany(Event::class)->latest();
     }
 
     public function speakers()
@@ -55,81 +55,4 @@ class EventCategory extends Model
     {
         return $this->hasOne(EventCertificate::class);
     }
-
-    public function getRemainingQuotaAttribute()
-    {
-        return max(
-            0,
-            $this->quota - $this->registrations()->count()
-        );
-    }
-
-    public function getIsRegistrationOpenAttribute()
-    {
-        $today = now();
-
-        return $this->registration_open <= $today &&
-               $this->registration_close >= $today;
-    }
-
-    public function getIsFullAttribute()
-    {
-        return $this->remaining_quota <= 0;
-    }
-    public function scopePublished($query)
-{
-    return $query->where('is_published', true);
-}
-
-public function scopeUpcoming($query)
-{
-    return $query->where('start_at', '>', now());
-}
-
-public function scopeOngoing($query)
-{
-    return $query
-        ->where('start_at', '<=', now())
-        ->where('end_at', '>=', now());
-}
-
-public function scopeFinished($query)
-{
-    return $query->where('end_at', '<', now());
-}
-
-public function scopeByStatus($query, $status)
-{
-    return $query->where('status', $status);
-}
-public function getStatusLabelAttribute()
-{
-    $now = now();
-
-    if ($now < $this->registration_open) {
-        return 'Coming Soon';
-    }
-
-    if (
-        $now >= $this->registration_open &&
-        $now <= $this->registration_close
-    ) {
-        return $this->is_full
-            ? 'Sold Out'
-            : 'Pendaftaran';
-    }
-
-    if (
-        $now >= $this->start_at &&
-        $now <= $this->end_at
-    ) {
-        return 'Sedang Berlangsung';
-    }
-
-    if ($now > $this->end_at) {
-        return 'Selesai';
-    }
-
-    return 'Coming Soon';
-}
 }
