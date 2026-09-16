@@ -163,4 +163,90 @@ $(function () {
 
 });
 </script>
+<script>
+$(document).on('click', '.btn-delete-transaction', function () {
+
+    const button = $(this);
+    const url = button.data('url');
+
+    Swal.fire({
+        title: 'Hapus transaksi?',
+        text: 'Transaksi dan seluruh peserta yang terkait akan dihapus.',
+        icon: 'warning',
+
+        showCancelButton: true,
+
+        confirmButtonText: 'Ya, Hapus',
+        cancelButtonText: 'Batal',
+
+        reverseButtons: true
+    }).then((result) => {
+
+        if (!result.isConfirmed) {
+            return;
+        }
+
+        $.ajax({
+
+            url: url,
+
+            type: 'DELETE',
+
+            data: {
+                _token: '{{ csrf_token() }}'
+            },
+
+            beforeSend: function () {
+
+                button
+                    .prop('disabled', true)
+                    .html(
+                        '<i class="ti ti-loader-2 spin"></i>'
+                    );
+
+            },
+
+            success: function (response) {
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil',
+                    text: response.message,
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+
+                $('#transactions-table')
+                    .DataTable()
+                    .ajax
+                    .reload(null, false);
+            },
+
+            error: function (xhr) {
+
+                let message = 'Transaksi gagal dihapus.';
+
+                if (
+                    xhr.responseJSON &&
+                    xhr.responseJSON.message
+                ) {
+                    message = xhr.responseJSON.message;
+                }
+
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Tidak dapat menghapus',
+                    text: message
+                });
+
+                button.prop('disabled', false);
+
+            }
+
+        });
+
+    });
+
+});
+</script>
 @endsection

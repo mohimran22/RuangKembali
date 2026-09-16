@@ -126,12 +126,17 @@ public function index(Request $request)
                     $transaction->id
                 );
 
+                $deleteRoute = route(
+                    'admin.transactions.destroy',
+                    $transaction->id
+                );
+
                 $html = '
                     <div class="btn-list flex-nowrap">
 
                         <a href="' . $showRoute . '"
-                           class="btn btn-sm btn-primary"
-                           title="Lihat Detail">
+                        class="btn btn-sm btn-primary"
+                        title="Lihat Detail">
                             <i class="ti ti-eye"></i>
                         </a>
                 ';
@@ -140,10 +145,25 @@ public function index(Request $request)
 
                     $html .= '
                         <a href="' . $showRoute . '"
-                           class="btn btn-sm btn-outline-warning"
-                           title="Perlu Verifikasi">
+                        class="btn btn-sm btn-outline-warning"
+                        title="Perlu Verifikasi">
                             <i class="ti ti-clock-check"></i>
                         </a>
+                    ';
+                }
+
+                if (
+                    auth()->user()->hasRole('Super-Admin')
+                    && $transaction->status !== 'paid'
+                ) {
+
+                    $html .= '
+                        <button type="button"
+                                class="btn btn-sm btn-outline-danger btn-delete-transaction"
+                                data-url="' . $deleteRoute . '"
+                                title="Hapus Transaksi">
+                            <i class="ti ti-trash"></i>
+                        </button>
                     ';
                 }
 

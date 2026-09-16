@@ -144,48 +144,51 @@ public function index(Request $request)
 
             ->addColumn('action', function ($transaction) {
 
-                $showRoute = auth()->user()->hasAnyRole([
-                    'Super-Admin',
-                    'Tim'
-                ])
-                    ? route(
-                        'admin.transactions.show',
-                        $transaction->id
-                    )
-                    : route(
-                        'transactions.show',
-                        $transaction->id
-                    );
+                $isAdmin = auth()->user()->hasAnyRole(['Super-Admin', 'Tim']);
 
-                $html = '
-                    <div class="btn-list flex-nowrap">
+                $showRoute = $isAdmin
+                    ? route('admin.transactions.show', $transaction->id)
+                    : route('transactions.show', $transaction->id);
 
-                        <a href="' . $showRoute . '"
-                           class="btn btn-sm btn-primary"
-                           title="Lihat Detail">
-                            <i class="ti ti-eye"></i>
-                        </a>
+                $html = '<div class="btn-list flex-nowrap">';
+
+                $html .= '
+                    <a href="' . $showRoute . '"
+                    class="btn btn-sm btn-primary"
+                    title="Lihat Detail">
+                        <i class="ti ti-eye"></i>
+                    </a>
                 ';
-                if (
-                    auth()->user()->hasAnyRole([
-                        'Super-Admin',
-                        'Tim'
-                    ])
-                    && $transaction->status === 'waiting_confirmation'
-                ) {
 
+                if ($isAdmin && $transaction->status === 'waiting_confirmation') {
                     $html .= '
                         <a href="' . $showRoute . '"
-                           class="btn btn-sm btn-outline-warning"
-                           title="Perlu Verifikasi">
+                        class="btn btn-sm btn-outline-warning"
+                        title="Perlu Verifikasi">
                             <i class="ti ti-clock-check"></i>
                         </a>
                     ';
                 }
 
-                $html .= '
-                    </div>
-                ';
+                if ($isAdmin) {
+                    $editRoute = route('admin.transactions.edit', $transaction->id);
+
+                    $html .= '
+                        <a href="' . $editRoute . '"
+                        class="btn btn-sm btn-outline-secondary"
+                        title="Edit Transaksi">
+                            <i class="ti ti-edit"></i>
+                        </a>
+                        <button type="button"
+                                class="btn btn-sm btn-outline-danger btn-delete-transaction"
+                                data-id="' . $transaction->id . '"
+                                title="Hapus Transaksi">
+                            <i class="ti ti-trash"></i>
+                        </button>
+                    ';
+                }
+
+                $html .= '</div>';
 
                 return $html;
             })

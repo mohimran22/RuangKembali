@@ -302,8 +302,6 @@ Route::post('/warehouse/products/store', [SupplierCatalogController::class, 'sto
 
 Route::middleware(['auth', 'permission:lihat daftar event|lihat data event'])->group(function () {
 
-    Route::get('/events/{event:event_code}', [EventController::class, 'show'])->name('events.show');
-
     Route::resource('/events', EventController::class);
     Route::get('events/{event}/pdf', [EventController::class, 'pdf'])
     ->name('events.pdf');
@@ -341,6 +339,15 @@ Route::prefix('admin')
 
         Route::post('/transactions/{transaction}/reject', [AdminTransactionController::class, 'reject'])
             ->name('transactions.reject');
+
+        Route::get('transactions/{transaction}/edit', [TransactionController::class, 'edit'])
+            ->name('admin.transactions.edit');
+
+        Route::put('transactions/{transaction}', [TransactionController::class, 'update'])
+            ->name('admin.transactions.update');
+
+        Route::delete('transactions/{transaction}', [TransactionController::class, 'destroy'])
+            ->name('admin.transactions.destroy');
 
     });
 Route::post('/job-categories/{id}/duplicate', [JobCategoryController::class, 'duplicate'])
