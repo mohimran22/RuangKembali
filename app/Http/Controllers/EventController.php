@@ -53,7 +53,7 @@ public function index(Request $request)
             })
 
             ->addColumn('event_name', function ($event) {
-                $url = route('events.show', $event->id);
+                $url = route('events.manage', $event->id);
 
                 return '<a href="' . $url . '">'
                     . e(Str::title($event->name ?? '-'))
@@ -183,7 +183,7 @@ public function index(Request $request)
 
                 if (auth()->user()->can('lihat data event')) {
                     $buttons .= '
-                        <a href="' . route('events.show', $event->id) . '"
+                        <a href="' . route('events.manage', $event->id) . '"
                            class="btn btn-icon btn-sm btn-primary"
                            title="Detail">
                             <i class="ti ti-eye"></i>
@@ -464,19 +464,19 @@ public function store(Request $request)
 
 private function generateEventCode(): string
 {
-    $prefix = 'EVT' . now()->format('Ym');
+    $prefix = 'EVT' . now()->format('Y');
 
     $last = Event::where('event_code', 'like', $prefix . '%')
-        ->latest()
+        ->orderByDesc('event_code')
         ->first();
 
     if (!$last) {
-        return $prefix . '0001';
+        return $prefix . '001';
     }
 
-    $number = (int) substr($last->event_code, -4) + 1;
+    $number = (int) substr($last->event_code, -3) + 1;
 
-    return $prefix . str_pad($number, 4, '0', STR_PAD_LEFT);
+    return $prefix . str_pad($number, 3, '0', STR_PAD_LEFT);
 }
 public function edit(Event $event)
 {
@@ -1085,5 +1085,12 @@ public function checkinScan(Request $request, Event $event)
         'participant' => array_merge($participantData, ['status' => 'attended']),
     ]);
 }
+public function showPublic(Event $event)
+{
+    abort_unless($event->is_published, 404);
 
+    $event->load('category', 'galleries', 'faqs', 'sponsors', 'speakers');
+
+    return view('events.public-show', compact('event'));
+}
 }

@@ -1,6 +1,5 @@
 <?php
 
-// app/View/Composers/NavbarComposer.php
 namespace App\View\Composers;
 
 use App\Models\EventCategory;
@@ -18,7 +17,7 @@ class NavbarComposer
                     ->latest('start_at')
                     ->limit(6); // batasi biar dropdown gak kepanjangan
             }])
-            ->has('events') // skip kategori yang gak punya event published
+            // ->has('events') // skip kategori yang gak punya event published
             ->orderBy('name')
             ->get()
         );

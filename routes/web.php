@@ -18,7 +18,7 @@ use App\Http\Controllers\AffiliatorController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\ProjectLevelController;
 use App\Http\Controllers\SupplierController;
-use App\Http\Controllers\ContractorController;
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\WorkerController;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\InvestorController;
@@ -45,9 +45,10 @@ use App\Http\Controllers\KasController;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\Request;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::get('/', [HomeController::class, 'index']);
+// Route::get('/', function () {
+//     return view('welcome');
+// });
 
 require __DIR__.'/auth.php';
 
@@ -288,33 +289,22 @@ Route::middleware(['auth', 'permission:lihat daftar produk'])->group(function ()
 Route::post('/products/generate-sku', [ProductController::class, 'generateSku'])
     ->name('products.generateSku');
 
-
-Route::middleware(['auth', 'permission:lihat daftar gudang|lihat data gudang'])->group(function () {
-    route::resource('/warehouses', WarehouseController::class);
-});
-
-
-Route::get('/warehouse/search-product', [SupplierCatalogController::class, 'searchProduct'])
-    ->name('warehouse.searchProduct');
-
-Route::post('/warehouse/products/store', [SupplierCatalogController::class, 'storeSupplierProduct'])
-    ->name('warehouse.products.store');
-
 Route::middleware(['auth', 'permission:lihat daftar event|lihat data event'])->group(function () {
-
-    Route::resource('/events', EventController::class);
+    Route::resource('/events', EventController::class)->except(['show']);
+    Route::get('/events/{event}/manage', [EventController::class, 'show'])->name('events.manage');
     Route::get('events/{event}/pdf', [EventController::class, 'pdf'])
     ->name('events.pdf');
-Route::get('/events/{event}/participants/lookup', [EventController::class, 'lookupParticipant'])
-    ->name('events.participants.lookup')
-    ->middleware(['auth', 'role:Tim|Super-Admin']);
+    Route::get('/events/{event}/participants/lookup', [EventController::class, 'lookupParticipant'])
+        ->name('events.participants.lookup')
+        ->middleware(['auth', 'role:Tim|Super-Admin']);
 
-Route::post('/events/{event}/participants/checkin-scan', [EventController::class, 'checkinScan'])
-    ->name('events.participants.checkinScan')
-    ->middleware(['auth', 'role:Tim|Super-Admin']);
-    Route::get('/events/{event:event_code}', [EventController::class, 'show'])->name('events.show');
+    Route::post('/events/{event}/participants/checkin-scan', [EventController::class, 'checkinScan'])
+        ->name('events.participants.checkinScan')
+        ->middleware(['auth', 'role:Tim|Super-Admin']);
 });
-
+Route::get('/events/{event:event_code}', [EventController::class, 'showPublic'])
+    ->name('events.show')
+    ->where('event', '^EVT\d{7}$');
 Route::get('/transactions', [TransactionController::class, 'index'])
     ->name('transactions.index');
 Route::get('/transactions/{transaction}', [TransactionController::class, 'show'])

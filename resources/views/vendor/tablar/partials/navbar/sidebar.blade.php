@@ -6,15 +6,12 @@
     <div class="sidebar-inner">
         <div class="sidebar-header">
             <div class="sidebar-logo-wrapper">
-
-                <img src="{{ asset('images/LOGORuKa.png') }}"
-                    class="logo-expand"
-                    alt="Ruang Kembali">
-
-                <img src="{{ asset('images/LOGO-RuKa-website.png') }}"
-                    class="logo-collapse"
-                    alt="Logo Icon">
-
+                <a href="/" class="logo-expand">
+                    <img src="{{ asset('images/LOGORuKa.png') }}" alt="Ruang Kembali">
+                </a>
+                <a href="/" class="logo-collapse">
+                    <img src="{{ asset('images/LOGO-RuKa-website.png') }}" alt="Logo Icon">
+                </a>
             </div>
             <button id="sidebarToggle" class="sidebar-toggle-btn d-none d-lg-flex">
                 <i class="ti ti-layout-sidebar-left-collapse"></i>

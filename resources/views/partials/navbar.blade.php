@@ -10,32 +10,33 @@
             <a href="/">HOME</a>
             <a href="#">ARTIKEL</a>
             {{-- <a href="#">PRODUK</a> --}}
-<div class="menu-dropdown">
-    <button type="button" class="menu-link">
-        EVENT
-        <i class="ti ti-chevron-down"></i>
-    </button>
-<div class="mega-menu">
-    @forelse ($eventCategories as $category)
-        <div class="mega-menu-item">
-            <a href="#" class="mega-menu-category">
-                {{ $category->name }}
-                <i class="ti ti-chevron-right"></i>
-            </a>
-
-            <div class="mega-submenu">
-                @foreach ($category->events as $event)
-                    <a href="{{ route('events.show', $event->event_code) }}">
-                        {{ $event->name }}
-                    </a>
-                @endforeach
+            <div class="menu-dropdown">
+                <button type="button" class="menu-link">
+                    EVENT
+                    <i class="ti ti-chevron-down"></i>
+                </button>
+                <div class="mega-menu">
+                    @forelse ($eventCategories as $category)
+                        <div class="mega-menu-item">
+                            <a href="#" class="mega-menu-category">
+                                {{ $category->name }}
+                                <i class="ti ti-chevron-right"></i>
+                            </a>
+                            <div class="mega-submenu">
+                                @forelse ($category->events as $event)
+                                    <a href="{{ route('events.show', $event->event_code) }}">
+                                        {{ $event->name }}
+                                    </a>
+                                @empty
+                                    <span class="mega-submenu-empty">Belum ada event</span>
+                                @endforelse
+                            </div>
+                        </div>
+                    @empty
+                        <span class="mega-menu-empty">Belum ada event tersedia</span>
+                    @endforelse
+                </div>
             </div>
-        </div>
-    @empty
-        <span class="mega-menu-empty">Belum ada event tersedia</span>
-    @endforelse
-</div>
-</div>
             <a href="{{ route('register') }}">BERGABUNG</a>
             <a href="#">TENTANG KAMI</a>
         </nav>
@@ -276,7 +277,55 @@
     background:#c3bbb0;
 
 }
-/* Tablet */
+.mega-menu-item{
+    position:relative;
+}
+
+.mega-menu-category{
+    display:flex !important;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.mega-menu-category i{
+    font-size:16px;
+    transition:.2s;
+}
+
+.mega-submenu{
+    display:none;
+    position:absolute;
+    top:0;
+    left:100%;
+    width:280px;
+    background:#DCCBA8;
+    box-shadow:0 15px 35px rgba(0,0,0,.18);
+}
+
+.mega-menu-item.open .mega-submenu{
+    display:block;
+}
+
+.mega-menu-item.open > .mega-menu-category i{
+    transform:rotate(90deg);
+}
+
+.mega-submenu a{
+    border-bottom:1px solid rgba(0,0,0,.15);
+}
+
+.mega-submenu a:last-child{
+    border-bottom:none;
+}
+
+.mega-menu-empty,
+.mega-submenu-empty{
+    display:block;
+    padding:18px 28px;
+    color:#555;
+    font-size:13px;
+    font-style:italic;
+}
 @media (min-width: 992px) and (max-width: 1200px) {
 
     .website-navbar{
@@ -455,6 +504,17 @@
 
     border:none;
 }
+.mega-submenu{
+    position:static;
+    width:100%;
+    box-shadow:none;
+    margin-left:12px;
+}
+
+.mega-submenu a{
+    font-size:12px;
+    padding:10px 18px;
+}
 }
 </style>
 <script>
@@ -477,8 +537,35 @@ overlay.onclick = () => {
 document.querySelectorAll(".menu-link").forEach(button => {
     button.addEventListener("click", function(e){
         e.preventDefault();
-        console.log("klik");
-        this.closest(".menu-dropdown").classList.toggle("open");
+        const dropdown = this.closest(".menu-dropdown");
+        const isOpen = dropdown.classList.contains("open");
+
+        dropdown.classList.toggle("open");
+
+        // kalau baru ditutup, reset semua submenu kategori di dalamnya
+        if (isOpen) {
+            dropdown.querySelectorAll(".mega-menu-item.open")
+                .forEach(item => item.classList.remove("open"));
+        }
+    });
+});
+document.querySelectorAll(".mega-menu-category").forEach(button => {
+    button.addEventListener("click", function(e){
+        e.preventDefault();
+        e.stopPropagation(); // biar gak ikut nutup .menu-dropdown parent
+
+        const currentItem = this.closest(".mega-menu-item");
+        const isOpen = currentItem.classList.contains("open");
+
+        // tutup semua kategori lain dulu
+        document.querySelectorAll(".mega-menu-item.open").forEach(item => {
+            item.classList.remove("open");
+        });
+
+        // toggle kategori yang diklik
+        if (!isOpen) {
+            currentItem.classList.add("open");
+        }
     });
 });
 const userBtn = document.getElementById('userBtn');
@@ -499,6 +586,8 @@ window.addEventListener('resize', function () {
         overlay.classList.remove('show');
         document.querySelectorAll('.menu-dropdown')
             .forEach(item => item.classList.remove('open'));
+        document.querySelectorAll('.mega-menu-item')
+            .forEach(item => item.classList.remove('open')); // tambahan ini
     }
 });
 </script>
