@@ -312,6 +312,11 @@ Route::get('/transactions/{transaction}', [TransactionController::class, 'show']
 
 Route::post('/transactions/{transaction}/upload-proof', [TransactionController::class, 'uploadProof'])
     ->name('transactions.upload-proof');
+        Route::get('/transactions/{transaction}/edit', [TransactionController::class, 'edit'])
+            ->name('transactions.edit');
+
+        Route::put('/transactions/{transaction}', [TransactionController::class, 'update'])
+            ->name('transactions.update');
 
 Route::prefix('admin')
     ->middleware(['auth', 'role:Super-Admin|Tim'])
@@ -329,11 +334,6 @@ Route::prefix('admin')
 
         Route::post('/transactions/{transaction}/reject', [AdminTransactionController::class, 'reject'])
             ->name('transactions.reject');
-        Route::get('/transactions/{transaction}/edit', [TransactionController::class, 'edit'])
-            ->name('transactions.edit');
-
-        Route::put('/transactions/{transaction}', [TransactionController::class, 'update'])
-            ->name('transactions.update');
 
         Route::delete('/transactions/{transaction}', [TransactionController::class, 'destroy'])
             ->name('transactions.destroy');

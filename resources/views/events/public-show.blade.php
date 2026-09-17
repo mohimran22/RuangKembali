@@ -982,51 +982,32 @@
                     @endif
                 </div>
 
-<div class="event-sidebar-card">
-    <h3><i class="ti ti-info-circle"></i> Info Event</h3>
+                <div class="event-sidebar-card">
+                    <h3><i class="ti ti-info-circle"></i> Info Event</h3>
 
-    <div class="event-sidebar-row">
-        <span class="label">Jenis Event</span>
-        <span class="value">
-            @if ($event->event_type === 'free')
-                <span class="event-sidebar-badge free">Gratis</span>
-            @else
-                <span class="event-sidebar-badge paid">Berbayar</span>
-            @endif
-        </span>
-    </div>
+                    <div class="event-sidebar-row">
+                        <span class="label">Jenis Event</span>
+                        <span class="value">
+                            @if ($event->event_type === 'free')
+                                <span class="event-sidebar-badge free">Gratis</span>
+                            @else
+                                <span class="event-sidebar-badge paid">Berbayar</span>
+                            @endif
+                        </span>
+                    </div>
 
-    @if ($event->event_type === 'paid')
-        <div class="event-sidebar-row">
-            <span class="label">Harga Tiket</span>
-            <span class="value">
-                Rp{{ number_format($event->price, 0, ',', '.') }}
-            </span>
-        </div>
-    @endif
+                    @if ($event->event_type === 'paid')
+                        <div class="event-sidebar-row">
+                            <span class="label">Harga Tiket</span>
+                            <span class="value">Rp{{ number_format($event->price, 0, ',', '.') }}</span>
+                        </div>
+                    @endif
 
-    <div class="event-sidebar-row">
-        <span class="label">Kuota</span>
-        <span class="value">
-            {{ $event->quota ? $event->quota . ' Peserta' : 'Tidak terbatas' }}
-        </span>
-    </div>
-
-    @if ($event->speakers->count())
-        <div class="event-sidebar-row">
-            <span class="label">Pembicara</span>
-
-            <span class="value">
-                @foreach ($event->speakers as $speaker)
-                    <span class="d-block mb-1">
-                        <i class="ti ti-microphone-2 me-1"></i>
-                        {{ $speaker->fullname }}
-                    </span>
-                @endforeach
-            </span>
-        </div>
-    @endif
-</div>
+                    <div class="event-sidebar-row">
+                        <span class="label">Kuota</span>
+                        <span class="value">{{ $event->quota ? $event->quota . ' Peserta' : 'Tidak terbatas' }}</span>
+                    </div>
+                </div>
 
                 <div class="event-sidebar-card">
                     <h3><i class="ti ti-calendar-event"></i> Registrasi</h3>

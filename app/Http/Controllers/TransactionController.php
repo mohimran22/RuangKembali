@@ -171,7 +171,7 @@ public function index(Request $request)
                 }
 
                 if ($isAdmin) {
-                    $editRoute = route('admin.transactions.edit', $transaction->id);
+                    $editRoute = route('transactions.edit', $transaction->id);
 
                     $html .= '
                         <a href="' . $editRoute . '"
@@ -286,11 +286,41 @@ public function update(Request $request, Transaction $transaction)
     $this->authorizeAdminOrTim();
 
     $validated = $request->validate([
-        'status' => 'required|in:pending,waiting_confirmation,paid,rejected,expired',
-        'total_amount' => 'required|numeric|min:0',
+        'participants' => 'array',
+        'participants.*.id' => 'required|uuid|exists:event_registrations,id',
+        'participants.*.guest_name' => 'nullable|string|max:255',
+        'participants.*.guest_email' => 'nullable|email|max:255',
+        'participants.*.price' => 'required|numeric|min:0',
     ]);
 
-    $transaction->update($validated);
+    if (!empty($validated['participants'])) {
+        foreach ($validated['participants'] as $participantData) {
+
+            $registration = $transaction->registrations
+                ->firstWhere('id', $participantData['id']);
+
+            if (!$registration) {
+                continue;
+            }
+
+            $updateData = [
+                'price' => $participantData['price'],
+            ];
+
+            // Nama & email hanya untuk peserta guest (belum punya akun).
+            if (is_null($registration->user_id)) {
+                $updateData['guest_name'] = $participantData['guest_name'] ?? $registration->guest_name;
+                $updateData['guest_email'] = $participantData['guest_email'] ?? $registration->guest_email;
+            }
+
+            $registration->update($updateData);
+        }
+    }
+
+    // Hitung ulang total_amount dari harga peserta yang sudah diperbarui.
+    $transaction->update([
+        'total_amount' => $transaction->registrations()->sum('price'),
+    ]);
 
     return redirect()
         ->route('admin.transactions.index')

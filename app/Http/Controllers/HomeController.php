@@ -22,15 +22,15 @@ class HomeController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
-    {
-        $events = Event::published()
-            ->with('category')
-            ->where('end_at', '>=', now())
-            ->orderBy('start_at')
-            ->limit(6)
-            ->get();
+public function index()
+{
+    $events = Event::published()
+        ->with('category')
+        ->orderByRaw('CASE WHEN end_at < ? THEN 1 ELSE 0 END', [now()])
+        ->orderBy('start_at')
+        ->limit(6)
+        ->get();
 
-        return view('welcome', compact('events'));
-    }
+    return view('welcome', compact('events'));
+}
 }
