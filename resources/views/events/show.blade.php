@@ -708,30 +708,50 @@
                         </div>
 
                     </div>
-                        @if($event->youtube_url)
+
+                        @if($event->youtubeLinks->count())
 
                             <div class="card mb-4">
 
                                 <div class="card-header">
-
                                     <h3 class="card-title">
                                         <i class="ti ti-brand-youtube me-2"></i>
                                         Video Event
                                     </h3>
-
                                 </div>
 
-                                <div class="card-body p-0">
+                                <div class="card-body">
 
-                                    <div class="event-video-wrapper">
+                                    <div class="event-video-scroll">
 
-                                        <iframe
-                                            src="{{ $event->youtube_embed_url }}"
-                                            title="{{ $event->name }}"
-                                            frameborder="0"
-                                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                                            allowfullscreen>
-                                        </iframe>
+                                        @foreach($event->youtubeLinks as $link)
+
+                                            <div class="event-video-item">
+
+                                                <div class="event-video-wrapper">
+
+                                                    @if($link->embed_url)
+                                                        <iframe
+                                                            src="{{ $link->embed_url }}"
+                                                            title="{{ $link->title ?? $event->name }}"
+                                                            frameborder="0"
+                                                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                                            allowfullscreen
+                                                            loading="lazy">
+                                                        </iframe>
+                                                    @endif
+
+                                                </div>
+
+                                                @if($link->title)
+                                                    <div class="event-video-title">
+                                                        {{ $link->title }}
+                                                    </div>
+                                                @endif
+
+                                            </div>
+
+                                        @endforeach
 
                                     </div>
 
@@ -1071,40 +1091,40 @@
             tabindex="0">
 
             <div class="card">
-<div class="card-header event-participants-header">
+                <div class="card-header event-participants-header">
 
-    <div>
-        <h3 class="card-title mb-1">
-            <i class="ti ti-users me-2"></i>
-            Daftar Peserta Event {{ $event->name }}
-        </h3>
+                    <div>
+                        <h3 class="card-title mb-1">
+                            <i class="ti ti-users me-2"></i>
+                            Daftar Peserta Event {{ $event->name }}
+                        </h3>
 
-        <div class="text-secondary small">
-            Peserta yang telah melakukan pendaftaran pada event ini.
-        </div>
-    </div>
+                        <div class="text-secondary small">
+                            Peserta yang telah melakukan pendaftaran pada event ini.
+                        </div>
+                    </div>
 
-    <div class="header-actions">
+                    <div class="header-actions">
 
-        @hasanyrole(['Tim', 'Super-Admin'])
+                        @hasanyrole(['Tim', 'Super-Admin'])
 
-            <button type="button"
-                    class="btn btn-success btn-sm"
-                    data-bs-toggle="modal"
-                    data-bs-target="#checkinModal">
-                <i class="ti ti-scan me-1"></i>
-                Check-in Peserta
-            </button>
+                            <button type="button"
+                                    class="btn btn-success btn-sm"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#checkinModal">
+                                <i class="ti ti-scan me-1"></i>
+                                Check-in Peserta
+                            </button>
 
-        @endhasanyrole
+                        @endhasanyrole
 
-        <span class="badge bg-primary-lt">
-            {{ $registrations->count() }} Peserta
-        </span>
+                        <span class="badge bg-primary-lt">
+                            {{ $registrations->count() }} Peserta
+                        </span>
 
-    </div>
+                    </div>
 
-</div>
+                </div>
 
                 <div class="card-body">
 

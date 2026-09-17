@@ -1,9 +1,6 @@
 @extends('tablar::page')
 
 @section('content')
-
-<div class="container-xl">
-
     <div class="page-header d-print-none mb-4">
         <h2 class="page-title">Transaksi</h2>
         <div class="text-secondary" style="margin-left:20px;">
@@ -14,39 +11,44 @@
             @endif
         </div>
     </div>
+    <div class="page-body">
+        <div class="container-xl">
+            <div class="row row-deck row-cards">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="table-responsive">
+                            <table
+                                id="transactions-table"
+                                class="table card-table table-vcenter"
+                                style="width: 100%;"
+                            >
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>No. Transaksi</th>
+                                        <th>Event</th>
 
-    <div class="card">
+                                        @if(auth()->user()->hasRole('Super-Admin'))
+                                            <th>Didaftarkan Oleh</th>
+                                        @endif
 
-        <div class="table-responsive">
-            <table
-                id="transactions-table"
-                class="table card-table table-vcenter"
-                style="width: 100%;"
-            >
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>No. Transaksi</th>
-                        <th>Event</th>
+                                        <th>Jumlah Peserta</th>
+                                        <th>Total Harga</th>
+                                        <th>Status</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
 
-                        @if(auth()->user()->hasRole('Super-Admin'))
-                            <th>Didaftarkan Oleh</th>
-                        @endif
-
-                        <th>Jumlah Peserta</th>
-                        <th>Total Harga</th>
-                        <th>Status</th>
-                        <th></th>
-                    </tr>
-                </thead>
-
-                <tbody>
-                </tbody>
-            </table>
+                                <tbody>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-
     </div>
-</div>
+
 
 @endsection
 @push('js')

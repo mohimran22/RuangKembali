@@ -302,75 +302,95 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="row mb-4">
-                            <div class="col-12">
+                        <div class="card mb-4">
 
-                                <label class="form-label">
-                                    Video YouTube
-                                </label>
-
-                                <div class="input-group">
-
-                                    <span class="input-group-text">
-                                        <i class="ti ti-brand-youtube"></i>
-                                    </span>
-
-                                    <input type="url"
-                                        name="youtube_url"
-                                        id="youtube_url"
-                                        class="form-control"
-                                        value="{{ old('youtube_url') }}"
-                                        placeholder="https://www.youtube.com/watch?v=...">
-
+                            <div class="card-header">
+                                <div>
+                                    <h3 class="card-title mb-1">Video YouTube</h3>
+                                    <div class="text-secondary small">
+                                        Tambahkan satu atau lebih link video YouTube untuk event ini.
+                                    </div>
                                 </div>
 
-                                <div class="form-hint">
-                                    Masukkan link video YouTube event.
+                                <div class="card-actions">
+                                    <button type="button"
+                                            class="btn btn-primary"
+                                            id="addYoutubeButton">
+                                        <i class="ti ti-plus me-1"></i>
+                                        Tambah Video
+                                    </button>
                                 </div>
-
                             </div>
-                            <div class="col-12 mt-3">
 
-                                <div id="youtubePreviewContainer"
-                                    class="youtube-preview-container d-none">
+                            <div class="card-body">
+                                <div id="youtubeLinksContainer">
 
-                                    <div class="youtube-preview-header">
+                                    @if(old('youtube_links'))
 
-                                        <div>
-                                            <div class="fw-semibold">
-                                                Preview Video
+                                        @foreach(old('youtube_links') as $index => $link)
+                                            <div class="youtube-link-card mb-2 p-2 border rounded" data-youtube-index="{{ $index }}">
+                                                <div class="row g-2 align-items-end">
+
+                                                    <div class="col-md-6">
+                                                        <label class="form-label small mb-1">Link YouTube</label>
+                                                        <input type="url"
+                                                            name="youtube_links[{{ $index }}][url]"
+                                                            class="form-control form-control-sm youtube-url-input"
+                                                            value="{{ $link['url'] ?? '' }}"
+                                                            placeholder="https://www.youtube.com/watch?v=...">
+                                                    </div>
+
+                                                    <div class="col-md-5">
+                                                        <label class="form-label small mb-1">Judul (opsional)</label>
+                                                        <input type="text"
+                                                            name="youtube_links[{{ $index }}][title]"
+                                                            class="form-control form-control-sm"
+                                                            value="{{ $link['title'] ?? '' }}"
+                                                            placeholder="Contoh: Cuplikan Sesi 1">
+                                                    </div>
+
+                                                    <div class="col-md-1">
+                                                        <button type="button"
+                                                                class="btn btn-sm btn-danger w-100 youtube-remove-btn"
+                                                                title="Hapus video">
+                                                            <i class="ti ti-trash"></i>
+                                                        </button>
+                                                    </div>
+
+                                                </div>
+
+                                                {{-- BARU: slot preview --}}
+                                                <div class="col-12 mt-2 youtube-preview-slot d-none">
+                                                    <div class="youtube-link-preview">
+                                                        <div class="preview-frame-wrapper">
+                                                            <iframe class="youtube-preview-frame"
+                                                                    src=""
+                                                                    title="Preview"
+                                                                    frameborder="0"
+                                                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                                                    allowfullscreen>
+                                                            </iframe>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
+                                        @endforeach
 
+                                    @else
+
+                                        <div id="youtubeLinksEmptyState" class="event-gallery-empty">
+                                            <i class="ti ti-brand-youtube"></i>
+                                            <div class="fw-semibold mt-2">Belum ada video</div>
                                             <div class="text-secondary small">
-                                                Video yang akan ditampilkan pada halaman event.
+                                                Klik "Tambah Video" untuk menambahkan link YouTube.
                                             </div>
                                         </div>
 
-                                        <button type="button"
-                                                class="btn btn-sm btn-ghost-secondary"
-                                                id="removeYoutubePreview">
-
-                                            <i class="ti ti-x"></i>
-
-                                        </button>
-
-                                    </div>
-
-                                    <div class="youtube-preview-wrapper">
-
-                                        <iframe id="youtubePreview"
-                                                src=""
-                                                title="Preview YouTube"
-                                                frameborder="0"
-                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                                                allowfullscreen>
-                                        </iframe>
-
-                                    </div>
+                                    @endif
 
                                 </div>
-
                             </div>
+
                         </div>
                         <div class="card mb-4">
 
@@ -736,113 +756,6 @@
             }
 
         });
-            const youtubeInput = document.getElementById('youtube_url');
-    const youtubePreview = document.getElementById('youtubePreview');
-    const youtubeIframe = document.getElementById('youtubeIframe');
-
-    function getYoutubeEmbedUrl(url) {
-
-        if (!url) {
-            return null;
-        }
-
-        try {
-
-            const parsedUrl = new URL(url);
-
-            if (
-                parsedUrl.hostname.includes('youtube.com') &&
-                parsedUrl.searchParams.get('v')
-            ) {
-                return 'https://www.youtube.com/embed/' +
-                    parsedUrl.searchParams.get('v');
-            }
-
-            if (parsedUrl.hostname === 'youtu.be') {
-
-                const videoId = parsedUrl.pathname
-                    .replace('/', '')
-                    .split('?')[0];
-
-                if (videoId) {
-
-                    return 'https://www.youtube.com/embed/' +
-                        videoId;
-                }
-            }
-
-            if (
-                parsedUrl.hostname.includes('youtube.com') &&
-                parsedUrl.pathname.startsWith('/embed/')
-            ) {
-
-                const videoId = parsedUrl.pathname
-                    .replace('/embed/', '')
-                    .split('/')[0];
-
-                if (videoId) {
-
-                    return 'https://www.youtube.com/embed/' +
-                        videoId;
-                }
-            }
-
-        } catch (error) {
-
-            return null;
-        }
-
-        return null;
-    }
-
-
-    function updateYoutubePreview() {
-
-        if (
-            !youtubeInput ||
-            !youtubePreview ||
-            !youtubeIframe
-        ) {
-            return;
-        }
-
-        const url = youtubeInput.value.trim();
-
-        if (!url) {
-
-            youtubePreview.classList.add('d-none');
-            youtubeIframe.src = '';
-
-            return;
-        }
-
-        const embedUrl = getYoutubeEmbedUrl(url);
-
-        if (embedUrl) {
-
-            youtubeIframe.src = embedUrl;
-            youtubePreview.classList.remove('d-none');
-
-        } else {
-
-            youtubePreview.classList.add('d-none');
-            youtubeIframe.src = '';
-        }
-    }
-
-
-    if (youtubeInput) {
-
-        youtubeInput.addEventListener(
-            'input',
-            updateYoutubePreview
-        );
-
-        youtubeInput.addEventListener(
-            'change',
-            updateYoutubePreview
-        );
-    }
 
     const addGalleryButton =
         document.getElementById('addGalleryButton');
@@ -1256,6 +1169,165 @@ function renderRundownEmptyState() {
         `;
     }
 
+}
+</script>
+<script>
+const addYoutubeButton = document.getElementById('addYoutubeButton');
+const youtubeLinksContainer = document.getElementById('youtubeLinksContainer');
+
+let youtubeIndex =
+    youtubeLinksContainer
+        ? youtubeLinksContainer.querySelectorAll('.youtube-link-card').length
+        : 0;
+
+function createYoutubeCard() {
+    if (!youtubeLinksContainer) return;
+
+    const emptyState = document.getElementById('youtubeLinksEmptyState');
+    if (emptyState) emptyState.remove();
+
+    const index = youtubeIndex++;
+
+    const card = document.createElement('div');
+    card.className = 'youtube-link-card mb-2 p-2 border rounded';
+    card.dataset.youtubeIndex = index;
+
+    card.innerHTML = `
+        <div class="row g-2 align-items-end">
+
+            <div class="col-md-6">
+                <label class="form-label small mb-1">Link YouTube</label>
+                <input type="url"
+                    name="youtube_links[${index}][url]"
+                    class="form-control form-control-sm youtube-url-input"
+                    placeholder="https://www.youtube.com/watch?v=...">
+            </div>
+
+            <div class="col-md-5">
+                <label class="form-label small mb-1">Judul (opsional)</label>
+                <input type="text"
+                    name="youtube_links[${index}][title]"
+                    class="form-control form-control-sm"
+                    placeholder="Contoh: Cuplikan Sesi 1">
+            </div>
+
+            <div class="col-md-1">
+                <button type="button"
+                        class="btn btn-sm btn-danger w-100 youtube-remove-btn"
+                        title="Hapus video">
+                    <i class="ti ti-trash"></i>
+                </button>
+            </div>
+
+        </div>
+
+        <div class="col-12 mt-2 youtube-preview-slot d-none">
+            <div class="youtube-link-preview">
+                <div class="preview-frame-wrapper">
+                    <iframe class="youtube-preview-frame"
+                            src=""
+                            title="Preview"
+                            frameborder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            allowfullscreen>
+                    </iframe>
+                </div>
+            </div>
+        </div>
+    `;
+
+    youtubeLinksContainer.appendChild(card);
+}
+
+if (addYoutubeButton) {
+    addYoutubeButton.addEventListener('click', createYoutubeCard);
+}
+
+if (youtubeLinksContainer) {
+    youtubeLinksContainer.addEventListener('click', function (event) {
+        const removeButton = event.target.closest('.youtube-remove-btn');
+        if (!removeButton) return;
+
+        const card = removeButton.closest('.youtube-link-card');
+        if (card) card.remove();
+
+        renderYoutubeEmptyState();
+    });
+}
+
+function renderYoutubeEmptyState() {
+    if (!youtubeLinksContainer) return;
+
+    const cards = youtubeLinksContainer.querySelectorAll('.youtube-link-card');
+
+    if (cards.length === 0) {
+        youtubeLinksContainer.innerHTML = `
+            <div id="youtubeLinksEmptyState" class="event-gallery-empty">
+                <i class="ti ti-brand-youtube"></i>
+                <div class="fw-semibold mt-2">Belum ada video</div>
+                <div class="text-secondary small">
+                    Klik "Tambah Video" untuk menambahkan link YouTube.
+                </div>
+            </div>
+        `;
+    }
+}
+function parseYoutubeEmbedUrl(url) {
+    if (!url) return null;
+
+    try {
+        const parsed = new URL(url.trim());
+
+        if (parsed.hostname.includes('youtube.com') && parsed.searchParams.get('v')) {
+            return 'https://www.youtube.com/embed/' + parsed.searchParams.get('v');
+        }
+
+        if (parsed.hostname.includes('youtu.be')) {
+            const id = parsed.pathname.replace('/', '');
+            if (id) return 'https://www.youtube.com/embed/' + id;
+        }
+
+        if (parsed.pathname.includes('/shorts/')) {
+            const id = parsed.pathname.split('/shorts/')[1];
+            if (id) return 'https://www.youtube.com/embed/' + id;
+        }
+    } catch (e) {
+        return null;
+    }
+
+    return null;
+}
+
+function updateCardPreview(cardEl) {
+    const input = cardEl.querySelector('.youtube-url-input');
+    const slot = cardEl.querySelector('.youtube-preview-slot');
+    const frame = cardEl.querySelector('.youtube-preview-frame');
+
+    if (!input || !slot || !frame) return;
+
+    const embedUrl = parseYoutubeEmbedUrl(input.value);
+
+    if (embedUrl) {
+        frame.src = embedUrl;
+        slot.classList.remove('d-none');
+    } else {
+        frame.src = '';
+        slot.classList.add('d-none');
+    }
+}
+
+if (youtubeLinksContainer) {
+    youtubeLinksContainer.addEventListener('input', function (event) {
+        if (!event.target.classList.contains('youtube-url-input')) return;
+
+        const card = event.target.closest('.youtube-link-card');
+        if (card) updateCardPreview(card);
+    });
+
+    // render preview awal buat kartu yang muncul dari old() (submit gagal)
+    youtubeLinksContainer
+        .querySelectorAll('.youtube-link-card')
+        .forEach(updateCardPreview);
 }
 </script>
 @endpush

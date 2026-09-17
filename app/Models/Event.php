@@ -96,6 +96,11 @@ public function incomeAccount()
 {
     return $this->belongsTo(AccountingAccount::class, 'income_account_id');
 }
+
+public function youtubeLinks()
+{
+    return $this->hasMany(EventYoutubeLink::class)->orderBy('sort_order');
+}
     public function getRemainingQuotaAttribute()
     {
         if (is_null($this->quota)) {

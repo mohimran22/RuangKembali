@@ -11,7 +11,7 @@
 
 .event-detail-thumb{
     width:100%;
-    max-height:420px;
+    height: 100%;
     object-fit:cover;
     border-radius:20px;
     margin-bottom:28px;
@@ -338,8 +338,8 @@
 
 <section class="event-detail-hero">
     <div class="container">
-        @if ($event->thumbnail)
-            <img src="{{ asset('storage/' . $event->thumbnail) }}" alt="{{ $event->name }}" class="event-detail-thumb">
+        @if ($event->poster)
+            <img src="{{ asset('storage/' . $event->poster) }}" alt="{{ $event->name }}" class="event-detail-thumb">
         @endif
 
         @if ($event->category)
@@ -367,6 +367,13 @@
             <span class="event-detail-status status-{{ Str::slug($event->status_label) }}">
                 {{ $event->status_label }}
             </span>
+            @if (!$event->is_full && $event->is_registration_open)
+                <a href="{{ route('register') }}" class="btn-daftar-event">Daftar Sekarang</a>
+            @elseif ($event->is_full)
+                <span class="badge-sold-out">Kuota Penuh</span>
+            @else
+                <span class="badge-closed">Pendaftaran Belum/Sudah Ditutup</span>
+            @endif
         </div>
     </div>
 </section>
@@ -376,7 +383,7 @@
         <div class="event-detail-description">
             {!! nl2br(e($event->description)) !!}
         </div>
-
+        Galeri Event
         @if ($event->galleries->isNotEmpty())
             <div class="event-detail-gallery">
                 @foreach ($event->galleries as $gallery)
@@ -384,19 +391,11 @@
                 @endforeach
             </div>
         @endif
-
+        Galeri Video
         @if ($event->youtube_embed_url)
             <div class="event-detail-video">
                 <iframe src="{{ $event->youtube_embed_url }}" allowfullscreen></iframe>
             </div>
-        @endif
-
-        @if (!$event->is_full && $event->is_registration_open)
-            <a href="{{ route('register') }}" class="btn-daftar-event">Daftar Sekarang</a>
-        @elseif ($event->is_full)
-            <span class="badge-sold-out">Kuota Penuh</span>
-        @else
-            <span class="badge-closed">Pendaftaran Belum/Sudah Ditutup</span>
         @endif
     </div>
 </section>

@@ -496,77 +496,109 @@
 
                             </div>
 
-                            <div class="row mb-4">
+                            <div class="mb-4">
 
-                                <div class="col-12">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <label class="form-label mb-0">Video YouTube</label>
 
-                                    <label class="form-label">
-                                        Video YouTube
-                                    </label>
-
-                                    <div class="input-group">
-
-                                        <span class="input-group-text">
-                                            <i class="ti ti-brand-youtube"></i>
-                                        </span>
-
-                                        <input type="url"
-                                            name="youtube_url"
-                                            id="youtube_url"
-                                            class="form-control"
-                                            value="{{ old('youtube_url', $event->youtube_url ?? '') }}"
-                                            placeholder="https://www.youtube.com/watch?v=...">
-
-                                    </div>
-
-                                    <div class="form-hint">
-                                        Masukkan link video YouTube event.
-                                    </div>
-
+                                    <button type="button"
+                                            class="btn btn-primary btn-sm"
+                                            id="addYoutubeButton">
+                                        <i class="ti ti-plus me-1"></i>
+                                        Tambah Video
+                                    </button>
                                 </div>
 
+                                <div id="youtubeLinksContainer">
 
-                                {{-- Preview YouTube --}}
-                                <div class="col-12 mt-3">
+                                    @php
+                                        $oldYoutubeLinks = old('youtube_links');
 
-                                    <div id="youtubePreviewContainer"
-                                        class="youtube-preview-container d-none">
+                                        if ($oldYoutubeLinks !== null) {
+                                            $editYoutubeLinks = $oldYoutubeLinks;
+                                        } else {
+                                            $editYoutubeLinks = $event->youtubeLinks
+                                                ->sortBy('sort_order')
+                                                ->values()
+                                                ->map(function ($link) {
+                                                    return [
+                                                        'id'    => $link->id,
+                                                        'url'   => $link->url,
+                                                        'title' => $link->title ?? '',
+                                                    ];
+                                                })
+                                                ->toArray();
+                                        }
+                                    @endphp
 
-                                        <div class="youtube-preview-header">
+                                    @if(count($editYoutubeLinks))
 
-                                            <div>
-                                                <div class="fw-semibold">
-                                                    Preview Video
+                                        @foreach($editYoutubeLinks as $index => $link)
+
+                                            <div class="youtube-link-card mb-2 p-2 border rounded" data-youtube-index="{{ $index }}">
+
+                                                {{-- hidden id, kalau ada (khusus edit) --}}
+
+                                                <div class="row g-2 align-items-end">
+
+                                                    <div class="col-md-6">
+                                                        <label class="form-label small mb-1">Link YouTube</label>
+                                                        <input type="url"
+                                                            name="youtube_links[{{ $index }}][url]"
+                                                            class="form-control form-control-sm youtube-url-input"
+                                                            value="{{ $link['url'] ?? '' }}"
+                                                            placeholder="https://www.youtube.com/watch?v=...">
+                                                    </div>
+
+                                                    <div class="col-md-5">
+                                                        <label class="form-label small mb-1">Judul (opsional)</label>
+                                                        <input type="text"
+                                                            name="youtube_links[{{ $index }}][title]"
+                                                            class="form-control form-control-sm"
+                                                            value="{{ $link['title'] ?? '' }}"
+                                                            placeholder="Contoh: Cuplikan Sesi 1">
+                                                    </div>
+
+                                                    <div class="col-md-1">
+                                                        <button type="button"
+                                                                class="btn btn-sm btn-danger w-100 youtube-remove-btn"
+                                                                title="Hapus video">
+                                                            <i class="ti ti-trash"></i>
+                                                        </button>
+                                                    </div>
+
+                                                    {{-- BARU: preview per kartu --}}
+                                                    <div class="col-12 mt-2 youtube-preview-slot d-none">
+                                                        <div class="youtube-link-preview">
+                                                            <div class="preview-frame-wrapper">
+                                                                <iframe class="youtube-preview-frame"
+                                                                        src=""
+                                                                        title="Preview"
+                                                                        frameborder="0"
+                                                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                                                        allowfullscreen>
+                                                                </iframe>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
                                                 </div>
 
-                                                <div class="text-secondary small">
-                                                    Video yang akan ditampilkan pada halaman event.
-                                                </div>
                                             </div>
 
-                                            <button type="button"
-                                                    class="btn btn-sm btn-ghost-secondary"
-                                                    id="removeYoutubePreview">
+                                        @endforeach
 
-                                                <i class="ti ti-x"></i>
+                                    @else
 
-                                            </button>
-
+                                        <div id="youtubeLinksEmptyState" class="event-gallery-empty">
+                                            <i class="ti ti-brand-youtube"></i>
+                                            <div class="fw-semibold mt-2">Belum ada video</div>
+                                            <div class="text-secondary small">
+                                                Klik "Tambah Video" untuk menambahkan link YouTube.
+                                            </div>
                                         </div>
 
-                                        <div class="youtube-preview-wrapper">
-
-                                            <iframe id="youtubePreview"
-                                                    src=""
-                                                    title="Preview YouTube"
-                                                    frameborder="0"
-                                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                                                    allowfullscreen>
-                                            </iframe>
-
-                                        </div>
-
-                                    </div>
+                                    @endif
 
                                 </div>
 
@@ -703,10 +735,6 @@
                                 <div id="newRundownContainer">
 
                                     @php
-                                        /*
-                                        * Jika validasi gagal, gunakan data old().
-                                        * Jika tidak ada old(), gunakan rundown yang tersimpan di database.
-                                        */
                                         $oldRundowns = old('rundowns');
 
                                         if ($oldRundowns !== null) {
@@ -749,17 +777,14 @@
                                             <div class="rundown-create-card mb-2 p-2 border rounded"
                                                 data-rundown-index="{{ $index }}">
 
-                                                {{-- ID rundown lama --}}
                                                 @if(!empty($rundown['id']))
                                                     <input type="hidden"
                                                         name="rundowns[{{ $index }}][id]"
                                                         value="{{ $rundown['id'] }}">
                                                 @endif
 
-
                                                 <div class="row g-2 align-items-end">
 
-                                                    {{-- Tanggal --}}
                                                     <div class="col-md-2">
                                                         <label class="form-label small mb-1">
                                                             Tanggal
@@ -771,8 +796,6 @@
                                                             value="{{ $rundown['rundown_date'] ?? '' }}">
                                                     </div>
 
-
-                                                    {{-- Mulai --}}
                                                     <div class="col-md-1">
                                                         <label class="form-label small mb-1">
                                                             Mulai
@@ -784,8 +807,6 @@
                                                             value="{{ $rundown['start_time'] ?? '' }}">
                                                     </div>
 
-
-                                                    {{-- Selesai --}}
                                                     <div class="col-md-1">
                                                         <label class="form-label small mb-1">
                                                             Selesai
@@ -797,8 +818,6 @@
                                                             value="{{ $rundown['end_time'] ?? '' }}">
                                                     </div>
 
-
-                                                    {{-- Aktivitas --}}
                                                     <div class="col-md-3">
                                                         <label class="form-label small mb-1">
                                                             Aktivitas
@@ -811,8 +830,6 @@
                                                             placeholder="Contoh: Registrasi Peserta">
                                                     </div>
 
-
-                                                    {{-- Pembicara --}}
                                                     <div class="col-md-2">
                                                         <label class="form-label small mb-1">
                                                             Pembicara/MC
@@ -825,8 +842,6 @@
                                                             placeholder="Nama pembicara / MC">
                                                     </div>
 
-
-                                                    {{-- Lokasi --}}
                                                     <div class="col-md-2">
                                                         <label class="form-label small mb-1">
                                                             Lokasi
@@ -839,8 +854,6 @@
                                                             placeholder="Lokasi">
                                                     </div>
 
-
-                                                    {{-- Hapus --}}
                                                     <div class="col-md-1">
                                                         <button type="button"
                                                                 class="btn btn-sm btn-danger w-100 rundown-remove-btn"
@@ -948,8 +961,6 @@
 
                                                 @endif
 
-
-                                                {{-- Sort order --}}
                                                 <input type="hidden"
                                                     name="faqs[{{ $index }}][sort_order]"
                                                     class="faq-sort-order"
@@ -984,8 +995,6 @@
 
                                                     </div>
 
-
-                                                    {{-- Hapus --}}
                                                     <div class="col-md-1 d-flex align-items-end">
 
                                                         <button type="button"
@@ -1337,12 +1346,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     }
 
-    function previewImage(
-        input,
-        previewBox,
-        imageId,
-        emptyId
-    ) {
+    function previewImage(input, previewBox, imageId, emptyId) {
 
         if (!input || !previewBox) {
             return;
@@ -1368,18 +1372,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
             reader.onload = function (event) {
 
-                let image =
-                    document.getElementById(imageId);
+                let image = document.getElementById(imageId);
 
                 if (!image) {
 
-                    image =
-                        document.createElement('img');
+                    image = document.createElement('img');
 
                     image.id = imageId;
 
-                    image.className =
-                        'media-preview-image';
+                    image.className = 'media-preview-image';
 
                     previewBox.innerHTML = '';
 
@@ -1396,133 +1397,8 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
     }
-
-    previewImage(
-        posterInput,
-        document.getElementById('posterPreviewBox'),
-        'posterPreviewImage',
-        'posterPreviewEmpty'
-    );
-
-
-    previewImage(
-        thumbnailInput,
-        document.getElementById('thumbnailPreviewBox'),
-        'thumbnailPreviewImage',
-        'thumbnailPreviewEmpty'
-    );
-
-    function getYoutubeId(url) {
-
-        if (!url) {
-            return null;
-        }
-
-        try {
-
-            const parsed =
-                new URL(url);
-            if (
-                parsed.hostname.includes('youtube.com') &&
-                parsed.searchParams.get('v')
-            ) {
-
-                return parsed.searchParams.get('v');
-
-            }
-
-            if (
-                parsed.hostname === 'youtu.be'
-            ) {
-
-                return parsed.pathname
-                    .replace('/', '')
-                    .split('/')[0];
-
-            }
-
-            if (
-                parsed.pathname.startsWith('/embed/')
-            ) {
-
-                return parsed.pathname
-                    .split('/embed/')[1]
-                    .split('/')[0];
-
-            }
-
-            if (
-                parsed.pathname.startsWith('/shorts/')
-            ) {
-
-                return parsed.pathname
-                    .split('/shorts/')[1]
-                    .split('/')[0];
-
-            }
-
-        } catch (error) {
-
-            return null;
-
-        }
-
-        return null;
-
-    }
-
-    function updateYoutubePreview() {
-
-        if (!youtubeInput) {
-            return;
-        }
-
-        const url = youtubeInput.value.trim();
-
-        const videoId = getYoutubeId(url);
-
-        if (!videoId) {
-
-            youtubePreviewContainer.classList.add('d-none');
-
-            youtubePreview.src = '';
-
-            return;
-
-        }
-        youtubePreview.src = 'https://www.youtube.com/embed/' + videoId;
-        youtubePreviewContainer.classList.remove('d-none');
-    }
-
-
-    if (youtubeInput) {
-
-        youtubeInput.addEventListener(
-            'input',
-            updateYoutubePreview
-        );
-        updateYoutubePreview();
-    }
-
-
-    if (removeYoutubePreview) {
-
-        removeYoutubePreview.addEventListener(
-            'click',
-            function () {
-
-                youtubeInput.value = '';
-
-                youtubePreview.src = '';
-
-                youtubePreviewContainer
-                    .classList.add('d-none');
-
-            }
-        );
-
-    }
-
+    previewImage(posterInput, document.getElementById('posterPreviewBox'), 'posterPreviewImage', 'posterPreviewEmpty');
+    previewImage(thumbnailInput, document.getElementById('thumbnailPreviewBox'), 'thumbnailPreviewImage', 'thumbnailPreviewEmpty');
     document
         .querySelectorAll('.event-gallery-delete')
         .forEach(function (button) {
@@ -1531,8 +1407,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 'click',
                 function () {
 
-                    const galleryId =
-                        this.dataset.galleryId;
+                    const galleryId = this.dataset.galleryId;
 
                     const card =
                         document.querySelector(
@@ -1545,15 +1420,9 @@ document.addEventListener('DOMContentLoaded', function () {
                         return;
                     }
 
-                    if (
-                        card.classList.contains(
-                            'is-deleted'
-                        )
-                    ) {
+                    if (card.classList.contains('is-deleted')) {
 
-                        card.classList.remove(
-                            'is-deleted'
-                        );
+                        card.classList.remove('is-deleted');
 
                         const hiddenInput =
                             document.querySelector(
@@ -1615,33 +1484,23 @@ document.addEventListener('DOMContentLoaded', function () {
                     'change',
                     function () {
 
-                        const files =
-                            Array.from(this.files);
+                        const files = Array.from(this.files);
 
                         if (!files.length) {
                             input.remove();
                             return;
                         }
 
-                        let wrapper =
-                            document.querySelector(
-                                '#newGalleryPreviewList'
-                            );
-
-
+                        let wrapper = document.querySelector('#newGalleryPreviewList');
                         if (!wrapper) {
 
-                            wrapper =
-                                document.createElement('div');
+                            wrapper = document.createElement('div');
 
-                            wrapper.id =
-                                'newGalleryPreviewList';
+                            wrapper.id = 'newGalleryPreviewList';
 
-                            wrapper.className =
-                                'new-gallery-list';
+                            wrapper.className = 'new-gallery-list';
 
-                            newGalleryContainer
-                                .appendChild(wrapper);
+                            newGalleryContainer.appendChild(wrapper);
 
                         }
 
@@ -1656,104 +1515,53 @@ document.addEventListener('DOMContentLoaded', function () {
                                 return;
                             }
 
-
-                            const reader =
-                                new FileReader();
-
+                            const reader = new FileReader();
 
                             reader.onload =
                                 function (event) {
 
-                                    const item =
-                                        document.createElement(
-                                            'div'
-                                        );
+                                    const item = document.createElement('div');
 
-                                    item.className =
-                                        'new-gallery-item';
+                                    item.className = 'new-gallery-item';
 
+                                    const image = document.createElement('img');
 
-                                    const image =
-                                        document.createElement(
-                                            'img'
-                                        );
+                                    image.src = event.target.result;
 
-                                    image.src =
-                                        event.target.result;
+                                    image.className = 'new-gallery-preview';
 
-                                    image.className =
-                                        'new-gallery-preview';
+                                    const removeButton = document.createElement('button');
 
+                                    removeButton.type = 'button';
 
-                                    const removeButton =
-                                        document.createElement(
-                                            'button'
-                                        );
+                                    removeButton.className = 'new-gallery-remove';
 
-                                    removeButton.type =
-                                        'button';
+                                    removeButton.innerHTML = '<i class="ti ti-x"></i>';
 
-                                    removeButton.className =
-                                        'new-gallery-remove';
-
-                                    removeButton.innerHTML =
-                                        '<i class="ti ti-x"></i>';
-
-
-                                    removeButton.addEventListener(
-                                        'click',
-                                        function () {
-
+                                    removeButton.addEventListener('click', function () {
                                             item.remove();
-
-                                            /*
-                                             * Jika sudah tidak ada
-                                             * preview baru, bersihkan
-                                             */
-                                            if (
-                                                !wrapper
-                                                    .children.length
-                                            ) {
-
+                                            if (!wrapper.children.length) {
                                                 wrapper.remove();
-
                                             }
-
                                         }
                                     );
 
+                                    item.appendChild(image);
 
-                                    item.appendChild(
-                                        image
-                                    );
+                                    item.appendChild(removeButton);
 
-                                    item.appendChild(
-                                        removeButton
-                                    );
-
-                                    wrapper.appendChild(
-                                        item
-                                    );
+                                    wrapper.appendChild(item);
 
                                 };
-
 
                             reader.readAsDataURL(file);
 
                         });
 
-
-                        /*
-                         * Masukkan input file ke container
-                         * agar ikut submit.
-                         */
-
-                        newGalleryContainer
-                            .appendChild(input);
+                        newGalleryContainer.appendChild(input);
 
                     }
                 );
-
 
                 input.click();
 
@@ -2009,5 +1817,160 @@ document.addEventListener('DOMContentLoaded', function () {
     );
 
 });
+</script>
+<script>
+const addYoutubeButton = document.getElementById('addYoutubeButton');
+const youtubeLinksContainer = document.getElementById('youtubeLinksContainer');
+
+let youtubeIndex =
+    youtubeLinksContainer
+        ? youtubeLinksContainer.querySelectorAll('.youtube-link-card').length
+        : 0;
+
+function createYoutubeCard() {
+    if (!youtubeLinksContainer) return;
+
+    const emptyState = document.getElementById('youtubeLinksEmptyState');
+    if (emptyState) emptyState.remove();
+
+    const index = youtubeIndex++;
+
+    const card = document.createElement('div');
+    card.className = 'youtube-link-card mb-2 p-2 border rounded';
+    card.dataset.youtubeIndex = index;
+
+    card.innerHTML = `
+        <div class="row g-2 align-items-end">
+
+            <div class="col-md-6">
+                <label class="form-label small mb-1">Link YouTube</label>
+                <input type="url"
+                    name="youtube_links[${index}][url]"
+                    class="form-control form-control-sm youtube-url-input"
+                    placeholder="https://www.youtube.com/watch?v=...">
+            </div>
+
+            <div class="col-md-5">
+                <label class="form-label small mb-1">Judul (opsional)</label>
+                <input type="text"
+                    name="youtube_links[${index}][title]"
+                    class="form-control form-control-sm"
+                    placeholder="Contoh: Cuplikan Sesi 1">
+            </div>
+
+            <div class="col-md-1">
+                <button type="button"
+                        class="btn btn-sm btn-danger w-100 youtube-remove-btn"
+                        title="Hapus video">
+                    <i class="ti ti-trash"></i>
+                </button>
+            </div>
+
+            <div class="col-12 mt-2 youtube-preview-slot d-none">
+                <div class="youtube-link-preview">
+                    <div class="preview-frame-wrapper">
+                        <iframe class="youtube-preview-frame"
+                                src=""
+                                title="Preview"
+                                frameborder="0"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                allowfullscreen>
+                        </iframe>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    `;
+
+    youtubeLinksContainer.appendChild(card);
+}
+
+if (addYoutubeButton) {
+    addYoutubeButton.addEventListener('click', createYoutubeCard);
+}
+
+if (youtubeLinksContainer) {
+    youtubeLinksContainer.addEventListener('click', function (event) {
+        const removeButton = event.target.closest('.youtube-remove-btn');
+        if (!removeButton) return;
+
+        removeButton.closest('.youtube-link-card')?.remove();
+        renderYoutubeEmptyState();
+    });
+}
+function parseYoutubeEmbedUrl(url) {
+    if (!url) return null;
+
+    try {
+        const parsed = new URL(url.trim());
+
+        if (parsed.hostname.includes('youtube.com') && parsed.searchParams.get('v')) {
+            return 'https://www.youtube.com/embed/' + parsed.searchParams.get('v');
+        }
+
+        if (parsed.hostname.includes('youtu.be')) {
+            const id = parsed.pathname.replace('/', '');
+            if (id) return 'https://www.youtube.com/embed/' + id;
+        }
+
+        if (parsed.pathname.includes('/shorts/')) {
+            const id = parsed.pathname.split('/shorts/')[1];
+            if (id) return 'https://www.youtube.com/embed/' + id;
+        }
+    } catch (e) {
+        return null;
+    }
+
+    return null;
+}
+
+function updateCardPreview(cardEl) {
+    const input = cardEl.querySelector('.youtube-url-input');
+    const slot = cardEl.querySelector('.youtube-preview-slot');
+    const frame = cardEl.querySelector('.youtube-preview-frame');
+
+    if (!input || !slot || !frame) return;
+
+    const embedUrl = parseYoutubeEmbedUrl(input.value);
+
+    if (embedUrl) {
+        frame.src = embedUrl;
+        slot.classList.remove('d-none');
+    } else {
+        frame.src = '';
+        slot.classList.add('d-none');
+    }
+}
+
+// delegasi: pantau perubahan di semua input url, termasuk yang ditambah belakangan
+if (youtubeLinksContainer) {
+    youtubeLinksContainer.addEventListener('input', function (event) {
+        if (!event.target.classList.contains('youtube-url-input')) return;
+
+        const card = event.target.closest('.youtube-link-card');
+        if (card) updateCardPreview(card);
+    });
+
+    // render preview awal buat kartu yang udah ada isinya (dari old()/DB pas edit)
+    youtubeLinksContainer
+        .querySelectorAll('.youtube-link-card')
+        .forEach(updateCardPreview);
+}
+function renderYoutubeEmptyState() {
+    if (!youtubeLinksContainer) return;
+
+    if (youtubeLinksContainer.querySelectorAll('.youtube-link-card').length === 0) {
+        youtubeLinksContainer.innerHTML = `
+            <div id="youtubeLinksEmptyState" class="event-gallery-empty">
+                <i class="ti ti-brand-youtube"></i>
+                <div class="fw-semibold mt-2">Belum ada video</div>
+                <div class="text-secondary small">
+                    Klik "Tambah Video" untuk menambahkan link YouTube.
+                </div>
+            </div>
+        `;
+    }
+}
 </script>
 @endpush

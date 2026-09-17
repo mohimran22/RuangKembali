@@ -17,6 +17,7 @@ use App\Models\PostalCode;
 use App\Models\AccountingAccount;
 use App\Models\Event;
 use App\Models\EventRegistration;
+use App\Models\EventYoutubeLink;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -322,7 +323,9 @@ public function store(Request $request)
         'is_published' => 'required|boolean',
         'poster' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         'thumbnail' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
-        'youtube_url' => 'nullable|url|max:500',
+        'youtube_links' => 'nullable|array',
+        'youtube_links.*.url' => 'required|url|max:500',
+        'youtube_links.*.title' => 'nullable|string|max:255',
         'gallery_images' => 'nullable|array',
         'gallery_images.*' => 'image|mimes:jpg,jpeg,png,webp|max:2048',
         'speaker_ids' => 'nullable|array',
@@ -406,6 +409,15 @@ public function store(Request $request)
                 $event->faqs()->create([
                     'question' => $faq['question'],
                     'answer' => $faq['answer'],
+                    'sort_order' => $index + 1,
+                ]);
+            }
+        }
+        if ($request->filled('youtube_links')) {
+            foreach ($request->youtube_links as $index => $link) {
+                $event->youtubeLinks()->create([
+                    'url' => $link['url'],
+                    'title' => $link['title'] ?? null,
                     'sort_order' => $index + 1,
                 ]);
             }
@@ -555,7 +567,13 @@ public function update(Request $request, Event $event)
         'is_published' => 'required|boolean',
         'poster' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         'thumbnail' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
-        'youtube_url' => 'nullable|url|max:500',
+        'youtube_links' => 'nullable|array',
+        'youtube_links.*.id' => [
+            'nullable',
+            'exists:event_youtube_links,id',
+        ],
+        'youtube_links.*.url' => 'required|url|max:500',
+        'youtube_links.*.title' => 'nullable|string|max:255',
         'gallery_images' => 'nullable|array',
         'gallery_images.*' => 'image|mimes:jpg,jpeg,png,webp|max:2048',
         'delete_gallery_ids' => 'nullable|array',
@@ -698,7 +716,6 @@ public function update(Request $request, Event $event)
                 : ($request->price ?? 0),
 
             'quota' => $request->quota,
-            'youtube_url' => $request->youtube_url,
             'description' => $request->description,
             'is_published' => $request->boolean('is_published'),
             'sponsorship_whatsapp' => $request->sponsorship_whatsapp,
@@ -937,7 +954,6 @@ public function update(Request $request, Event $event)
             }
         }
 
-
         $faqQuery = EventFaq::where('event_id', $event->id);
 
         if (count($submittedFaqIds)) {
@@ -947,7 +963,54 @@ public function update(Request $request, Event $event)
         }
 
         $faqQuery->delete();
+        $submittedYoutubeIds = [];
 
+        if ($request->filled('youtube_links')) {
+
+            foreach ($request->youtube_links as $index => $link) {
+
+                if (empty($link['url'])) {
+                    continue;
+                }
+
+                if (!empty($link['id'])) {
+
+                    $youtubeLink = EventYoutubeLink::where('id', $link['id'])
+                        ->where('event_id', $event->id)
+                        ->first();
+
+                    if ($youtubeLink) {
+
+                        $youtubeLink->update([
+                            'url' => $link['url'],
+                            'title' => $link['title'] ?? null,
+                            'sort_order' => $index + 1,
+                        ]);
+
+                        $submittedYoutubeIds[] = $youtubeLink->id;
+                    }
+
+                } else {
+
+                    $youtubeLink = EventYoutubeLink::create([
+                        'event_id' => $event->id,
+                        'url' => $link['url'],
+                        'title' => $link['title'] ?? null,
+                        'sort_order' => $index + 1,
+                    ]);
+
+                    $submittedYoutubeIds[] = $youtubeLink->id;
+                }
+            }
+        }
+
+        $youtubeQuery = EventYoutubeLink::where('event_id', $event->id);
+
+        if (count($submittedYoutubeIds)) {
+            $youtubeQuery->whereNotIn('id', $submittedYoutubeIds);
+        }
+
+        $youtubeQuery->delete();
         DB::commit();
 
         return redirect()
@@ -977,7 +1040,7 @@ public function update(Request $request, Event $event)
 }
 public function show($id)
 {
-    $event = Event::with('category', 'galleries')
+    $event = Event::with('category', 'galleries', 'youtubeLinks')
         ->findOrFail($id);
 
     $registrationsQuery = $event->registrations()
@@ -1089,7 +1152,7 @@ public function showPublic(Event $event)
 {
     abort_unless($event->is_published, 404);
 
-    $event->load('category', 'galleries', 'faqs', 'sponsors', 'speakers');
+    $event->load('category', 'galleries', 'faqs', 'sponsors', 'speakers', 'rundowns');
 
     return view('events.public-show', compact('event'));
 }

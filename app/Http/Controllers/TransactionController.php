@@ -80,7 +80,7 @@ public function index(Request $request)
 
                 $names = $transaction->registrations
                     ->map(function ($registration) {
-                        return $registration->user->fullname ?? '-';
+                        return $registration->participant_name ?? '-';
                     })
                     ->filter()
                     ->implode(', ');

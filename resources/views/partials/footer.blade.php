@@ -19,7 +19,7 @@
                 <ul class="footer-contact-list">
                     <li>
                         <i class="ti ti-brand-whatsapp"></i>
-                        <a href="https://wa.me/62REPLACE_NUMBER" target="_blank" rel="noopener">
+                        <a href="https://wa.me/6285340222242" target="_blank" rel="noopener">
                             Admin (Fast Response) &ndash; Klik untuk WhatsApp
                         </a>
                     </li>
