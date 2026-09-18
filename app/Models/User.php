@@ -38,31 +38,6 @@ public function team()
     return $this->hasOne(Customer::class);
 }
 
-    public function investor()
-{
-    return $this->hasOne(Investor::class);
-}
-
-    public function supplier()
-{
-    return $this->hasOne(Supplier::class);
-}
-
-    public function contractor()
-{
-    return $this->hasOne(Contractor::class);
-}
-
-    public function worker()
-{
-    return $this->hasOne(Worker::class);
-}
-
-    public function architect()
-{
-    return $this->hasOne(Architect::class);
-}
-
     public function affiliator()
 {
     return $this->hasOne(Affiliator::class);

@@ -55,10 +55,10 @@
                     </li> --}}
                 </ul>
 
-                <p class="footer-contact-note">
+                {{-- <p class="footer-contact-note">
                     Info lengkap kontak dan cabang juga tersedia di
                     <a href="#" target="_blank" rel="noopener">REPLACE_LINK</a>
-                </p>
+                </p> --}}
             </div>
         </div>
     </section>

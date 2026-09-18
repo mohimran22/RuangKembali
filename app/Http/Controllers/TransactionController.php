@@ -323,7 +323,7 @@ public function update(Request $request, Transaction $transaction)
     ]);
 
     return redirect()
-        ->route('admin.transactions.index')
+        ->route('transactions.index')
         ->with('success', 'Transaksi berhasil diperbarui.');
 }
 

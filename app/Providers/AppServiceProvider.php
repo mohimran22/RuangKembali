@@ -10,6 +10,8 @@ use TakiElias\Tablar\Tablar;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\View;
 use App\View\Composers\NavbarComposer;
+use Illuminate\Auth\Notifications\VerifyEmail;
+use Illuminate\Notifications\Messages\MailMessage;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -40,5 +42,16 @@ class AppServiceProvider extends ServiceProvider
         });
         Carbon::setLocale('id');
         View::composer('partials.navbar', NavbarComposer::class);
+
+        VerifyEmail::toMailUsing(function ($notifiable, $url) {
+            return (new MailMessage)
+                ->subject('Verifikasi Alamat Email Anda - Ruang Kembali')
+                ->greeting('Halo, ' . $notifiable->fullname . '!')
+                ->line('Terima kasih sudah mendaftar di Ruang Kembali.')
+                ->line('Silakan klik tombol di bawah untuk memverifikasi alamat email kamu.')
+                ->action('Verifikasi Email', $url)
+                ->line('Jika kamu tidak merasa membuat akun ini, abaikan email ini.')
+                ->salutation('Salam, Tim Ruang Kembali');
+        });
     }
 }
