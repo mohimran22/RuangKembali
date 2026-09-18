@@ -179,18 +179,18 @@ class MembersController extends Controller
         'loyalty_level' => 'nullable|in:1,2,3,4,5'
     ]);
 
-if ($request->hasFile('photo')) {
-    $filename = Str::uuid().'.'.$request->file('photo')->getClientOriginalExtension();
+    if ($request->hasFile('photo')) {
+        $filename = Str::uuid().'.'.$request->file('photo')->getClientOriginalExtension();
 
-    $path = $request->file('photo')->storeAs(
-        'photos',
-        $filename,
-        'public'
-    );
+        $path = $request->file('photo')->storeAs(
+            'photos',
+            $filename,
+            'public'
+        );
 
-    // simpan full relative path
-    $validated['photo'] = $path;   // → photos/uuid.jpg
-}
+        // simpan full relative path
+        $validated['photo'] = $path;   // → photos/uuid.jpg
+    }
 
     // Jika alamat pengiriman sama dengan domisili user
         if ($request->has('same_address')) {
@@ -226,6 +226,7 @@ if ($request->hasFile('photo')) {
                 'sub_district_id' => $validated['user_sub_district_id'],
                 'postal_code_id' => $validated['user_postal_code_id'],
                 'email' => $validated['email'],
+                'email_verified_at' => now(),
                 'password' => Hash::make($password),
                 'phone' => $validated['phone'] ?? null,
                 'gender' => $validated['gender'] ?? null,
@@ -272,7 +273,6 @@ if ($request->hasFile('photo')) {
             (session('new_user_password') ? ' Akun user baru dibuat. Password: ' . session('new_user_password') : '')
         );
 }
-
 
 // public function generateNicAjax()
 // {

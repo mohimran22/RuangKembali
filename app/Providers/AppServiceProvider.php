@@ -46,7 +46,7 @@ class AppServiceProvider extends ServiceProvider
         VerifyEmail::toMailUsing(function ($notifiable, $url) {
             return (new MailMessage)
                 ->subject('Verifikasi Alamat Email Anda - Ruang Kembali')
-                ->greeting('Halo, ' . $notifiable->fullname . '!')
+                ->greeting('Assalamualaikum, ' . $notifiable->fullname . '!')
                 ->line('Terima kasih sudah mendaftar di Ruang Kembali.')
                 ->line('Silakan klik tombol di bawah untuk memverifikasi alamat email kamu.')
                 ->action('Verifikasi Email', $url)

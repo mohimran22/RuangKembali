@@ -156,6 +156,7 @@ class UsersController extends Controller
         }
         $validated['password'] = Hash::make($validated['password']);
         $validated['is_speakers'] = $request->boolean('is_speakers');
+        $validated['email_verified_at'] = now();
         $user = User::create($validated);
 
         // Assign role

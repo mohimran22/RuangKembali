@@ -73,7 +73,8 @@ public function activeRole()
         'account_holder',
         'active_role',
         'identity_photo',
-        'is_speakers'
+        'is_speakers',
+        'email_verified_at'
     ];
 
     /**
