@@ -7,7 +7,7 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>Ruang Kembali</title>
+        {!! SEO::generate() !!}
 
     <link rel="icon" type="image/x-icon" href="{{ asset('LOGO_RuKa_ONLY_tab_browser.png') }}">
 
@@ -20,7 +20,7 @@
     <!-- Tabler Icons -->
     <link rel="stylesheet" href="{{ asset('fonts/tabler-icons.css') }}">
 
-    <!-- CSS tambahan -->
+    @include('partials.footer-css')
     @stack('styles')
 </head>
 

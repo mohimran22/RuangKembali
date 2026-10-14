@@ -225,169 +225,7 @@
     color:#888;
     padding:40px 0;
 }
-.website-footer{
-    background:#f8f6f2;
-    padding-top:60px;
-}
 
-.footer-info-section{
-    max-width:1500px;
-    margin:auto;
-    padding:0 5% 60px;
-}
-
-.footer-info-header{
-    text-align:center;
-    margin-bottom:40px;
-}
-
-.footer-info-header h2{
-    font-size:28px;
-    font-weight:700;
-    color:#111;
-    margin-bottom:8px;
-}
-
-.footer-info-header p{
-    color:#666;
-    font-size:14px;
-}
-
-.footer-info-grid{
-    display:grid;
-    grid-template-columns:1.2fr 1fr;
-    gap:28px;
-    align-items:start;
-}
-
-.footer-location-card,
-.footer-contact-card{
-    background:#fff;
-    border-radius:16px;
-    padding:28px;
-    box-shadow:0 8px 24px rgba(0,0,0,.06);
-}
-
-.footer-location-card h3,
-.footer-contact-card h3{
-    display:flex;
-    align-items:center;
-    gap:8px;
-    font-size:18px;
-    font-weight:700;
-    color:#111;
-    margin-bottom:14px;
-}
-.footer-location-card{
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-    text-align:center;
-    padding:40px 28px;
-}
-
-.footer-brand-logo{
-    height:56px;
-    margin-bottom:16px;
-}
-
-.footer-brand-tagline{
-    font-size:14px;
-    color:#666;
-    max-width:320px;
-    line-height:1.5;
-}
-.footer-location-address{
-    font-size:14px;
-    color:#333;
-    margin-bottom:6px;
-}
-
-.footer-location-hours{
-    font-size:13px;
-    color:#888;
-    margin-bottom:16px;
-}
-
-.footer-map-btn{
-    display:inline-flex;
-    align-items:center;
-    gap:6px;
-    background:#eef3ff;
-    color:#1971c2;
-    font-weight:600;
-    font-size:13px;
-    padding:8px 14px;
-    border-radius:8px;
-    text-decoration:none;
-    margin-bottom:16px;
-}
-
-.footer-map-btn:hover{
-    background:#dce7fb;
-}
-
-.footer-map-embed{
-    border-radius:12px;
-    overflow:hidden;
-}
-
-.footer-map-embed iframe{
-    display:block;
-}
-
-.footer-contact-list{
-    list-style:none;
-    padding:0;
-    margin:0 0 16px;
-    display:flex;
-    flex-direction:column;
-    gap:14px;
-}
-
-.footer-contact-list li{
-    display:flex;
-    align-items:center;
-    gap:10px;
-    font-size:14px;
-}
-
-.footer-contact-list i{
-    font-size:20px;
-    color:#c92a2a;
-    flex-shrink:0;
-}
-
-.footer-contact-list a{
-    color:#333;
-    text-decoration:none;
-}
-
-.footer-contact-list a:hover{
-    color:#b7965b;
-}
-
-.footer-contact-note{
-    font-size:12px;
-    color:#999;
-    border-top:1px solid #eee;
-    padding-top:14px;
-}
-
-.footer-contact-note a{
-    color:#b7965b;
-    font-weight:600;
-    text-decoration:none;
-}
-
-.footer-bottom{
-    text-align:center;
-    padding:20px 5%;
-    border-top:1px solid #eee;
-    font-size:12px;
-    color:#888;
-}
 .join-section{
     padding:0 5% 100px;
     max-width:1500px;
@@ -532,6 +370,147 @@
         font-size:24px;
     }
 }
+
+/* ===== Artikel Terbaru ===== */
+.article-section{
+    padding:0 5% 80px;
+    max-width:1500px;
+    margin:auto;
+}
+.article-grid{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:28px;
+}
+.article-card{
+    display:flex;
+    flex-direction:column;
+    background:#fff;
+    border-radius:16px;
+    overflow:hidden;
+    text-decoration:none;
+    color:inherit;
+    box-shadow:0 8px 24px rgba(0,0,0,.08);
+    transition:transform .25s, box-shadow .25s;
+}
+.article-card:hover{
+    transform:translateY(-6px);
+    box-shadow:0 16px 36px rgba(0,0,0,.14);
+}
+.article-card-thumb{
+    position:relative;
+    aspect-ratio:16/10;
+    background:#f2f2f2;
+    overflow:hidden;
+}
+.article-card-thumb img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
+    transition:transform .5s;
+}
+.article-card:hover .article-card-thumb img{ transform:scale(1.05); }
+.article-card-thumb-placeholder{
+    width:100%;
+    height:100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:40px;
+    color:#bbb;
+}
+.article-card-body{
+    padding:20px;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    flex:1;
+}
+.article-card-category{
+    font-size:11px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.5px;
+    color:#b7965b;
+}
+.article-card-title{
+    font-size:17px;
+    font-weight:700;
+    color:#111;
+    line-height:1.35;
+    margin:0;
+    display:-webkit-box;
+    -webkit-line-clamp:2;
+    -webkit-box-orient:vertical;
+    overflow:hidden;
+}
+.article-card-excerpt{
+    font-size:14px;
+    color:#666;
+    line-height:1.6;
+    margin:0;
+    display:-webkit-box;
+    -webkit-line-clamp:3;
+    -webkit-box-orient:vertical;
+    overflow:hidden;
+}
+.article-card-footer{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+    margin-top:auto;
+    padding-top:12px;
+    border-top:1px solid #f0f0f0;
+}
+.article-card-date{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    font-size:13px;
+    color:#888;
+}
+.article-card-cta{
+    display:flex;
+    align-items:center;
+    gap:4px;
+    font-size:13px;
+    font-weight:600;
+    color:#b7965b;
+    white-space:nowrap;
+}
+.article-more{
+    text-align:center;
+    margin-top:36px;
+}
+.btn-article-more{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    border:1.5px solid #b7965b;
+    color:#8a6d36;
+    font-weight:600;
+    font-size:14px;
+    padding:12px 28px;
+    border-radius:12px;
+    text-decoration:none;
+    transition:.25s;
+}
+.btn-article-more:hover{
+    background:#b7965b;
+    color:#fff;
+}
+@media (max-width:1100px){
+    .article-grid{ grid-template-columns:repeat(2, 1fr); }
+}
+@media (max-width:768px){
+    .article-section{ padding:0 5% 50px; }
+    .article-grid{ grid-template-columns:1fr; gap:20px; }
+    .article-card-body{ padding:16px; }
+    .article-more{ margin-top:28px; }
+    .btn-article-more{ width:100%; justify-content:center; }
+}
 </style>
 <section class="hero">
     <div id="heroSlider" class="carousel slide carousel-fade" data-bs-ride="carousel">
@@ -583,6 +562,60 @@
 
         </div>
 </section>
+@php
+    $articles = collect($articles ?? []);
+    $artIndexUrl = collect(['artikel.index', 'articles.index'])->first(fn ($r) => Route::has($r));
+    $artShowName = collect(['articles.show', 'artikel.show'])->first(fn ($r) => Route::has($r));
+    $artTitle = fn ($a) => data_get($a, 'title') ?? data_get($a, 'judul');
+    $artImg   = fn ($a) => data_get($a, 'featured_image') ?? data_get($a, 'thumbnail') ?? data_get($a, 'image') ?? data_get($a, 'cover');
+    $artUrl   = fn ($a) => $artShowName ? route($artShowName, $a) : '#';
+    $artCat   = fn ($a) => collect(data_get($a, 'categories', []))->pluck('name')->first() ?: data_get($a, 'category.name');
+    $artText  = fn ($a) => data_get($a, 'excerpt') ?: \Illuminate\Support\Str::limit(trim(preg_replace('/\s+/', ' ', strip_tags(str_replace('<', ' <', (string) data_get($a, 'content'))))), 140);
+@endphp
+@if ($articles->isNotEmpty())
+<section class="event-section" style="padding-bottom:50px">
+    <div class="event-section-header" style="margin-bottom:0">
+        <h2>Artikel Terbaru</h2>
+        <p>Bacaan pilihan untuk menemani langkahmu bertumbuh</p>
+    </div>
+</section>
+<section class="article-section" id="artikel">
+    <div class="article-grid">
+        @foreach ($articles->take(3) as $a)
+            @php $img = $artImg($a); $cat = $artCat($a); $date = data_get($a, 'published_at'); @endphp
+            <a href="{{ $artUrl($a) }}" class="article-card">
+                <div class="article-card-thumb">
+                    @if ($img)
+                        <img src="{{ asset('storage/' . $img) }}" alt="{{ $artTitle($a) }}" loading="lazy">
+                    @else
+                        <div class="article-card-thumb-placeholder"><i class="ti ti-article"></i></div>
+                    @endif
+                </div>
+                <div class="article-card-body">
+                    @if ($cat)
+                        <span class="article-card-category">{{ $cat }}</span>
+                    @endif
+                    <h3 class="article-card-title">{{ $artTitle($a) }}</h3>
+                    <p class="article-card-excerpt">{{ $artText($a) }}</p>
+                    <div class="article-card-footer">
+                        <span class="article-card-date">
+                            @if ($date)
+                                <i class="ti ti-calendar"></i> {{ \Illuminate\Support\Carbon::parse($date)->translatedFormat('d M Y') }}
+                            @endif
+                        </span>
+                        <span class="article-card-cta">Baca <i class="ti ti-arrow-right"></i></span>
+                    </div>
+                </div>
+            </a>
+        @endforeach
+    </div>
+    @if ($artIndexUrl)
+        <div class="article-more">
+            <a href="{{ route($artIndexUrl) }}" class="btn-article-more">Lihat Semua Artikel <i class="ti ti-arrow-right"></i></a>
+        </div>
+    @endif
+</section>
+@endif
 <section class="event-section">
     <div class="event-section-header">
         <h2>Event Terbaru</h2>
