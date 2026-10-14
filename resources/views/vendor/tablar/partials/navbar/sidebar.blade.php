@@ -43,27 +43,38 @@
 @push('js')
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-
+    const root = document.documentElement;
     const btn = document.getElementById("sidebarToggle");
 
-    if(!btn) return;
+    function applyResponsiveSidebar() {
+        const w = window.innerWidth;
 
-    btn.addEventListener("click", function(){
-
-        document.documentElement.classList.toggle("sidebar-collapsed");
-
-        localStorage.setItem(
-            "sidebarCollapsed",
-            document.documentElement.classList.contains("sidebar-collapsed")
-        );
-
-    });
-    if(window.innerWidth <= 576){
-
-        document.documentElement.classList.remove('sidebar-collapsed');
-
+        if (w >= 992 && w <= 1200) {
+            // tablet: selalu collapsed (sesuai media query 80px)
+            root.classList.add('sidebar-collapsed');
+        } else if (w <= 576) {
+            root.classList.remove('sidebar-collapsed');
+        } else {
+            // desktop: ikuti pilihan user
+            root.classList.toggle(
+                'sidebar-collapsed',
+                localStorage.getItem('sidebarCollapsed') === 'true'
+            );
+        }
     }
 
+    applyResponsiveSidebar();
+    window.addEventListener('resize', applyResponsiveSidebar);
+
+    if (!btn) return;
+
+    btn.addEventListener("click", function () {
+        root.classList.toggle("sidebar-collapsed");
+        localStorage.setItem(
+            "sidebarCollapsed",
+            root.classList.contains("sidebar-collapsed")
+        );
+    });
 });
 </script>
 {{-- <script>
@@ -245,7 +256,7 @@ document.addEventListener('click', function(e){
         pointer-events:auto;
     }
 
-    /* tooltip off */
+    #sidebarToggle { display: none !important; }
     .sidebar-collapsed .navbar-nav > .nav-item > .nav-link::before{
         display:none !important;
     }

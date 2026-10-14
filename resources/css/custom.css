@@ -757,89 +757,116 @@ col.just-hidden {
     -webkit-overflow-scrolling: touch;
 }
 
-.progress-table {
-    background-color: #fff;
-    border-collapse: separate;
-    border-spacing: 0;
-    margin: 0 !important;
-    table-layout: fixed;
+.wp-article-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
     width: 100%;
-    min-width: max-content;
 }
-.progress-table col[style*="display: none"] {
-    width: 0 !important;
+
+.wp-toolbar-filters {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    flex: 1 1 auto;
+    min-width: 0;
 }
-.progress-table th,
-.progress-table td {
-    border: 1px solid #adb5bd !important;
-    min-width: 60px;
+
+.wp-toolbar-filters select {
+    width: auto;
+    min-width: 0;
+    height: 36px;
+    font-size: 13px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+
+.wp-toolbar-filters select[name="month"] {
+    width: 155px;
+}
+
+.wp-toolbar-filters select[name="category"] {
+    width: 205px;
+}
+
+.wp-toolbar-filters select[name="seo"] {
+    width: 160px;
+}
+
+.wp-toolbar-filters select[name="readability"] {
+    width: 195px;
+}
+
+.wp-toolbar-filters .btn,
+.wp-toolbar-search .btn {
+    height: 36px;
+    padding: 6px 14px;
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.wp-toolbar-search {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 0 0 300px;
+}
+
+.wp-toolbar-search .form-control {
+    min-width: 0;
+    height: 36px;
+    font-size: 13px;
+}
+
+.wp-toolbar-search .btn-dark {
+    background: #000;
+    border-color: #000;
+}
+
+.wp-toolbar-search .btn-primary:hover {
+    background: #c4c4c4;
+    border-color: #c4c4c4;
+}
+
+.article-title {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    overflow: hidden;
+    text-overflow: ellipsis;
     white-space: normal;
-    word-break: break-word;
-    line-height: 1.2;
-    background-color: #fff;
+    overflow-wrap: anywhere;
+    line-height: 1.5;
+    max-width: 600px;
 }
-.progress-table tr:first-child th {
-    border-top: 1px solid #adb5bd;
-    height: 60px;
-}
-.progress-table thead tr:nth-child(2) th {
-    height: 60px;
-}
-.progress-table th:first-child,
-.progress-table td:first-child {
-    border-left: 1px solid #adb5bd;
-}
-.progress-table thead th {
-    background-color: #fff !important;
-    position: sticky;
+
+/* Area judul memiliki lebar yang konsisten */
+.table td.article-title-cell {
+    min-width: 260px;
+    max-width: 600px;
+    white-space: normal;
     vertical-align: middle;
 }
+/* Tablet */
+@media (max-width: 1199.98px) {
+    .wp-article-toolbar {
+        flex-wrap: wrap;
+    }
 
-.progress-table thead th.sticky-col {
-    background-color: #ffff;
-}
+    .wp-toolbar-filters {
+        flex-basis: 100%;
+    }
 
-.progress-table col.col-hidden {
-    visibility: collapse;
-    width: 0 !important;
-}
+    .wp-toolbar-search {
+        flex-basis: 100%;
+        justify-content: flex-end;
+    }
 
-/* sel yang ikut kolom hidden */
-.progress-table th.col-hidden,
-.progress-table td.col-hidden {
-    visibility: collapse;
-    padding: 0 !important;
-    border: 0 !important;
-}
-.progress-table .sticky-col{
-    position: sticky !important;
-    background: #fff !important;
-    background-clip: padding-box;
-    z-index: 25;
-}
-
-.progress-table tbody td.sticky-col {
-    top: auto !important;
-}
-.progress-table tr.table-warning td.sticky-col {
-    background-color: #fff3cd;
-    z-index: 6;
-}
-
-/* sticky kolom kiri (class dari JS) */
-.sticky-col {
-    position: sticky;
-    background-color: #fff;
-    box-shadow: 1px 0 0 #adb5bd;
-}
-.sticky-last{
-    border-right: 2px solid #adb5bd !important;
-}
-/* row kategori */
-.row-category .sticky-col{
-    background-color: #c4c4c4;
-    font-weight: 700;
-    z-index: 8;
+    .wp-toolbar-search .form-control {
+        flex: 0 1 280px;
+    }
 }
 .d-none {
     display: none;

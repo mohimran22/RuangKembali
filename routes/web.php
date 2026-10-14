@@ -44,10 +44,20 @@ use App\Http\Controllers\JournalExportController;
 use App\Http\Controllers\KasController;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Admin\ArticleController as AdminArticleController;
+use App\Http\Controllers\ArticleController;
+use App\Http\Controllers\SitemapController;
+use App\Http\Controllers\TagController;
 
-Route::get('/', [HomeController::class, 'index']);
+Route::get('/', [HomeController::class, 'index'])->name('landing');   // nama 'landing' dipakai banyak view
+Route::get('/artikel', [ArticleController::class, 'index'])->name('artikel.index');
+Route::get('/artikel/{article:slug}', [ArticleController::class, 'show'])->name('articles.show');
+Route::get('/sitemap.xml', [SitemapController::class, 'index']);
 
-require __DIR__.'/auth.php';
+// Route::get('/', [HomeController::class, 'index']);
+Route::middleware('noindex')->group(function () {
+    require __DIR__.'/auth.php';
+});
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])
@@ -60,7 +70,15 @@ Route::middleware('auth')->get('/home', function () {
 Route::middleware(['auth', 'role:Super-Admin'])->group(function () {
     Route::resource('/menus', MenuController::class);
 });
-
+Route::middleware(['auth', 'role:Super-Admin'])->group(function () {
+    Route::resource('articles', AdminArticleController::class)->except('show');
+    Route::delete('categories/bulk', [\App\Http\Controllers\CategoryController::class, 'bulk'])->name('categories.bulk');
+    Route::resource('categories', \App\Http\Controllers\CategoryController::class)->except(['create', 'show']);
+    Route::delete('tags/bulk', [TagController::class, 'bulk'])->name('tags.bulk');
+    Route::resource('tags', TagController::class)->except(['create', 'show']);
+    Route::post('articles/bulk', [AdminArticleController::class, 'bulk'])->name('articles.bulk');
+    Route::post('articles/analyze', [AdminArticleController::class, 'analyze'])->name('articles.analyze');
+});
 Route::get('/member/profile', [DashboardController::class, 'edit'])->name('member.profile');
 Route::put('/member/profile', [DashboardController::class, 'update'])->name('member.update');
 Route::get('/affiliators/profile', [DashboardController::class, 'edit'])->name('affiliators.profile');
