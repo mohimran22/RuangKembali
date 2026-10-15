@@ -4,14 +4,28 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Article;
+use App\Models\Category;
 use App\Models\Tag;
 use App\Support\OgImage;
 use App\Services\SeoAnalyzer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Support\Facades\Storage;
 
-class ArticleController extends Controller
+class ArticleController extends Controller implements HasMiddleware
 {
+        public static function middleware(): array
+    {
+        return [
+            new Middleware('permission:lihat data artikel',  only: ['index']),
+            new Middleware('permission:tambah data artikel', only: ['create', 'store']),
+            new Middleware('permission:ubah data artikel',   only: ['edit', 'update', 'analyze']),
+            new Middleware('permission:hapus data artikel',  only: ['destroy']),
+        ];
+    }
+
     public function index(Request $request)
     {
         $status  = $request->query('status');
@@ -51,7 +65,7 @@ class ArticleController extends Controller
         $months = Article::withTrashed()->orderByDesc('created_at')->pluck('created_at')
             ->map(fn ($d) => $d->format('Y-m'))->unique()->values();
 
-        $categories = \App\Models\Category::orderBy('name')->get();
+        $categories = Category::orderBy('name')->get();
 
         return view('admin.articles.index', compact(
             'articles', 'counts', 'months', 'categories', 'status', 'orderby', 'order'
@@ -98,7 +112,7 @@ class ArticleController extends Controller
         return back()->with('success', 'Artikel dihapus.');
     }
 
-    private function validated(Request $request): array
+       private function validated(Request $request, ?Article $article = null): array
     {
         $data = $request->validate([
             'title'            => 'required|string|max:255',
@@ -137,6 +151,9 @@ class ArticleController extends Controller
     private function handleFiles(Request $request, array $data, ?Article $article = null): array
     {
         foreach (['featured_image', 'og_image'] as $field) {
+            if ($article?->$field) {
+                Storage::disk('public')->delete($article->$field);
+            }
             if ($request->hasFile($field)) {
                 $data[$field] = $request->file($field)->store('articles', 'public');
             } else {
@@ -162,72 +179,84 @@ class ArticleController extends Controller
     }
 
     private function scoreFilter($q, string $col, string $v)
-{
-    return match ($v) {
-        'good' => $q->where($col, '>=', 70),
-        'ok'   => $q->whereBetween($col, [40, 69]),
-        'bad'  => $q->where($col, '<', 40),
-        'none' => $q->whereNull($col),
-        default => $q,
-    };
-}
-
-public function bulk(Request $request)
-{
-    $request->validate([
-        'bulk_action' => 'required|in:publish,draft,trash,restore,delete',
-        'ids'         => 'required|array',
-        'ids.*'       => 'integer',
-    ]);
-
-    $articles = Article::withTrashed()->whereIn('id', $request->ids)->get();
-
-    foreach ($articles as $a) {
-        match ($request->bulk_action) {
-            'publish' => $a->update(['status' => 'published', 'published_at' => $a->published_at ?? now()]),
-            'draft'   => $a->update(['status' => 'draft']),
-            'trash'   => $a->delete(),
-            'restore' => $a->restore(),
-            'delete'  => $a->forceDelete(),
+    {
+        return match ($v) {
+            'good' => $q->where($col, '>=', 70),
+            'ok'   => $q->whereBetween($col, [40, 69]),
+            'bad'  => $q->where($col, '<', 40),
+            'none' => $q->whereNull($col),
+            default => $q,
         };
     }
 
-    return back()->with('success', count($articles) . ' artikel diproses.');
-}
+    public function bulk(Request $request)
+    {
+        $request->validate([
+            'bulk_action' => 'required|in:publish,draft,trash,restore,delete',
+            'ids'         => 'required|array',
+            'ids.*'       => 'integer',
+        ]);
 
-private function afterSave(Request $request, Article $article): void
-{
-    $article->categories()->sync($request->input('categories', []));
+        $permission = match ($request->bulk_action) {
+            'publish', 'draft' => 'publikasi data artikel',
+            'trash', 'restore' => 'hapus data artikel',
+            'delete'           => 'hapus permanen data artikel',
+        };
+        abort_unless($request->user()->can($permission), 403);
 
-    $tagIds = collect(explode(',', (string) $request->input('tags')))
-        ->map(fn ($t) => trim($t))->filter()->unique()
-        ->map(fn ($name) => Tag::firstOrCreate(['slug' => Str::slug($name)], ['name' => $name])->id);
+        $query = Article::query()->whereIn('id', $request->ids);
 
-    $article->tags()->sync($tagIds);
-    $regenerate = $request->hasFile('featured_image') || $request->hasFile('og_image') || ! $article->og_auto;
-    if ($regenerate) {
-        $source = $article->og_image ?: $article->featured_image;
-        $article->update(['og_auto' => $source ? OgImage::make($source, $article->og_auto) : null]);
+        $articles = match ($request->bulk_action) {
+            'restore', 'delete' => $query->onlyTrashed()->get(),
+            default             => $query->get(),
+        };
+
+        foreach ($articles as $a) {
+            match ($request->bulk_action) {
+                'publish' => $a->update(['status' => 'published', 'published_at' => $a->published_at ?? now()]),
+                'draft'   => $a->update(['status' => 'draft']),
+                'trash'   => $a->delete(),
+                'restore' => $a->restore(),
+                'delete'  => $a->forceDelete(),
+            };
+        }
+
+        return back()->with('success', $articles->count() . ' artikel diproses.');
     }
-    $article->update(SeoAnalyzer::scores($article->fresh()));
-}
 
-public function analyze(Request $request)
-{
-    $article = new Article([
-        'title'            => (string) $request->input('title'),
-        'slug'             => $request->filled('slug') ? $request->input('slug') : Str::slug((string) $request->input('title')),
-        'content'          => (string) $request->input('content'),
-        'excerpt'          => $request->input('excerpt'),
-        'meta_title'       => $request->input('meta_title'),
-        'meta_description' => $request->input('meta_description'),
-        'focus_keyword'    => $request->input('focus_keyword'),
-    ]);
+    private function afterSave(Request $request, Article $article): void
+    {
+        $article->categories()->sync($request->input('categories', []));
 
-    return response()->json(SeoAnalyzer::analyze(
-        $article,
-        $request->boolean('has_featured'),
-        $request->integer('article_id') ?: null,
-    ));
-}
+        $tagIds = collect(explode(',', (string) $request->input('tags')))
+            ->map(fn ($t) => trim($t))->filter()->unique()
+            ->map(fn ($name) => Tag::firstOrCreate(['slug' => Str::slug($name)], ['name' => $name])->id);
+
+        $article->tags()->sync($tagIds);
+        $regenerate = $request->hasFile('featured_image') || $request->hasFile('og_image') || ! $article->og_auto;
+        if ($regenerate) {
+            $source = $article->og_image ?: $article->featured_image;
+            $article->update(['og_auto' => $source ? OgImage::make($source, $article->og_auto) : null]);
+        }
+        $article->update(SeoAnalyzer::scores($article->fresh()));
+    }
+
+    public function analyze(Request $request)
+    {
+        $article = new Article([
+            'title'            => (string) $request->input('title'),
+            'slug'             => $request->filled('slug') ? $request->input('slug') : Str::slug((string) $request->input('title')),
+            'content'          => (string) $request->input('content'),
+            'excerpt'          => $request->input('excerpt'),
+            'meta_title'       => $request->input('meta_title'),
+            'meta_description' => $request->input('meta_description'),
+            'focus_keyword'    => $request->input('focus_keyword'),
+        ]);
+
+        return response()->json(SeoAnalyzer::analyze(
+            $article,
+            $request->boolean('has_featured'),
+            $request->integer('article_id') ?: null,
+        ));
+    }
 }

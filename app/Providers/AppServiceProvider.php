@@ -64,10 +64,10 @@ class AppServiceProvider extends ServiceProvider
                 // Maks 3 percobaan per menit per IP
                 Limit::perMinute(3)->by('reg-ip-min:' . $request->ip()),
                 // Maks 10 percobaan per jam per IP
-                Limit::perHour(10)->by('reg-ip-hour:' . $request->ip()),
+                Limit::perHour(20)->by('reg-ip-hour:' . $request->ip()),
                 // Maks 2 percobaan per hari untuk alamat email yang sama
                 // (mencegah email bombing ke satu korban)
-                Limit::perDay(2)->by('reg-email:' . sha1($email)),
+                Limit::perDay(5)->by('reg-email:' . sha1($email)),
             ];
         });
 

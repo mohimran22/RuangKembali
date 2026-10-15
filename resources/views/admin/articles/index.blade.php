@@ -6,7 +6,9 @@
         <div class="row g-2 align-items-center">
             <div class="col"><h2 class="page-title">Artikel</h2></div>
             <div class="col-auto ms-auto">
-                <a href="{{ route('articles.create') }}" class="btn btn-dark">+ Tulis Artikel</a>
+                @can('tambah data artikel')
+                    <a href="{{ route('articles.create') }}" class="btn btn-dark">+ Tulis Artikel</a>
+                @endcan
             </div>
         </div>
     </div>
@@ -20,6 +22,9 @@
     $tab = fn ($label, $key, $n) => '<a href="' . e(route('articles.index', $key ? ['status' => $key] : [])) . '"'
         . ((request('status') ?: null) === $key ? ' style="font-weight:bold;color:#000"' : '') . '>'
         . $label . ' (' . $n . ')</a>';
+    $canBulk = auth()->user()->canAny([
+        'publikasi data artikel', 'hapus data artikel', 'hapus permanen data artikel',
+    ]);
 @endphp
 <div class="page-body">
     <div class="container-xl">
@@ -38,79 +43,6 @@
 {{-- @if(request('tag'))
     <a href="{{ route('articles.index', request()->except('tag', 'page')) }}" class="badge bg-red-lt text-decoration-none">Tag: {{ $tags_active_name ?? request('tag') }} ✕</a>
 @endif --}}
-{{-- <form method="GET" class="article-filter mb-3">
-    <input type="hidden" name="status" value="{{ request('status') }}">
-    <input type="hidden" name="tag" value="{{ request('tag') }}">
-
-    <div class="article-filter-row">
-        <div class="filter-item filter-date">
-            <select name="month" class="form-select">
-                <option value="">Semua tanggal</option>
-                @foreach($months as $m)
-                    <option value="{{ $m }}" @selected(request('month') === $m)>
-                        {{ \Carbon\Carbon::parse($m . '-01')->translatedFormat('F Y') }}
-                    </option>
-                @endforeach
-            </select>
-        </div>
-
-        <div class="filter-item filter-category">
-            <select name="category" class="form-select">
-                <option value="">Semua kategori</option>
-                @foreach($categories as $c)
-                    <option value="{{ $c->id }}"
-                        @selected((string) request('category') === (string) $c->id)>
-                        {{ $c->name }}
-                    </option>
-                @endforeach
-            </select>
-        </div>
-
-        @foreach([
-            'seo' => 'Semua skor SEO',
-            'readability' => 'Semua skor keterbacaan'
-        ] as $name => $label)
-            <div class="filter-item filter-score">
-                <select name="{{ $name }}" class="form-select">
-                    <option value="">{{ $label }}</option>
-                    <option value="good" @selected(request($name) === 'good')>
-                        Baik (hijau)
-                    </option>
-                    <option value="ok" @selected(request($name) === 'ok')>
-                        Cukup (oranye)
-                    </option>
-                    <option value="bad" @selected(request($name) === 'bad')>
-                        Buruk (merah)
-                    </option>
-                    <option value="none" @selected(request($name) === 'none')>
-                        Belum dihitung
-                    </option>
-                </select>
-            </div>
-        @endforeach
-
-        <div class="filter-submit">
-            <button type="submit" class="btn btn-outline-secondary">
-                <i class="ti ti-filter me-1"></i> Filter
-            </button>
-        </div>
-    </div>
-    <div class="article-search-row">
-        <div class="article-search">
-            <input
-                type="text"
-                name="search"
-                value="{{ request('search') }}"
-                class="form-control"
-                placeholder="Cari judul artikel..."
-            >
-
-            <button type="submit" class="btn btn-outline-secondary">
-                <i class="ti ti-search me-1"></i> Cari
-            </button>
-        </div>
-    </div>
-</form> --}}
 
 <form method="GET" class="wp-article-toolbar mb-3">
     <input type="hidden" name="status" value="{{ request('status') }}">
@@ -177,50 +109,36 @@
 {{-- Bulk --}}
 <form method="POST" action="{{ route('articles.bulk') }}">
     @csrf
-    <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
-        <select name="bulk_action" class="form-select"
-            style="width:auto; min-width:155px" required>
-            <option value="">Bulk actions</option>
+    @if($canBulk)
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+            <select name="bulk_action" class="form-select"
+                style="width:auto; min-width:155px" required>
+                <option value="">Bulk actions</option>
 
-            @if(request('status') === 'trash')
-                <option value="restore">Restore</option>
-                <option value="delete">Hapus permanen</option>
-            @else
-                <option value="publish">Terbitkan</option>
-                <option value="draft">Jadikan draft</option>
-                <option value="trash">Pindah ke Trash</option>
-            @endif
-        </select>
+                @if(request('status') === 'trash')
+                    <option value="restore">Restore</option>
+                    <option value="delete">Hapus permanen</option>
+                @else
+                    <option value="publish">Terbitkan</option>
+                    <option value="draft">Jadikan draft</option>
+                    <option value="trash">Pindah ke Trash</option>
+                @endif
+            </select>
 
-        <button type="submit" class="btn btn-outline-secondary">
-            Apply
-        </button>
+            <button type="submit" class="btn btn-outline-secondary">
+                Apply
+            </button>
 
-        <span class="ms-auto text-muted small">
-            {{ $articles->total() }} artikel
-        </span>
-    </div>
-    {{-- <div class="d-flex gap-2 mb-2">
-        <select name="bulk_action" class="form-select" style="width:auto" required>
-            <option value="">Bulk actions</option>
-            @if(request('status') === 'trash')
-                <option value="restore">Restore</option>
-                <option value="delete">Hapus permanen</option>
-            @else
-                <option value="publish">Terbitkan</option>
-                <option value="draft">Jadikan draft</option>
-                <option value="trash">Pindah ke Trash</option>
-            @endif
-        </select>
-        <button class="btn btn-outline-secondary">Apply</button>
-        <span class="ms-auto text-muted">{{ $articles->total() }} artikel</span>
-    </div> --}}
-
+            <span class="ms-auto text-muted small">
+                {{ $articles->total() }} artikel
+            </span>
+        </div>
+    @endif
     <div class="table-responsive">
         <table class="table table-vcenter card-table">
             <thead>
                 <tr>
-                    <th style="width:30px"><input type="checkbox" id="check-all"></th>
+                    @if($canBulk)<th style="width:30px"><input type="checkbox" id="check-all"></th>@endif
                     <th><a href="{{ $sortUrl('title') }}">Judul</a></th>
                     <th>Penulis</th>
                     <th>Kategori</th>
@@ -234,22 +152,34 @@
             <tbody>
             @forelse($articles as $a)
                 <tr>
-                    <td><input type="checkbox" name="ids[]" value="{{ $a->id }}" class="row-check"></td>
+                    @if($canBulk)
+                        <td><input type="checkbox" name="ids[]" value="{{ $a->id }}" class="row-check"></td>
+                    @endif
                     <td class="article-title-cell">
                         <strong class="article-title-cell">
-                            @if($a->trashed()) {{ $a->title }}
-                            @else <a href="{{ route('articles.edit', $a) }}">{{ $a->title }}</a>
+                            @if($a->trashed() || ! auth()->user()->can('ubah data artikel'))
+                                {{ $a->title }}
+                            @else
+                                <a href="{{ route('articles.edit', $a) }}">{{ $a->title }}</a>
                             @endif
                         </strong>
                         <div class="small">
                             @if($a->trashed())
-                                <a href="#" onclick="rowAction('restore', {{ $a->id }}); return false;">Restore</a> |
-                                <a href="#" class="text-danger"
-                                   onclick="rowAction('delete', {{ $a->id }}, 'Hapus permanen?'); return false;">Hapus permanen</a>
+                                @can('hapus data artikel')
+                                    <a href="#" onclick="rowAction('restore', {{ $a->id }}); return false;">Restore</a>
+                                @endcan
+                                @can('hapus permanen data artikel')
+                                    | <a href="#" class="text-danger"
+                                        onclick="rowAction('delete', {{ $a->id }}, 'Hapus permanen?'); return false;">Hapus permanen</a>
+                                @endcan
                             @else
-                                <a href="{{ route('articles.edit', $a) }}">Edit</a> |
-                                <a href="#" class="text-danger"
-                                   onclick="rowAction('trash', {{ $a->id }}); return false;">Hapus</a>
+                                @can('ubah data artikel')
+                                    <a href="{{ route('articles.edit', $a) }}">Edit</a>
+                                @endcan
+                                @can('hapus data artikel')
+                                    | <a href="#" class="text-danger"
+                                        onclick="rowAction('trash', {{ $a->id }}); return false;">Hapus</a>
+                                @endcan
                                 @if($a->status === 'published')
                                     | <a href="{{ route('articles.show', $a) }}" target="_blank">Lihat</a>
                                 @endif
@@ -281,7 +211,7 @@
                     </td>
                 </tr>
             @empty
-                <tr><td colspan="9" class="text-center text-muted">Tidak ada artikel.</td></tr>
+                <tr><td colspan="{{ $canBulk ? 9 : 8 }}" class="text-center text-muted">Tidak ada artikel.</td></tr>
             @endforelse
             </tbody>
         </table>
@@ -305,4 +235,27 @@ function rowAction(action, id, confirmMsg) {
         </div></div>
     </div>
 </div>
+@can('tambah data artikel')
+<a href="{{ route('articles.create') }}"
+   class="mobile-fab d-md-none"
+   aria-label="Tulis artikel">
+
+    <svg xmlns="http://www.w3.org/2000/svg"
+         width="26"
+         height="26"
+         viewBox="0 0 24 24"
+         stroke-width="2"
+         stroke="currentColor"
+         fill="none"
+         stroke-linecap="round"
+         stroke-linejoin="round">
+
+        <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+        <line x1="12" y1="5" x2="12" y2="19"/>
+        <line x1="5" y1="12" x2="19" y2="12"/>
+
+    </svg>
+
+</a>
+@endcan
 @endsection

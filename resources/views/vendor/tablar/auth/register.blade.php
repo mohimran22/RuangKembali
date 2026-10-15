@@ -238,7 +238,7 @@ label {
                         <span class="input-group-text bg-transparent border-end-0">
                             <i class="ti ti-user"></i>
                         </span>
-                        <input type="text" name="fullname"
+                        <input type="text" name="fullname" value="{{ old('fullname') }}"
                             class="form-control border-start-0 @error('fullname') is-invalid @enderror"
                             placeholder="Masukkan nama Anda" autofocus>
                     </div>
@@ -253,11 +253,11 @@ label {
                         <span class="input-group-text bg-transparent border-end-0">
                             <i class="ti ti-user"></i>
                         </span>
-                        <input type="tel" name="phone"
-                            class="form-control border-start-0 @error('fullname') is-invalid @enderror"
-                            placeholder="Masukkan nomor HP Anda" autofocus>
+                        <input type="tel" name="phone" value="{{ old('phone') }}"
+                            class="form-control border-start-0 @error('phone') is-invalid @enderror"
+                            placeholder="Contoh: 081234567890">
                     </div>
-                    @error('fullname')
+                    @error('phone')
                         <div class="invalid-feedback d-block">{{ $message }}</div>
                     @enderror
                 </div>
@@ -268,7 +268,7 @@ label {
                         <span class="input-group-text bg-transparent border-end-0">
                             <i class="ti ti-mail"></i>
                         </span>
-                        <input id="email" type="text" name="email"
+                        <input id="email" type="text" name="email" value="{{ old('email') }}"
                             class="form-control border-start-0 @error('email') is-invalid @enderror"
                             placeholder="Masukkan alamat email Anda" autofocus>
                     </div>
@@ -312,7 +312,15 @@ label {
                         <div class="invalid-feedback d-block">{{ $message }}</div>
                     @enderror
                 </div>
-
+                <div class="mb-3">
+                    <div class="cf-turnstile"
+                            data-sitekey="{{ config('services.turnstile.site_key') }}"
+                            data-size="flexible"
+                            data-theme="light"></div>
+                    @error('cf-turnstile-response')
+                        <div class="invalid-feedback d-block text-center">{{ $message }}</div>
+                    @enderror
+                </div>
                 <button type="submit" class="btn btn-register text-white w-100">Daftar</button>
 
                 <div class="text-center mt-3 small">
@@ -327,6 +335,7 @@ label {
             </form>
         </div>
     </div>
+       <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     <script>
         document.querySelectorAll('.toggle-password').forEach(button => {
             button.addEventListener('click', function () {

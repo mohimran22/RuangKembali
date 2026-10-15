@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Storage;
 
 class Article extends Model
 {
@@ -48,5 +49,16 @@ public function renderedContent(): string
     return \App\Support\Shortcodes::render(
         \App\Support\VideoEmbed::render((string) $this->content)
     );
+}
+
+protected static function booted(): void
+{
+    static::forceDeleting(function (Article $article) {
+        foreach (['featured_image', 'og_image', 'og_auto'] as $field) {
+            if ($article->$field) {
+                Storage::disk('public')->delete($article->$field);
+            }
+        }
+    });
 }
 }
