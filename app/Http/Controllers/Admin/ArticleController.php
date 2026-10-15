@@ -10,20 +10,16 @@ use App\Support\OgImage;
 use App\Services\SeoAnalyzer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
-use Illuminate\Routing\Controllers\HasMiddleware;
-use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\Storage;
 
 class ArticleController extends Controller implements HasMiddleware
 {
-        public static function middleware(): array
+    public function __construct()
     {
-        return [
-            new Middleware('permission:lihat data artikel',  only: ['index']),
-            new Middleware('permission:tambah data artikel', only: ['create', 'store']),
-            new Middleware('permission:ubah data artikel',   only: ['edit', 'update', 'analyze']),
-            new Middleware('permission:hapus data artikel',  only: ['destroy']),
-        ];
+        $this->middleware('permission:lihat data artikel')->only(['index']);
+        $this->middleware('permission:tambah data artikel')->only(['create', 'store']);
+        $this->middleware('permission:ubah data artikel')->only(['edit', 'update', 'analyze']);
+        $this->middleware('permission:hapus data artikel')->only(['destroy']);
     }
 
     public function index(Request $request)
