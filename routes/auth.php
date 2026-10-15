@@ -12,11 +12,16 @@ use App\Http\Controllers\Auth\VerifyEmailController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
-    Route::get('register', [RegisteredUserController::class, 'create'])
-        ->name('register');
+    // Route::get('register', [RegisteredUserController::class, 'create'])
+    //     ->name('register');
 
-    Route::post('register', [RegisteredUserController::class, 'store']);
+    // Route::post('register', [RegisteredUserController::class, 'store']);
+// Pendaftaran ditutup sementara (serangan bot)
+Route::get('register', fn () => redirect()->route('login')
+        ->with('status', 'Pendaftaran sedang ditutup sementara.'))
+    ->name('register');
 
+Route::post('register', fn () => abort(503, 'Pendaftaran sedang ditutup sementara.'));
     Route::get('login', [AuthenticatedSessionController::class, 'create'])
         ->name('login');
 
@@ -25,8 +30,9 @@ Route::middleware('guest')->group(function () {
     Route::get('forgot-password', [PasswordResetLinkController::class, 'create'])
         ->name('password.request');
 
-    Route::post('forgot-password', [PasswordResetLinkController::class, 'store'])
-        ->name('password.email');
+Route::post('forgot-password', [PasswordResetLinkController::class, 'store'])
+    ->middleware('throttle:5,1')
+    ->name('password.email');
 
     Route::get('reset-password/{token}', [NewPasswordController::class, 'create'])
         ->name('password.reset');
@@ -43,10 +49,12 @@ Route::middleware('auth')->group(function () {
         ->middleware(['signed', 'throttle:6,1'])
         ->name('verification.verify');
 
+    // Route::post('email/verification-notification', [EmailVerificationNotificationController::class, 'store'])
+    //     ->middleware('throttle:6,1')
+    //     ->name('verification.send');
     Route::post('email/verification-notification', [EmailVerificationNotificationController::class, 'store'])
-        ->middleware('throttle:6,1')
-        ->name('verification.send');
-
+    ->middleware('throttle:kirim-verifikasi')
+    ->name('verification.send');
     Route::get('confirm-password', [ConfirmablePasswordController::class, 'show'])
         ->name('password.confirm');
 

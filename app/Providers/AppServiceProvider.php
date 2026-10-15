@@ -12,6 +12,9 @@ use Illuminate\Support\Facades\View;
 use App\View\Composers\NavbarComposer;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Notifications\Messages\MailMessage;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Support\Str;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -52,6 +55,30 @@ class AppServiceProvider extends ServiceProvider
                 ->action('Verifikasi Email', $url)
                 ->line('Jika kamu tidak merasa membuat akun ini, abaikan email ini.')
                 ->salutation('Salam, Tim Ruang Kembali');
+        });
+
+        RateLimiter::for('registrasi', function (Request $request) {
+            $email = Str::lower((string) $request->input('email'));
+
+            return [
+                // Maks 3 percobaan per menit per IP
+                Limit::perMinute(3)->by('reg-ip-min:' . $request->ip()),
+                // Maks 10 percobaan per jam per IP
+                Limit::perHour(10)->by('reg-ip-hour:' . $request->ip()),
+                // Maks 2 percobaan per hari untuk alamat email yang sama
+                // (mencegah email bombing ke satu korban)
+                Limit::perDay(2)->by('reg-email:' . sha1($email)),
+            ];
+        });
+
+        // Limiter untuk kirim ulang email verifikasi
+        RateLimiter::for('kirim-verifikasi', function (Request $request) {
+            $key = $request->user()?->id ?: $request->ip();
+
+            return [
+                Limit::perMinute(1)->by('verif-min:' . $key),
+                Limit::perHour(5)->by('verif-hour:' . $key),
+            ];
         });
     }
 }
