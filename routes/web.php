@@ -108,7 +108,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-Route::middleware(['auth', 'permission:lihat daftar member|lihat data member', 'activerole:Member'])
+Route::middleware(['auth', 'verified', 'permission:lihat daftar member|lihat data member', 'activerole:Member'])
     ->group(function () {
         Route::get('/members/generate-nic', [MembersController::class, 'generateNicAjax'])->name('members.generateNic');
         Route::resource('/members', MembersController::class)->whereUuid('member');

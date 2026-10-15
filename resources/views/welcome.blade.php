@@ -562,60 +562,7 @@
 
         </div>
 </section>
-@php
-    $articles = collect($articles ?? []);
-    $artIndexUrl = collect(['artikel.index', 'articles.index'])->first(fn ($r) => Route::has($r));
-    $artShowName = collect(['articles.show', 'artikel.show'])->first(fn ($r) => Route::has($r));
-    $artTitle = fn ($a) => data_get($a, 'title') ?? data_get($a, 'judul');
-    $artImg   = fn ($a) => data_get($a, 'featured_image') ?? data_get($a, 'thumbnail') ?? data_get($a, 'image') ?? data_get($a, 'cover');
-    $artUrl   = fn ($a) => $artShowName ? route($artShowName, $a) : '#';
-    $artCat   = fn ($a) => collect(data_get($a, 'categories', []))->pluck('name')->first() ?: data_get($a, 'category.name');
-    $artText  = fn ($a) => data_get($a, 'excerpt') ?: \Illuminate\Support\Str::limit(trim(preg_replace('/\s+/', ' ', strip_tags(str_replace('<', ' <', (string) data_get($a, 'content'))))), 140);
-@endphp
-@if ($articles->isNotEmpty())
-<section class="event-section" style="padding-bottom:50px">
-    <div class="event-section-header" style="margin-bottom:0">
-        <h2>Artikel Terbaru</h2>
-        <p>Bacaan pilihan untuk menemani langkahmu bertumbuh</p>
-    </div>
-</section>
-<section class="article-section" id="artikel">
-    <div class="article-grid">
-        @foreach ($articles->take(3) as $a)
-            @php $img = $artImg($a); $cat = $artCat($a); $date = data_get($a, 'published_at'); @endphp
-            <a href="{{ $artUrl($a) }}" class="article-card">
-                <div class="article-card-thumb">
-                    @if ($img)
-                        <img src="{{ asset('storage/' . $img) }}" alt="{{ $artTitle($a) }}" loading="lazy">
-                    @else
-                        <div class="article-card-thumb-placeholder"><i class="ti ti-article"></i></div>
-                    @endif
-                </div>
-                <div class="article-card-body">
-                    @if ($cat)
-                        <span class="article-card-category">{{ $cat }}</span>
-                    @endif
-                    <h3 class="article-card-title">{{ $artTitle($a) }}</h3>
-                    <p class="article-card-excerpt">{{ $artText($a) }}</p>
-                    <div class="article-card-footer">
-                        <span class="article-card-date">
-                            @if ($date)
-                                <i class="ti ti-calendar"></i> {{ \Illuminate\Support\Carbon::parse($date)->translatedFormat('d M Y') }}
-                            @endif
-                        </span>
-                        <span class="article-card-cta">Baca <i class="ti ti-arrow-right"></i></span>
-                    </div>
-                </div>
-            </a>
-        @endforeach
-    </div>
-    @if ($artIndexUrl)
-        <div class="article-more">
-            <a href="{{ route($artIndexUrl) }}" class="btn-article-more">Lihat Semua Artikel <i class="ti ti-arrow-right"></i></a>
-        </div>
-    @endif
-</section>
-@endif
+
 <section class="event-section">
     <div class="event-section-header">
         <h2>Event Terbaru</h2>
@@ -678,6 +625,60 @@
         @endforelse
     </div>
 </section>
+@php
+    $articles = collect($articles ?? []);
+    $artIndexUrl = collect(['artikel.index', 'articles.index'])->first(fn ($r) => Route::has($r));
+    $artShowName = collect(['articles.show', 'artikel.show'])->first(fn ($r) => Route::has($r));
+    $artTitle = fn ($a) => data_get($a, 'title') ?? data_get($a, 'judul');
+    $artImg   = fn ($a) => data_get($a, 'featured_image') ?? data_get($a, 'thumbnail') ?? data_get($a, 'image') ?? data_get($a, 'cover');
+    $artUrl   = fn ($a) => $artShowName ? route($artShowName, $a) : '#';
+    $artCat   = fn ($a) => collect(data_get($a, 'categories', []))->pluck('name')->first() ?: data_get($a, 'category.name');
+    $artText  = fn ($a) => data_get($a, 'excerpt') ?: \Illuminate\Support\Str::limit(trim(preg_replace('/\s+/', ' ', strip_tags(str_replace('<', ' <', (string) data_get($a, 'content'))))), 140);
+@endphp
+@if ($articles->isNotEmpty())
+<section class="event-section" style="padding-bottom:50px">
+    <div class="event-section-header" style="margin-bottom:0">
+        <h2>Artikel Terbaru</h2>
+        <p>Bacaan pilihan untuk menemani langkahmu bertumbuh</p>
+    </div>
+</section>
+<section class="article-section" id="artikel">
+    <div class="article-grid">
+        @foreach ($articles->take(3) as $a)
+            @php $img = $artImg($a); $cat = $artCat($a); $date = data_get($a, 'published_at'); @endphp
+            <a href="{{ $artUrl($a) }}" class="article-card">
+                <div class="article-card-thumb">
+                    @if ($img)
+                        <img src="{{ asset('storage/' . $img) }}" alt="{{ $artTitle($a) }}" loading="lazy">
+                    @else
+                        <div class="article-card-thumb-placeholder"><i class="ti ti-article"></i></div>
+                    @endif
+                </div>
+                <div class="article-card-body">
+                    @if ($cat)
+                        <span class="article-card-category">{{ $cat }}</span>
+                    @endif
+                    <h3 class="article-card-title">{{ $artTitle($a) }}</h3>
+                    <p class="article-card-excerpt">{{ $artText($a) }}</p>
+                    <div class="article-card-footer">
+                        <span class="article-card-date">
+                            @if ($date)
+                                <i class="ti ti-calendar"></i> {{ \Illuminate\Support\Carbon::parse($date)->translatedFormat('d M Y') }}
+                            @endif
+                        </span>
+                        <span class="article-card-cta">Baca <i class="ti ti-arrow-right"></i></span>
+                    </div>
+                </div>
+            </a>
+        @endforeach
+    </div>
+    @if ($artIndexUrl)
+        <div class="article-more">
+            <a href="{{ route($artIndexUrl) }}" class="btn-article-more">Lihat Semua Artikel <i class="ti ti-arrow-right"></i></a>
+        </div>
+    @endif
+</section>
+@endif
 <section class="join-section">
     <div class="join-card">
         <h2>Bergabung Bersama Kami</h2>

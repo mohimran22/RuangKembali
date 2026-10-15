@@ -318,7 +318,9 @@ label {
                 <div class="text-center mt-3 small">
                     Sudah punya akun? <a href="{{ route('login') }}" class="fw-semibold text-dark">Silakan masuk</a>
                 </div>
-
+                <div style="position:absolute; left:-9999px;" aria-hidden="true">
+                    <input type="text" name="website" tabindex="-1" autocomplete="off">
+                </div>
                 <div class="text-center text-muted mt-4 small">
                     ZH Picture © {{ date('Y') }} Semua Hak Dilindungi
                 </div>
