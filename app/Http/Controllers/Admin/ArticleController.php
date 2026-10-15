@@ -12,7 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 
-class ArticleController extends Controller implements HasMiddleware
+class ArticleController extends Controller
 {
     public function __construct()
     {
