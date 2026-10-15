@@ -33,7 +33,7 @@
                 <div class="col">
                     <div class="d-flex align-items-center gap-2">
                         <a href="{{ route('articles.index') }}"
-                        class="btn btn-icon btn-dark"
+                        class="btn btn-icon btn-primary"
                         aria-label="Kembali"
                         title="Kembali">
                             <i class="ti ti-arrow-left"></i>
@@ -46,7 +46,7 @@
                 </div>
 
                 <div class="col-auto ms-auto">
-                    <button type="submit" class="btn btn-dark">
+                    <button type="submit" class="btn btn-primary">
                         <i class="ti ti-device-floppy me-1"></i>
                         Simpan
                     </button>

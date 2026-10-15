@@ -7,7 +7,7 @@
             <div class="col"><h2 class="page-title">Artikel</h2></div>
             <div class="col-auto ms-auto">
                 @can('tambah data artikel')
-                    <a href="{{ route('articles.create') }}" class="btn btn-dark">+ Tulis Artikel</a>
+                    <a href="{{ route('articles.create') }}" class="btn btn-primary">+ Tulis Artikel</a>
                 @endcan
             </div>
         </div>
@@ -94,7 +94,7 @@
             class="form-control"
             placeholder="Cari judul..."
         >
-        <button type="submit" class="btn btn-dark">
+        <button type="submit" class="btn btn-primary">
             Cari
         </button>
     </div>

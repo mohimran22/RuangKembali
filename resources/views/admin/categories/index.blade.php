@@ -39,7 +39,7 @@
                             @error('slug') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             <small class="text-muted">Versi URL dari nama. Kosongkan untuk otomatis.</small>
                         </div>
-                        <button type="submit" class="btn btn-dark">Tambah Kategori</button>
+                        <button type="submit" class="btn btn-primary">Tambah Kategori</button>
                     </form>
                 </div></div>
             </div>
