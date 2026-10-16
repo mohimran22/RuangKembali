@@ -7,8 +7,8 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        {!! SEO::generate() !!}
-
+    {!! SEO::generate() !!}
+    <meta name="google-site-verification" content="diLVlZaziSCeg-VGMchKDGGFtqdcCkpFy_9SXuiWsiY" />
     <link rel="icon" type="image/x-icon" href="{{ asset('LOGO_RuKa_ONLY_tab_browser.png') }}">
 
     <!-- Bootstrap -->

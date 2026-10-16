@@ -330,7 +330,7 @@ label {
                     <input type="text" name="website" tabindex="-1" autocomplete="off">
                 </div>
                 <div class="text-center text-muted mt-4 small">
-                    ZH Picture © {{ date('Y') }} Semua Hak Dilindungi
+                    Ruang Kembali © {{ date('Y') }} Semua Hak Dilindungi
                 </div>
             </form>
         </div>

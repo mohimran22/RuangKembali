@@ -225,7 +225,15 @@
                     <div class="invalid-feedback d-block">{{ $message }}</div>
                 @enderror
             </div>
-
+            <div class="mb-3">
+                <div class="cf-turnstile"
+                        data-sitekey="{{ config('services.turnstile.site_key') }}"
+                        data-size="flexible"
+                        data-theme="light"></div>
+                @error('cf-turnstile-response')
+                    <div class="invalid-feedback d-block text-center">{{ $message }}</div>
+                @enderror
+            </div>
             <button type="submit" class="btn btn-login text-white w-100">Masuk</button>
 
             {{-- <div class="text-center mt-3 small">
@@ -243,6 +251,7 @@
     </div>
 </div>
 
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 <script>
     // Toggle password show/hide
     const togglePassword = document.getElementById('togglePassword');
