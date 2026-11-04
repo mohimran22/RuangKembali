@@ -21,7 +21,7 @@ class ViewServiceProvider extends ServiceProvider
         $user = Auth::user();
         if (!$user) return;
 
-        $cacheKey = 'menus_for_user_' . $user->id;
+        $cacheKey = 'menus_for_user_' . $user->id . '_' . $user->active_role;
 
         $menus = Cache::remember($cacheKey, now()->addMinutes(1), function () use ($user) {
             return Menu::whereNull('parent_id')

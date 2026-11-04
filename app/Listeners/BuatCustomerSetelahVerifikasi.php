@@ -24,5 +24,7 @@ class BuatCustomerSetelahVerifikasi
             'user_id' => $user->id,
             ...Customer::getDefaultAttributes($user),
         ]);
+        
+        \Illuminate\Support\Facades\Cache::forget('menus_for_user_' . $user->id);
     }
 }

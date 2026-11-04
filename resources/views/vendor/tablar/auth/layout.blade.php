@@ -17,9 +17,15 @@
   
     @yield('tablar_css')
 
-        <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('fonts/tabler-icons.css') }}">
-
+    <style>
+        body,
+        button,
+        input {
+            font-family: 'Poppins', system-ui, sans-serif !important;
+        }
+    </style>
 </head>
 <body class=" border-top-wide border-primary d-flex flex-column">
     @include('partials.navbar')
