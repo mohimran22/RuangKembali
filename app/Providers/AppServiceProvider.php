@@ -15,6 +15,7 @@ use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Support\Str;
+use Illuminate\Http\Request;
 
 class AppServiceProvider extends ServiceProvider
 {
