@@ -177,7 +177,7 @@
                                 Swal.fire({
                                     icon: 'success',
                                     title: 'Berhasil!',
-                                    text: 'Pemilik telah dihapus.',
+                                    text: 'Data team telah dihapus.',
                                     timer: 2000,
                                     showConfirmButton: false
                             });

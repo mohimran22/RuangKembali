@@ -195,6 +195,7 @@ public function index(Request $request)
 
     public function approve(Transaction $transaction)
     {
+        // Cek cepat (pengaman sebenarnya ada di dalam lock di bawah)
         abort_unless(
             $transaction->status === 'waiting_confirmation',
             400,
@@ -203,25 +204,29 @@ public function index(Request $request)
 
         DB::transaction(function () use ($transaction) {
 
-            // Load event beserta COA yang sudah ditentukan pada event
-            $transaction->load('event');
-
-            $event = $transaction->event;
+            // Kunci baris transaksi supaya approve bersamaan tidak lolos dua kali
+            $locked = Transaction::whereKey($transaction->id)
+                ->lockForUpdate()
+                ->firstOrFail();
 
             abort_unless(
-                $event,
-                404,
-                'Event transaksi tidak ditemukan.'
+                $locked->status === 'waiting_confirmation',
+                400,
+                'Transaksi ini tidak dalam status menunggu konfirmasi.'
             );
 
-            // Pastikan Event sudah memiliki COA Kas/Bank
+            $locked->load(['event', 'registrations.user']);
+
+            $event = $locked->event;
+
+            abort_unless($event, 404, 'Event transaksi tidak ditemukan.');
+
             abort_unless(
                 $event->cash_account_id,
                 422,
                 'Akun Kas / Bank untuk event ini belum ditentukan.'
             );
 
-            // Pastikan Event sudah memiliki COA Pendapatan
             abort_unless(
                 $event->income_account_id,
                 422,
@@ -240,49 +245,44 @@ public function index(Request $request)
                 ->where('is_active', true)
                 ->firstOrFail();
 
-            $totalPeserta = $transaction->registrations->sum(function ($registration) {
-                return (float) $registration->price;
-            });
+            // Bandingkan dalam satuan sen (integer), tanpa bcmath
+            $totalPeserta = $locked->registrations
+                ->sum(fn ($r) => (int) round((float) $r->price * 100));
 
-            $nominalTransaksi = (float) $transaction->total_amount;
+            $nominalTransaksi = (int) round((float) $locked->total_amount * 100);
 
             abort_unless(
-                bccomp((string) $totalPeserta, (string) $nominalTransaksi, 2) === 0,
+                $totalPeserta === $nominalTransaksi,
                 422,
                 'Total pembayaran peserta tidak sesuai dengan nominal transaksi.'
             );
 
-            $transaction->update([
+            $locked->update([
                 'status'  => 'paid',
                 'paid_at' => now(),
             ]);
 
-            $transaction->registrations()->update([
+            $locked->registrations()->update([
                 'status' => 'paid',
             ]);
 
-            $journalCode = $this->generateNextJournalCode();
-
             $journal = AccountingJournal::create([
                 'license_id'       => $licenseId,
-                'journal_code'     => $journalCode,
+                'journal_code'     => $this->generateNextJournalCode(),
                 'transaction_date' => now()->toDateString(),
-                'description'      => 'Penerimaan pembayaran event - '
-                                    . ($transaction->event->name),
+                'description'      => 'Penerimaan pembayaran event - ' . $event->name,
                 'created_by'       => auth()->id(),
-                'reference_code'   => $transaction->transaction_code,
-                'transaction_id'   => $transaction->id,
+                'reference_code'   => $locked->transaction_code,
+                'transaction_id'   => $locked->id,
             ]);
 
-            foreach ($transaction->registrations as $registration) {
-
-                $registration->loadMissing('user');
+            foreach ($locked->registrations as $registration) {
 
                 $person = $registration->user->fullname
                     ?? $registration->guest_name
                     ?? $registration->ticket_code;
 
-                $nominalPeserta = (float) $registration->price;
+                $nominalPeserta = round((float) $registration->price, 2);
 
                 // Debit Kas / Bank
                 AccountingJournalDetail::create([
@@ -292,9 +292,7 @@ public function index(Request $request)
                     'debit'       => $nominalPeserta,
                     'credit'      => 0,
                     'description' => 'Penerimaan pembayaran event - '
-                                    . $event->name
-                                    . ' - '
-                                    . $registration->ticket_code,
+                                    . $event->name . ' - ' . $registration->ticket_code,
                 ]);
 
                 // Kredit Pendapatan Event
@@ -305,23 +303,26 @@ public function index(Request $request)
                     'debit'       => 0,
                     'credit'      => $nominalPeserta,
                     'description' => 'Pendapatan pendaftaran event - '
-                                    . $event->name
-                                    . ' - '
-                                    . $registration->ticket_code,
+                                    . $event->name . ' - ' . $registration->ticket_code,
                 ]);
             }
         });
 
-        $transaction->load([
+        // Muat ulang supaya status 'paid' terbaca di notifikasi
+        $transaction->refresh()->load([
             'event',
             'registrations.user',
             'registeredBy',
         ]);
 
         if ($transaction->registeredBy) {
-            $transaction->registeredBy->notify(
-                new TransactionApprovedNotification($transaction)
-            );
+            try {
+                $transaction->registeredBy->notify(
+                    new TransactionApprovedNotification($transaction)
+                );
+            } catch (\Throwable $e) {
+                report($e);
+            }
         }
 
         return back()->with(
@@ -329,7 +330,6 @@ public function index(Request $request)
             'Transaksi berhasil disetujui, status diubah menjadi Lunas dan jurnal berhasil dibuat.'
         );
     }
-
     public function reject(Request $request, Transaction $transaction)
     {
         abort_unless(
@@ -355,32 +355,19 @@ public function index(Request $request)
         return back()->with('success', 'Transaksi ditolak, user perlu upload ulang bukti transfer.');
     }
 
-    private function generateNextJournalCode()
+private function generateNextJournalCode(): string
 {
     $licenseId = config('app.license_id');
 
-    $lastJournalNumber = AccountingJournal::where('license_id', $licenseId)
-        ->where('journal_code', 'ILIKE', 'IJ-%')
-        ->selectRaw("
-            MAX(
-                CAST(
-                    REGEXP_REPLACE(journal_code, '^.*-', '') AS INTEGER
-                )
-            ) as last_number
-        ")
+    // Serialisasi pembuatan kode per license. Lepas otomatis saat transaksi selesai.
+    DB::select('SELECT pg_advisory_xact_lock(hashtext(?))', ['journal_code:' . $licenseId]);
+
+    $last = AccountingJournal::where('license_id', $licenseId)
+        ->whereRaw("journal_code ~ '^IJ-[0-9]+$'")
+        ->selectRaw('MAX(CAST(SUBSTRING(journal_code FROM 4) AS INTEGER)) as last_number')
         ->value('last_number');
 
-    $lastJournalNumber = $lastJournalNumber ?? 0;
-
-    do {
-        $nextNumber = str_pad($lastJournalNumber + 1, 4, '0', STR_PAD_LEFT);
-        $journalCode = 'IJ-' . $nextNumber;
-
-        $exists = AccountingJournal::where('journal_code', $journalCode)->exists();
-        $lastJournalNumber++;
-    } while ($exists);
-
-    return $journalCode;
+    return 'IJ-' . str_pad(((int) $last) + 1, 4, '0', STR_PAD_LEFT);
 }
 
 public function edit(Transaction $transaction)

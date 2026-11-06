@@ -142,37 +142,36 @@ class AccountController extends Controller
         $internalRoles = $user->roles
             ->where('role_group', 'Internal');
 
-        if ($internalRoles->isNotEmpty()) {
+if ($internalRoles->isNotEmpty()) {
+    $team = Team::where('user_id', $user->id)->first();
 
-            Team::firstOrCreate(
-                ['user_id' => $user->id],
-                [
-                    'nik' => Team::generateNik(),
+    if (!$team) {
+        Team::create([
+            'user_id' => $user->id,
+            'nik' => Team::generateNik(),
+            'position' => $internalRoles->pluck('name')->values()->toArray(),
+            'marital_status' => 1,
+            'employment_status' => 'Aktif',
+            'start_date' => now()->format('Y-m-d'),
+            'basic_salary' => 0,
+            'allowance' => 0,
+            'deduction' => 0,
+            'bonus' => 0,
+            'thr' => 0,
+            'contract_letter_file' => 'dokumen.pdf',
+        ]);
+    } else {
+        $team->update([
+            'position' => $internalRoles->pluck('name')->values()->toArray(),
+        ]);
+    }
+} else {
 
-                    'position' => $internalRoles
-                        ->pluck('name')
-                        ->values()
-                        ->toArray(),
+            if ($user->team) {
 
-                    'marital_status' => 1,
-                    'employment_status' => 'Aktif',
-                    'start_date' => now()->format('Y-m-d'),
-                    'basic_salary' => 0,
-                    'allowance' => 0,
-                    'deduction' => 0,
-                    'bonus' => 0,
-                    'thr' => 0,
-                    'contract_letter_file' => 'dokumen.pdf',
-                ]
-            );
+                if (!$user->team->projects()->exists()) {
 
-        } else {
-
-            if ($user->employee) {
-
-                if (!$user->employee->projects()->exists()) {
-
-                    $user->employee->delete();
+                    $user->team->delete();
 
                 }
 

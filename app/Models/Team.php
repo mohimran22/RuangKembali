@@ -135,19 +135,14 @@ public function bank()
     return Str::title($value);
 }
 
-public static function generateNik()
+public static function generateNik(): string
 {
-    $lastEmployee = self::orderBy('id', 'desc')->first();
+    $max = self::lockForUpdate()
+        ->pluck('nik')
+        ->map(fn ($nik) => preg_match('/^T-(\d+)$/', (string) $nik, $m) ? (int) $m[1] : 0)
+        ->max() ?? 0;
 
-    // Ambil angka terakhir dari NIK sebelumnya (misal E-0007 → 7)
-    $lastNumber = 0;
-    if ($lastEmployee && preg_match('/T-(\d+)/', $lastEmployee->nik, $matches)) {
-        $lastNumber = (int) $matches[1];
-    }
-
-    // Tambah 1 dan format jadi E-0001
-    $newNumber = $lastNumber + 1;
-    return 'T-' . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
+    return 'T-' . str_pad($max + 1, 4, '0', STR_PAD_LEFT);
 }
 
 

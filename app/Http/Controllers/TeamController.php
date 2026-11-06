@@ -282,7 +282,7 @@ if ($request->hasFile('training_certificate')) {
 
 public static function generateNikAjax()
 {
-    $lastNumber = Team::where('nik', 'ilike', 'E-%')
+    $lastNumber = Team::where('nik', 'ilike', 'T-%')
         ->selectRaw("
             MAX(
                 CAST(
@@ -294,7 +294,7 @@ public static function generateNikAjax()
         ->value('max_nik');
 
     $newNumber = ($lastNumber ?? 0) + 1;
-    $nik = 'E-' . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
+    $nik = 'T-' . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
 
     return response()->json([
         'nik' => $nik
