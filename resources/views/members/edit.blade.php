@@ -420,17 +420,16 @@
 </div>
 @endsection
 
-                                    @push('js')
-                                        <script>
-                                            $(document).ready(function() {
-                                                $('.select2').select2({
-                                                    placeholder: "-- Pilih --",
-                                                    width: '100%'
-                                                });
-                                            });
-                                        </script>
+@push('js')
+    <script>
+        $(document).ready(function() {
+            $('.select2').select2({
+                width: '100%'
+            });
+        });
+    </script>
 
-                                        <script>
+    <script>
         document.getElementById('photo').addEventListener('change', function (event) {
         const input = event.target;
         const file = input.files[0];
@@ -455,209 +454,204 @@
             };
             reader.readAsDataURL(file);
         }
-    });
+        });
     </script>
 
-                                        <script>
-                                        $('#province').change(function () {
-                                        var id = $(this).val();
-                                        $('#city').html('<option>Loading...</option>');
-                                        $('#district').html('<option value="">-- Pilih kecamatan --</option>');
-                                        $('#sub_district').html('<option value="">-- Pilih Kelurahan --</option>');
+    <script>
+        $('#province').change(function () {
+        var id = $(this).val();
+        $('#city').html('<option>Loading...</option>');
+        $('#district').html('<option value="">-- Pilih kecamatan --</option>');
+        $('#sub_district').html('<option value="">-- Pilih Kelurahan --</option>');
 
-                                            if (id) {
-                                            $.get('/api/cities/' + id, function (data) {
-                                            $('#city').empty().append('<option value="">-- Pilih Kabupaten --</option>');
-                                            $.each(data, function (i, city) {
-                                            $('#city').append('<option value="' + city.id + '">' + city.name + '</option>');
-                                                        });
-                                                    });
-                                                }
-                                            });
-
-                                            $('#city').change(function () {
-                                                var id = $(this).val();
-                                                $('#district').html('<option>Loading...</option>');
-                                                $('#sub_district').html('<option value="">-- Pilih Kelurahan --</option>');
-
-                                                if (id) {
-                                                    $.get('/api/districts/' + id, function (data) {
-                                                        $('#district').empty().append('<option value="">-- Pilih Kecamatan --</option>');
-                                                        $.each(data, function (i, district) {
-                                                            $('#district').append('<option value="' + district.id + '">' + district.name + '</option>');
-                                                        });
-                                                    });
-                                                }
-                                            });
-
-                                            $('#district').change(function () {
-                                                var id = $(this).val();
-                                                $('#sub_district').html('<option>Loading...</option>');
-
-                                                if (id) {
-                                                    $.get('/api/sub_districts/' + id, function (data) {
-                                                        $('#sub_district').empty().append('<option value="">-- Pilih Kelurahan --</option>');
-                                                        $.each(data, function (i, sub_district) {
-                                                            $('#sub_district').append('<option value="' + sub_district.id + '">' + sub_district.name + '</option>');
-                                                        });
-                                                    });
-                                                }
-                                            });
-
-                                            $('#sub_district').change(function () {
-                                                var id = $(this).val();
-                                                $('#postal_code').html('<option>Loading...</option>');
-
-                                                if (id) {
-                                                    $.get('/api/postal_codes/' + id, function (data) {
-                                                        $('#postal_code').empty().append('<option value="">-- Pilih Kode Pos --</option>');
-                                                        $.each(data, function (i, postal_code) {
-                                                            $('#postal_code').append('<option value="' + postal_code.id + '">' + postal_code.postal_code + '</option>');
-                                                        });
-                                                    });
-                                                }
-                                            });
-                                        </script>
-
-<script>
-    $('#user_province').change(function () {
-    var id = $(this).val();
-    $('#user_city').html('<option>Loading...</option>');
-    $('#user_district').html('<option value="">-- Pilih kecamatan --</option>');
-    $('#user_sub_district').html('<option value="">-- Pilih kelurahan --</option>');
-
-    if (id) {
-    $.get('/api/cities/' + id, function (data) {
-    $('#user_city').empty().append('<option value="">-- Pilih city --</option>');
-    $.each(data, function (i, city) {
-        $('#user_city').append('<option value="' + city.id + '">' + city.name + '</option>');
+            if (id) {
+            $.get('/api/cities/' + id, function (data) {
+            $('#city').empty().append('<option value="">-- Pilih Kabupaten --</option>');
+            $.each(data, function (i, city) {
+            $('#city').append('<option value="' + city.id + '">' + city.name + '</option>');
+                        });
+                    });
+                }
             });
+
+            $('#city').change(function () {
+                var id = $(this).val();
+                $('#district').html('<option>Loading...</option>');
+                $('#sub_district').html('<option value="">-- Pilih Kelurahan --</option>');
+
+                if (id) {
+                    $.get('/api/districts/' + id, function (data) {
+                        $('#district').empty().append('<option value="">-- Pilih Kecamatan --</option>');
+                        $.each(data, function (i, district) {
+                            $('#district').append('<option value="' + district.id + '">' + district.name + '</option>');
+                        });
+                    });
+                }
+            });
+
+            $('#district').change(function () {
+                var id = $(this).val();
+                $('#sub_district').html('<option>Loading...</option>');
+
+                if (id) {
+                    $.get('/api/sub_districts/' + id, function (data) {
+                        $('#sub_district').empty().append('<option value="">-- Pilih Kelurahan --</option>');
+                        $.each(data, function (i, sub_district) {
+                            $('#sub_district').append('<option value="' + sub_district.id + '">' + sub_district.name + '</option>');
+                        });
+                    });
+                }
+            });
+
+            $('#sub_district').change(function () {
+                var id = $(this).val();
+                $('#postal_code').html('<option>Loading...</option>');
+
+                if (id) {
+                    $.get('/api/postal_codes/' + id, function (data) {
+                        $('#postal_code').empty().append('<option value="">-- Pilih Kode Pos --</option>');
+                        $.each(data, function (i, postal_code) {
+                            $('#postal_code').append('<option value="' + postal_code.id + '">' + postal_code.postal_code + '</option>');
+                        });
+                    });
+                }
+            });
+    </script>
+
+    <script>
+        $('#user_province').change(function () {
+        var id = $(this).val();
+        $('#user_city').html('<option>Loading...</option>');
+        $('#user_district').html('<option value="">-- Pilih kecamatan --</option>');
+        $('#user_sub_district').html('<option value="">-- Pilih kelurahan --</option>');
+
+        if (id) {
+        $.get('/api/cities/' + id, function (data) {
+        $('#user_city').empty().append('<option value="">-- Pilih city --</option>');
+        $.each(data, function (i, city) {
+            $('#user_city').append('<option value="' + city.id + '">' + city.name + '</option>');
+                });
+            });
+            }
         });
-        }
-    });
 
-    $('#user_city').change(function () {
-    var id = $(this).val();
-    $('#user_district').html('<option>Loading...</option>');
-    $('#user_sub_district').html('<option value="">-- Pilih kelurahan --</option>');
+        $('#user_city').change(function () {
+        var id = $(this).val();
+        $('#user_district').html('<option>Loading...</option>');
+        $('#user_sub_district').html('<option value="">-- Pilih kelurahan --</option>');
 
-    if (id) {
-        $.get('/api/districts/' + id, function (data) {
-            $('#user_district').empty().append('<option value="">-- Pilih kecamatan --</option>');
-            $.each(data, function (i, district) {
-                $('#user_district').append('<option value="' + district.id + '">' + district.name + '</option>');
+        if (id) {
+            $.get('/api/districts/' + id, function (data) {
+                $('#user_district').empty().append('<option value="">-- Pilih kecamatan --</option>');
+                $.each(data, function (i, district) {
+                    $('#user_district').append('<option value="' + district.id + '">' + district.name + '</option>');
+                        });
+                    });
+                }
+            });
+
+        $('#user_district').change(function () {
+        var id = $(this).val();
+        $('#user_sub_district').html('<option>Loading...</option>');
+
+            if (id) {
+                $.get('/api/sub_districts/' + id, function (data) {
+                    $('#user_sub_district').empty().append('<option value="">-- Pilih kelurahan --</option>');
+                    $.each(data, function (i, sub_district) {
+                        $('#user_sub_district').append('<option value="' + sub_district.id + '">' + sub_district.name + '</option>');
                     });
                 });
             }
         });
 
-    $('#user_district').change(function () {
-    var id = $(this).val();
-    $('#user_sub_district').html('<option>Loading...</option>');
+        $('#user_sub_district').change(function () {
+        var id = $(this).val();
+        $('#user_postal_code').html('<option>Loading...</option>');
 
         if (id) {
-            $.get('/api/sub_districts/' + id, function (data) {
-                $('#user_sub_district').empty().append('<option value="">-- Pilih kelurahan --</option>');
-                $.each(data, function (i, sub_district) {
-                    $('#user_sub_district').append('<option value="' + sub_district.id + '">' + sub_district.name + '</option>');
+            $.get('/api/postal_codes/' + id, function (data) {
+                $('#user_postal_code').empty().append('<option value="">-- Pilih kode pos --</option>');
+                $.each(data, function (i, postal_code) {
+                    $('#user_postal_code').append('<option value="' + postal_code.id + '">' + postal_code.postal_code + '</option>');
                 });
             });
-        }
-    });
-
-    $('#user_sub_district').change(function () {
-    var id = $(this).val();
-    $('#user_postal_code').html('<option>Loading...</option>');
-
-    if (id) {
-        $.get('/api/postal_codes/' + id, function (data) {
-            $('#user_postal_code').empty().append('<option value="">-- Pilih kode pos --</option>');
-            $.each(data, function (i, postal_code) {
-                $('#user_postal_code').append('<option value="' + postal_code.id + '">' + postal_code.postal_code + '</option>');
-            });
+            }
         });
-        }
-    });
-</script>
+    </script>
 
-<script>
-$(document).ready(function() {
+    <script>
+        $(document).ready(function() {
 
-    function lockShippingFields(lock = true) {
-        const fields = $('#province, #city, #district, #sub_district, #postal_code, [name="shipping_address"], [name="shipping_name"], [name="shipping_phone"]');
-        if (lock) {
-            fields.attr('readonly', true).addClass('bg-light text-muted');
-        } else {
-            fields.attr('readonly', false).removeClass('bg-light text-muted');
-        }
-    }
-
-    // Saat checkbox diubah
-    $('#same_address').on('change', function() {
-        if ($(this).is(':checked')) {
-
-            // Ambil data domisili user
-            let province = $('#user_province').val();
-            let city = $('#user_city').val();
-            let district = $('#user_district').val();
-            let subdistrict = $('#user_sub_district').val();
-            let postal = $('#user_postal_code').val();
-
-            let provinceText = $('#user_province option:selected').text();
-            let cityText = $('#user_city option:selected').text();
-            let districtText = $('#user_district option:selected').text();
-            let subdistrictText = $('#user_sub_district option:selected').text();
-            let postalText = $('#user_postal_code option:selected').text();
-
-            // Isi select2 pengiriman langsung
-            $('#province').append(new Option(provinceText, province, true, true)).trigger('change.select2');
-            setTimeout(() => { $('#city').append(new Option(cityText, city, true, true)).trigger('change.select2'); }, 400);
-            setTimeout(() => { $('#district').append(new Option(districtText, district, true, true)).trigger('change.select2'); }, 800);
-            setTimeout(() => { $('#sub_district').append(new Option(subdistrictText, subdistrict, true, true)).trigger('change.select2'); }, 1200);
-            setTimeout(() => { $('#postal_code').append(new Option(postalText, postal, true, true)).trigger('change.select2'); }, 1500);
-
-            // Copy field teks
-            $('[name="shipping_address"]').val($('[name="address"]').val());
-            $('[name="shipping_name"]').val($('[name="fullname"]').val());
-            $('[name="shipping_phone"]').val($('[name="phone"]').val());
-
-            lockShippingFields(true);
-
-        } else {
-            lockShippingFields(false);
-        }
-    });
-
-    // Saat halaman pertama kali dimuat (mode edit)
-    if ($('#same_address').is(':checked')) {
-        lockShippingFields(true);
-    }
-});
-</script>
-
-
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    const select = document.getElementById('bank_id');
-    const selectedBankId = "{{ $user->bank_id ?? '' }}";
-
-    fetch('/api/banks')
-        .then(response => response.json())
-        .then(data => {
-            data.forEach(bank => {
-                const option = document.createElement('option');
-                option.value = bank.id;
-                option.text = `${bank.name} (${bank.code})`;
-                if (bank.id === selectedBankId) {
-                    option.selected = true;
+            function lockShippingFields(lock = true) {
+                const fields = $('#province, #city, #district, #sub_district, #postal_code, [name="shipping_address"], [name="shipping_name"], [name="shipping_phone"]');
+                if (lock) {
+                    fields.attr('readonly', true).addClass('bg-light text-muted');
+                } else {
+                    fields.attr('readonly', false).removeClass('bg-light text-muted');
                 }
-                select.appendChild(option);
+            }
+
+            // Saat checkbox diubah
+            $('#same_address').on('change', function() {
+                if ($(this).is(':checked')) {
+
+                    // Ambil data domisili user
+                    let province = $('#user_province').val();
+                    let city = $('#user_city').val();
+                    let district = $('#user_district').val();
+                    let subdistrict = $('#user_sub_district').val();
+                    let postal = $('#user_postal_code').val();
+
+                    let provinceText = $('#user_province option:selected').text();
+                    let cityText = $('#user_city option:selected').text();
+                    let districtText = $('#user_district option:selected').text();
+                    let subdistrictText = $('#user_sub_district option:selected').text();
+                    let postalText = $('#user_postal_code option:selected').text();
+
+                    // Isi select2 pengiriman langsung
+                    $('#province').append(new Option(provinceText, province, true, true)).trigger('change.select2');
+                    setTimeout(() => { $('#city').append(new Option(cityText, city, true, true)).trigger('change.select2'); }, 400);
+                    setTimeout(() => { $('#district').append(new Option(districtText, district, true, true)).trigger('change.select2'); }, 800);
+                    setTimeout(() => { $('#sub_district').append(new Option(subdistrictText, subdistrict, true, true)).trigger('change.select2'); }, 1200);
+                    setTimeout(() => { $('#postal_code').append(new Option(postalText, postal, true, true)).trigger('change.select2'); }, 1500);
+
+                    // Copy field teks
+                    $('[name="shipping_address"]').val($('[name="address"]').val());
+                    $('[name="shipping_name"]').val($('[name="fullname"]').val());
+                    $('[name="shipping_phone"]').val($('[name="phone"]').val());
+
+                    lockShippingFields(true);
+
+                } else {
+                    lockShippingFields(false);
+                }
             });
+
+            // Saat halaman pertama kali dimuat (mode edit)
+            if ($('#same_address').is(':checked')) {
+                lockShippingFields(true);
+            }
         });
-});
-</script>
-                                    @endpush
+    </script>
 
-                                    
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const select = document.getElementById('bank_id');
+            const selectedBankId = "{{ $user->bank_id ?? '' }}";
 
-
+            fetch('/api/banks')
+                .then(response => response.json())
+                .then(data => {
+                    data.forEach(bank => {
+                        const option = document.createElement('option');
+                        option.value = bank.id;
+                        option.text = `${bank.name} (${bank.code})`;
+                        if (bank.id === selectedBankId) {
+                            option.selected = true;
+                        }
+                        select.appendChild(option);
+                    });
+                });
+        });
+    </script>
+@endpush

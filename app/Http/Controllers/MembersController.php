@@ -288,7 +288,7 @@ class MembersController extends Controller
 
 public static function generateNicAjax()
 {
-    $lastNumber = Customer::where('nic', 'like', 'C-%')
+    $lastNumber = Customer::where('nic', 'like', 'M-%')
         ->selectRaw("
             MAX(
                 CAST(
@@ -300,7 +300,7 @@ public static function generateNicAjax()
         ->value('max_nic');
 
     $newNumber = ($lastNumber ?? 0) + 1;
-    $nic = 'C-' . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
+    $nic = 'M-' . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
 
     return response()->json([
         'nic' => $nic

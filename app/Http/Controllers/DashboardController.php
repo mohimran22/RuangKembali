@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AccountingAccount;
+use App\Models\AccountingJournalDetail;
 use App\Models\Attendance;
 use App\Models\Religion;
 use App\Models\Province;
@@ -10,6 +12,10 @@ use App\Models\District;
 use App\Models\SubDistrict;
 use App\Models\PostalCode;
 use App\Models\User;
+use App\Models\Event;
+use App\Models\Transaction;
+use App\Models\EventRegistration;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
@@ -18,35 +24,61 @@ use Illuminate\Support\Facades\Storage;
 
 class DashboardController extends Controller
 {
+    private const COUNTED_STATUS = ['paid', 'attended'];
+
     public function index()
     {
-        $user = auth()->user();
+    $events = Event::query()
+        ->withCount([
+            'registrations as registrations_count' => fn ($q) => $q->whereIn('status', self::COUNTED_STATUS),
+            'registrations as pending_count'       => fn ($q) => $q->where('status', 'pending'),
+            'registrations as checked_in_count'    => fn ($q) => $q->whereNotNull('checked_in_at'),
+        ])
+        ->orderByDesc('start_at')
+        ->take(6)
+        ->get();
 
-    $requiredCustomerFields = [
-        'fullname',
-        'phone',
-    ];
+    $totalEvent        = Event::count();
+    $upcomingEvent     = Event::where('start_at', '>=', now())->count();
+    $totalRegistration = EventRegistration::whereIn('status', self::COUNTED_STATUS)->count();
+    $totalPending      = EventRegistration::where('status', 'pending')->count();
+    $totalCheckedIn    = EventRegistration::whereNotNull('checked_in_at')->count();
 
-    $requiredAffiliatorFields = [
-        'bank_id',
-        'account_number',
-        'account_holder',
-    ];
+        // ================= FINANCE =================
+        $awalBulan  = now()->startOfMonth();
+        $akhirBulan = now()->endOfMonth();
 
-    // Cek apakah ada field yang kosong di data user
-    $incompleteProfile = collect($requiredCustomerFields)->contains(fn($field) => empty($user->$field));
-    $incompleteAffiliator = collect($requiredAffiliatorFields)->contains(fn($field) => empty($user->$field));
+        $groupedAccounts = $this->buildGroupedAccounts(function ($q) {
+            $q->whereDate('transaction_date', '<=', today());
+        });
 
-        $profileComplete = !$incompleteProfile && !$incompleteAffiliator;
-        $attendanceToday = null;
+        $cashAccounts  = collect(data_get($groupedAccounts, 'AKTIVA.Aset Lancar - Kas & Bank.accounts', []));
+        $totalCashBank = $cashAccounts->sum('balance');
 
-        if (auth()->user()->isInternal() && auth()->user()->employee) {
-            $attendanceToday = Attendance::where('employee_id', auth()->user()->employee->id)
-                ->whereDate('attendance_date', today())
-                ->first();
-        }
-        return view('dashboard.index', compact('user', 'incompleteProfile', 'incompleteAffiliator', 'attendanceToday'));
+        $cashAccountIds = AccountingAccount::where('is_parent', false)
+            ->where('category', 'AKTIVA')
+            ->where('sub_category', 'Aset Lancar - Kas & Bank')
+            ->pluck('id');
 
+        $thisMonth = function ($q) {
+            $q->whereMonth('transaction_date', now()->month)
+              ->whereYear('transaction_date', now()->year);
+        };
+
+        $cashInThisMonth = AccountingJournalDetail::whereIn('account_id', $cashAccountIds)
+            ->whereHas('journal', $thisMonth)->sum('debit');
+
+        $cashOutThisMonth = AccountingJournalDetail::whereIn('account_id', $cashAccountIds)
+            ->whereHas('journal', $thisMonth)->sum('credit');
+
+        $monthlyRevenue = AccountingJournalDetail::whereHas('account', fn ($q) => $q->where('account_code', 'like', '4%'))
+            ->whereHas('journal', fn ($q) => $q->whereBetween('transaction_date', [$awalBulan, $akhirBulan]))
+            ->sum('credit');
+
+        return view('dashboard.index', compact(
+            'events', 'totalEvent', 'upcomingEvent', 'totalRegistration', 'totalCheckedIn', 'totalPending',
+            'cashAccounts', 'totalCashBank', 'cashInThisMonth', 'cashOutThisMonth', 'monthlyRevenue'
+        ));
     }
 
     public function edit()
@@ -115,4 +147,67 @@ class DashboardController extends Controller
         return redirect()->route('dashboard')
             ->with('success', 'Profil Anda berhasil diperbarui.');
     }
+
+        private function buildGroupedAccounts(\Closure $journalFilter)
+{
+    $accounts = AccountingAccount::where('is_parent', false)
+        ->get()
+        ->map(function ($account) use ($journalFilter) {
+
+            $debit = AccountingJournalDetail::query()
+                ->where('account_id', $account->id)
+                ->whereHas('journal', $journalFilter)
+                ->sum('debit');
+
+            $credit = AccountingJournalDetail::query()
+                ->where('account_id', $account->id)
+                ->whereHas('journal', $journalFilter)
+                ->sum('credit');
+
+            switch ($account->category) {
+
+                case 'AKTIVA':
+                case 'BEBAN':
+                    $balance = $debit - $credit;
+                    break;
+
+                case 'KEWAJIBAN':
+                case 'EKUITAS':
+                case 'PENDAPATAN':
+                    $balance = $credit - $debit;
+                    break;
+
+                default:
+                    $balance = $debit - $credit;
+            }
+
+            return [
+                'account_code' => $account->account_code,
+                'account_name' => $account->account_name,
+                'account_type' => $account->account_type,
+                'category'     => $account->category,
+                'sub_category' => $account->sub_category,
+                'debit'        => $debit,
+                'credit'       => $credit,
+                'balance'      => $balance,
+            ];
+        });
+
+    return $accounts
+        ->groupBy('category')
+        ->map(function ($catGroup) {
+
+            return $catGroup->groupBy('sub_category')->map(function ($subGroup) {
+
+                return [
+                    'accounts'         => $subGroup,
+                    'subtotalDebit'    => $subGroup->sum('debit'),
+                    'subtotalCredit'   => $subGroup->sum('credit'),
+                    'subtotalBalance'  => $subGroup->sum('balance'),
+                ];
+
+            });
+
+        });
+}
 }

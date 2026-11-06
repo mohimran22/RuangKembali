@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Support\Facades\DB;
 
 class Customer extends Model
 {
@@ -66,22 +67,17 @@ public function scopeLoyalty($query, $level)
         return $this->user?->fullname;
     }
 
-public static function generateNic()
+public static function generateNic(): string
 {
-    $lastNumber = self::where('nic', 'like', 'M-%')
-        ->selectRaw("
-            MAX(
-                CAST(
-                    REGEXP_REPLACE(nic, '[^0-9]', '', 'g')
-                    AS INTEGER
-                )
-            ) as max_nic
-        ")
+    // Serialisasi pembuatan NIC. Lepas otomatis saat transaksi commit/rollback.
+    DB::select("SELECT pg_advisory_xact_lock(hashtext('generate_nic'))");
+
+    $lastNumber = self::withTrashed()   // hapus withTrashed() kalau tidak pakai SoftDeletes
+        ->whereRaw("nic ~ '^M-[0-9]+$'")
+        ->selectRaw('MAX(CAST(SUBSTRING(nic FROM 3) AS INTEGER)) as max_nic')
         ->value('max_nic');
 
-    $newNumber = ($lastNumber ?? 0) + 1;
-
-    return 'M-' . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
+    return 'M-' . str_pad(((int) $lastNumber) + 1, 4, '0', STR_PAD_LEFT);
 }
 
 
