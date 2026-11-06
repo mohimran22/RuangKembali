@@ -28,21 +28,33 @@ class DashboardController extends Controller
 
     public function index()
     {
-    $events = Event::query()
-        ->withCount([
-            'registrations as registrations_count' => fn ($q) => $q->whereIn('status', self::COUNTED_STATUS),
-            'registrations as pending_count'       => fn ($q) => $q->where('status', 'pending'),
-            'registrations as checked_in_count'    => fn ($q) => $q->whereNotNull('checked_in_at'),
-        ])
-        ->orderByDesc('start_at')
-        ->take(6)
-        ->get();
+        $user       = auth()->user();
+        $activeRole = session('active_role'); // sesuaikan nama key dengan dropdown peran
 
-    $totalEvent        = Event::count();
-    $upcomingEvent     = Event::where('start_at', '>=', now())->count();
-    $totalRegistration = EventRegistration::whereIn('status', self::COUNTED_STATUS)->count();
-    $totalPending      = EventRegistration::where('status', 'pending')->count();
-    $totalCheckedIn    = EventRegistration::whereNotNull('checked_in_at')->count();
+        // Pakai peran aktif dari dropdown kalau ada dan memang dimiliki user;
+        // kalau tidak, jatuh ke pengecekan peran biasa.
+        $isMember = ($activeRole && $user->hasRole($activeRole))
+            ? $activeRole === 'Member'
+            : ($user->hasRole('Member') && !$user->hasRole('Super-Admin'));
+
+        if ($isMember) {
+            return $this->memberDashboard($user);
+        }
+        $events = Event::query()
+            ->withCount([
+                'registrations as registrations_count' => fn ($q) => $q->whereIn('status', self::COUNTED_STATUS),
+                'registrations as pending_count'       => fn ($q) => $q->where('status', 'pending'),
+                'registrations as checked_in_count'    => fn ($q) => $q->whereNotNull('checked_in_at'),
+            ])
+            ->orderByDesc('start_at')
+            ->take(6)
+            ->get();
+
+        $totalEvent        = Event::count();
+        $upcomingEvent     = Event::where('start_at', '>=', now())->count();
+        $totalRegistration = EventRegistration::whereIn('status', self::COUNTED_STATUS)->count();
+        $totalPending      = EventRegistration::where('status', 'pending')->count();
+        $totalCheckedIn    = EventRegistration::whereNotNull('checked_in_at')->count();
 
         // ================= FINANCE =================
         $awalBulan  = now()->startOfMonth();
@@ -147,6 +159,26 @@ class DashboardController extends Controller
         return redirect()->route('dashboard')
             ->with('success', 'Profil Anda berhasil diperbarui.');
     }
+
+    private function memberDashboard($user)
+{
+    // Event yang saya daftar
+    $myRegistrations = EventRegistration::with('event:id,name,start_at,end_at,location,quota')
+        ->where(fn ($q) => $q->where('user_id', $user->id)->orWhere('registered_by', $user->id))
+        ->latest('registered_at')
+        ->get();
+
+    // Event yang sedang berlangsung + jumlah pesertanya
+    $ongoingEvents = Event::where('is_published', true)
+        ->where('end_at', '>=', now())
+        ->withCount([
+            'registrations as registrations_count' => fn ($q) => $q->whereIn('status', self::COUNTED_STATUS),
+        ])
+        ->orderBy('start_at')
+        ->get();
+
+    return view('dashboard.member', compact('myRegistrations', 'ongoingEvents'));
+}
 
         private function buildGroupedAccounts(\Closure $journalFilter)
 {

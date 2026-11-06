@@ -72,8 +72,7 @@ public static function generateNic(): string
     // Serialisasi pembuatan NIC. Lepas otomatis saat transaksi commit/rollback.
     DB::select("SELECT pg_advisory_xact_lock(hashtext('generate_nic'))");
 
-    $lastNumber = self::withTrashed()   // hapus withTrashed() kalau tidak pakai SoftDeletes
-        ->whereRaw("nic ~ '^M-[0-9]+$'")
+    $lastNumber = self::whereRaw("nic ~ '^M-[0-9]+$'")
         ->selectRaw('MAX(CAST(SUBSTRING(nic FROM 3) AS INTEGER)) as max_nic')
         ->value('max_nic');
 

@@ -1,0 +1,95 @@
+@extends('tablar::page')
+
+@section('content')
+@php
+    $badge = fn ($s) => match ($s) {
+        'pending'  => ['warning', 'Menunggu Pembayaran'],
+        'paid'     => ['success', 'Terdaftar'],
+        'attended' => ['info',    'Sudah Hadir'],
+        default    => ['secondary', ucfirst($s)],
+    };
+@endphp
+
+<div class="page-body">
+    <div class="container-xl pt-4">
+
+        <h2 class="text-center mb-4 pt-5">
+            Selamat Datang {{ auth()->user()->fullname }} di Sistem Ruang Kembali
+        </h2>
+
+        <div class="row g-4">
+
+            {{-- ============ EVENT BERLANGSUNG ============ --}}
+            <div class="col-12">
+                <div class="card shadow-sm border-0 rounded-4">
+                    <div class="card-header"><h5 class="mb-0">🔴 Event Sedang Berlangsung</h5></div>
+                    <div class="card-body p-4">
+                        <div class="row g-3">
+                            @forelse($ongoingEvents as $event)
+                                <div class="col-md-6 col-xl-4">
+                                    <div class="border rounded-3 p-3 h-100">
+                                        <div class="fw-bold">{{ $event->name }}</div>
+                                        <div class="text-secondary small mt-1">
+                                            {{ $event->start_at->translatedFormat('d M Y, H:i') }}
+                                            @if($event->location) · {{ $event->location }} @endif
+                                        </div>
+                                        <div class="mt-2">
+                                            👥 {{ $event->registrations_count }}{{ $event->quota ? ' / '.$event->quota : '' }} peserta
+                                        </div>
+                                    </div>
+                                </div>
+                            @empty
+                                <div class="col-12 text-secondary">Tidak ada event yang sedang berlangsung.</div>
+                            @endforelse
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- ============ EVENT SAYA ============ --}}
+            <div class="col-12">
+                <div class="card shadow-sm border-0 rounded-4">
+                    <div class="card-header"><h5 class="mb-0">🎟 Event yang Saya Daftar</h5></div>
+                    <div class="card-body p-4">
+                        <div class="table-responsive">
+                            <table class="table table-vcenter table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Nama Event</th>
+                                        <th>Tanggal</th>
+                                        <th>Kode Tiket</th>
+                                        <th>Status</th>
+                                        <th class="text-end">Peserta / Kuota</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse($myRegistrations as $reg)
+                                        @php [$color, $label] = $badge($reg->status); @endphp
+                                        <tr>
+                                            <td>{{ $reg->event?->name ?? '-' }}</td>
+                                            <td>{{ $reg->event?->start_at?->translatedFormat('d M Y') ?? '-' }}</td>
+                                            <td><code>{{ $reg->ticket_code }}</code></td>
+                                            <td><span class="badge bg-{{ $color }}-lt">{{ $label }}</span></td>
+                                            <td class="text-end">
+                                                @if($reg->status === 'pending' && $reg->transaction_id)
+                                                    <a href="{{ route('transactions.show', $reg->transaction_id) }}"
+                                                       class="btn btn-sm btn-warning">Bayar</a>
+                                                @endif
+                                            </td>
+                                            <td>{{ $reg->participant_name ?? '-' }}</td>
+                                        </tr>
+                                    @empty
+                                        <tr><td colspan="5" class="text-secondary">Kamu belum mendaftar event apa pun.</td></tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+@endsection

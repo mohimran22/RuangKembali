@@ -76,7 +76,7 @@
                                 <label class="form-label">Jenis Kelamin</label>
                                 <select name="gender" 
                                         class="form-select select2 @error('gender') is-invalid @enderror" >
-                                    <option value="">-- Pilih --</option>
+                                    <option value="">-- Pilih Jenis Kelamin --</option>
                                     <option value="1" {{ old('gender') == '1' ? 'selected' : '' }}>Laki-laki</option>
                                     <option value="2" {{ old('gender') == '2' ? 'selected' : '' }}>Perempuan</option>
                                 </select>
@@ -399,9 +399,6 @@
         .catch(error => console.error('❌ Error fetching vendor_id:', error));
     });
 </script>
-
-
-
 
     <script>
         document.getElementById('photo').addEventListener('change', function (event) {

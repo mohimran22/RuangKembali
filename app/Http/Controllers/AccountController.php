@@ -142,41 +142,31 @@ class AccountController extends Controller
         $internalRoles = $user->roles
             ->where('role_group', 'Internal');
 
-if ($internalRoles->isNotEmpty()) {
-    $team = Team::where('user_id', $user->id)->first();
+        if ($internalRoles->isNotEmpty()) {
+            $team = Team::where('user_id', $user->id)->first();
 
-    if (!$team) {
-        Team::create([
-            'user_id' => $user->id,
-            'nik' => Team::generateNik(),
-            'position' => $internalRoles->pluck('name')->values()->toArray(),
-            'marital_status' => 1,
-            'employment_status' => 'Aktif',
-            'start_date' => now()->format('Y-m-d'),
-            'basic_salary' => 0,
-            'allowance' => 0,
-            'deduction' => 0,
-            'bonus' => 0,
-            'thr' => 0,
-            'contract_letter_file' => 'dokumen.pdf',
-        ]);
-    } else {
-        $team->update([
-            'position' => $internalRoles->pluck('name')->values()->toArray(),
-        ]);
-    }
-} else {
-
-            if ($user->team) {
-
-                if (!$user->team->projects()->exists()) {
-
-                    $user->team->delete();
-
-                }
-
+            if (!$team) {
+                Team::create([
+                    'user_id' => $user->id,
+                    'nik' => Team::generateNik(),
+                    'position' => $internalRoles->pluck('name')->values()->toArray(),
+                    'marital_status' => 1,
+                    'employment_status' => 'Aktif',
+                    'start_date' => now()->format('Y-m-d'),
+                    'basic_salary' => 0,
+                    'allowance' => 0,
+                    'deduction' => 0,
+                    'bonus' => 0,
+                    'thr' => 0,
+                    'contract_letter_file' => 'dokumen.pdf',
+                ]);
+            } else {
+                $team->update([
+                    'position' => $internalRoles->pluck('name')->values()->toArray(),
+                ]);
             }
-
+        } else {
+            $user->team?->delete();
         }
 
         foreach ($user->roles->where('role_group', 'Eksternal') as $role) {
