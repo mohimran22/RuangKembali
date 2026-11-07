@@ -27,7 +27,7 @@
             <div class="col-auto">
                 <div class="btn-list">
 
-                    <a href="{{ route('events.register', $event->id) }}"
+                    <a href="{{ route('events.register', $event->slug) }}"
                     target="_blank"
                     rel="noopener noreferrer"
                     class="btn btn-primary">
@@ -1243,7 +1243,7 @@
         </div>
     </div>
     <div class="event-sticky-cta d-md-none">
-        <a href="{{ route('events.register', $event->id) }}"
+        <a href="{{ route('events.register', $event->slug) }}"
         target="_blank"
         rel="noopener noreferrer"
         class="btn btn-primary w-100">

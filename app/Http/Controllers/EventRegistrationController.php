@@ -16,7 +16,7 @@ class EventRegistrationController extends Controller
         abort_unless($event->is_published, 404);
 
         $user = auth()->user();
-        $registration = EventRegistration::where('event_id', $event->id)
+        $registration = EventRegistration::where('event_id', $event->slug)
             ->where('user_id', $user->id)
             ->first();
         $transactionCode = $this->generateTransactionCode();
@@ -145,7 +145,7 @@ class EventRegistrationController extends Controller
 
             if ($event->event_type === 'free') {
                 return redirect()
-                    ->route('events.register', $event->id)
+                    ->route('events.register', $event->slug)
                     ->with('success', 'Pendaftaran event berhasil!');
             }
 

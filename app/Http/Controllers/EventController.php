@@ -65,7 +65,7 @@ public function index(Request $request)
             })
 
             ->addColumn('event_name', function ($event) {
-                $url = route('events.manage', $event->id);
+                $url = route('events.manage', $event->slug);
 
                 return '<a href="' . $url . '">'
                     . e(Str::title($event->name ?? '-'))
@@ -195,7 +195,7 @@ public function index(Request $request)
 
                 if (ActiveRole::hasPermission('lihat data event')) {
                     $buttons .= '
-                        <a href="' . route('events.manage', $event->id) . '"
+                        <a href="' . route('events.manage', $event->slug) . '"
                            class="btn btn-icon btn-sm btn-primary"
                            title="Detail">
                             <i class="ti ti-eye"></i>
