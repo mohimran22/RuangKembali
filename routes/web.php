@@ -274,37 +274,33 @@ Route::middleware(['auth', 'permission:lihat daftar produk'])->group(function ()
 Route::post('/products/generate-sku', [ProductController::class, 'generateSku'])
     ->name('products.generateSku');
 
-Route::middleware(['auth', 'permission:lihat daftar event|lihat data event'])->group(function () {
+Route::middleware(['auth', 'active.permission:lihat daftar event|lihat data event'])->group(function () {
     Route::resource('/events', EventController::class)->except(['show']);
     Route::get('/events/{event}/manage', [EventController::class, 'show'])->name('events.manage');
-    Route::get('events/{event}/pdf', [EventController::class, 'pdf'])
-    ->name('events.pdf');
+
     Route::get('/events/{event}/participants/lookup', [EventController::class, 'lookupParticipant'])
-        ->name('events.participants.lookup')
-        ->middleware(['auth', 'role:Tim|Super-Admin']);
+        ->name('events.participants.lookup');
 
     Route::post('/events/{event}/participants/checkin-scan', [EventController::class, 'checkinScan'])
-        ->name('events.participants.checkinScan')
-        ->middleware(['auth', 'role:Tim|Super-Admin']);
+        ->name('events.participants.checkinScan');
 });
 Route::get('/events/{event:event_code}', [EventController::class, 'showPublic'])
     ->name('events.show')
     ->where('event', '^EVT\d{7}$');
-Route::get('/transactions', [TransactionController::class, 'index'])
-    ->name('transactions.index');
-Route::get('/transactions/{transaction}', [TransactionController::class, 'show'])
-    ->name('transactions.show');
-
+Route::get('/transactions', [TransactionController::class, 'index'])->name('transactions.index');
+Route::get('/transactions/{transaction}', [TransactionController::class, 'show'])->name('transactions.show');
 Route::post('/transactions/{transaction}/upload-proof', [TransactionController::class, 'uploadProof'])
     ->name('transactions.upload-proof');
-        Route::get('/transactions/{transaction}/edit', [TransactionController::class, 'edit'])
-            ->name('transactions.edit');
 
-        Route::put('/transactions/{transaction}', [TransactionController::class, 'update'])
-            ->name('transactions.update');
+Route::middleware('active.role:Super-Admin|Tim')->group(function () {
+    Route::get('/transactions/{transaction}/edit', [TransactionController::class, 'edit'])
+        ->name('transactions.edit');
+    Route::put('/transactions/{transaction}', [TransactionController::class, 'update'])
+        ->name('transactions.update');
+});
 
 Route::prefix('admin')
-    ->middleware(['auth', 'role:Super-Admin|Tim'])
+    ->middleware(['auth', 'active.role:Super-Admin|Tim'])
     ->name('admin.')
     ->group(function () {
 

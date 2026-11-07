@@ -9,6 +9,7 @@ use App\Models\Transaction;
 use App\Models\AccountingAccount;
 use App\Models\AccountingJournal;
 use App\Models\AccountingJournalDetail;
+use App\Helpers\ActiveRole;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use DB;
@@ -16,8 +17,14 @@ use Yajra\DataTables\Facades\DataTables;
 
 class TransactionController extends Controller
 {
+    private function authorizeStaff(): void
+{
+    abort_unless(in_array(ActiveRole::name(), ['Super-Admin', 'Tim']), 403);
+}
+
 public function index(Request $request)
 {
+    $this->authorizeStaff();
     $status = $request->get('status');
 
     $query = Transaction::with([
@@ -57,7 +64,7 @@ public function index(Request $request)
 
                 $names = $transaction->registrations
                     ->map(function ($registration) {
-                        return $registration->user->fullname ?? '-';
+                        return $registration->participant_name ?? '-';
                     })
                     ->filter()
                     ->implode(', ');
@@ -188,6 +195,7 @@ public function index(Request $request)
 
     public function show(Transaction $transaction)
     {
+        $this->authorizeStaff();
         $transaction->load(['event', 'registeredBy', 'registrations.user']);
 
         return view('admin.show', compact('transaction'));
@@ -195,13 +203,18 @@ public function index(Request $request)
 
     public function approve(Transaction $transaction)
     {
+        $this->authorizeStaff();
         // Cek cepat (pengaman sebenarnya ada di dalam lock di bawah)
         abort_unless(
             $transaction->status === 'waiting_confirmation',
             400,
             'Transaksi ini tidak dalam status menunggu konfirmasi.'
         );
-
+        abort_if(
+            $transaction->registered_by === auth()->id(),
+            403,
+            'Kamu tidak bisa menyetujui transaksi yang kamu daftarkan sendiri.'
+        );
         DB::transaction(function () use ($transaction) {
 
             // Kunci baris transaksi supaya approve bersamaan tidak lolos dua kali
@@ -332,6 +345,7 @@ public function index(Request $request)
     }
     public function reject(Request $request, Transaction $transaction)
     {
+        $this->authorizeStaff();
         abort_unless(
             $transaction->status === 'waiting_confirmation',
             400,
@@ -348,9 +362,15 @@ public function index(Request $request)
         ]);
 
 
-    $transaction->load(['event', 'registeredBy']);
+        $transaction->load(['event', 'registeredBy']);
 
-    $transaction->registeredBy->notify(new TransactionRejectedNotification($transaction));
+        if ($transaction->registeredBy) {
+            try {
+                $transaction->registeredBy->notify(new TransactionRejectedNotification($transaction));
+            } catch (\Throwable $e) {
+                report($e);
+            }
+        }
 
         return back()->with('success', 'Transaksi ditolak, user perlu upload ulang bukti transfer.');
     }

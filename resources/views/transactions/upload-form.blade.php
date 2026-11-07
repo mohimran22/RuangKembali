@@ -1,26 +1,22 @@
 <form action="{{ route('transactions.upload-proof', $transaction->id) }}"
       method="POST"
-      enctype="multipart/form-data">
-
+      enctype="multipart/form-data"
+      class="mb-3">
     @csrf
 
-    <div class="mb-3">
-        <label class="form-label">Upload Bukti Transfer</label>
-        <input type="file"
-               name="proof_of_payment"
-               class="form-control"
-               accept="image/*"
-               required>
-        <div class="form-hint">Format JPG/PNG, maksimal 5MB.</div>
-    </div>
-
+    <label class="form-label">Bukti Pembayaran (diunggah oleh staf)</label>
+    <input type="file"
+           name="proof_of_payment"
+           accept="image/*"
+           class="form-control @error('proof_of_payment') is-invalid @enderror"
+           required>
     @error('proof_of_payment')
-        <div class="text-danger small mb-3">{{ $message }}</div>
+        <div class="invalid-feedback">{{ $message }}</div>
     @enderror
+    <div class="form-hint">Format gambar, maksimal 5 MB. Pengunggah akan tercatat atas nama kamu.</div>
 
-    <button type="submit" class="btn btn-primary w-100">
+    <button type="submit" class="btn btn-primary mt-3">
         <i class="ti ti-upload me-1"></i>
-        Upload Bukti Transfer
+        Upload Bukti
     </button>
-
 </form>

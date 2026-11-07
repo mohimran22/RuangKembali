@@ -113,38 +113,40 @@
                             </div>
                         </div>
 
-                    @elseif($transaction->status === 'rejected')
+                            @elseif($transaction->status === 'rejected')
 
-                        <div class="alert alert-danger">
-                            <div class="d-flex">
-                                <i class="ti ti-alert-circle fs-2 me-3"></i>
-                                <div>
-                                    <h3 class="alert-title">Ditolak</h3>
-                                    @if($transaction->rejection_reason)
-                                        <div class="text-secondary">Alasan: {{ $transaction->rejection_reason }}</div>
-                                    @endif
+                                <div class="alert alert-danger">
+                                    <div class="d-flex">
+                                        <i class="ti ti-alert-circle fs-2 me-3"></i>
+                                        <div>
+                                            <h3 class="alert-title">Ditolak</h3>
+                                            @if($transaction->rejection_reason)
+                                                <div class="text-secondary">Alasan: {{ $transaction->rejection_reason }}</div>
+                                            @endif
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                        </div>
 
-                    @elseif($transaction->status === 'pending')
+                                @include('transactions.upload-form')
 
-                        <div class="alert alert-warning">
-                            <i class="ti ti-clock me-2"></i>
-                            User belum mengupload bukti transfer.
-                        </div>
+                            @elseif($transaction->status === 'pending')
 
-                    @endif
+                                <div class="alert alert-warning">
+                                    <i class="ti ti-clock me-2"></i>
+                                    Bukti transfer belum diupload. Kamu bisa mengunggahnya atas nama peserta.
+                                </div>
+
+                                @include('transactions.upload-form')
+
+                            @endif
 
 
-                    @if($transaction->proof_of_payment)
-                        <div class="mb-4">
-                            <div class="text-secondary small mb-2">Bukti Transfer</div>
-                            <a href="{{ Storage::url($transaction->proof_of_payment) }}" target="_blank">
-                                <img src="{{ Storage::url($transaction->proof_of_payment) }}"
-                                     class="img-fluid rounded border"
-                                     style="max-height: 400px;">
-                            </a>
+                    @if($transaction->proofUploader)
+                        <div class="text-secondary small mt-2">
+                            Diunggah oleh {{ $transaction->proofUploader->fullname }}
+                            @if($transaction->proof_uploaded_by !== $transaction->registered_by)
+                                <span class="badge bg-orange-lt ms-1">Atas nama peserta</span>
+                            @endif
                         </div>
                     @endif
 

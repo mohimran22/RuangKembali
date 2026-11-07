@@ -4,7 +4,7 @@
     <div class="page-header d-print-none mb-4">
         <h2 class="page-title">Transaksi</h2>
         <div class="text-secondary" style="margin-left:20px;">
-            @if(auth()->user()->hasRole('Super-Admin'))
+            @if($isStaff)
                 Daftar seluruh transaksi pendaftaran event di sistem.
             @else
                 Daftar transaksi pendaftaran event kamu.
@@ -28,7 +28,7 @@
                                         <th>No. Transaksi</th>
                                         <th>Event</th>
 
-                                        @if(auth()->user()->hasRole('Super-Admin'))
+                                        @if($isStaff)
                                             <th>Didaftarkan Oleh</th>
                                         @endif
 
@@ -55,9 +55,7 @@
 <script>
 $(function () {
 
-    const isSuperAdmin = @json(
-        auth()->user()->hasRole('Super-Admin')
-    );
+    const isStaff = @json($isStaff);
 
     let columns = [
         {
@@ -76,7 +74,7 @@ $(function () {
             orderable: false
         }
     ];
-    if (isSuperAdmin) {
+    if (isStaff) {
         columns.push({
             data: 'registered_by_name',
             name: 'registeredBy.fullname',
@@ -185,8 +183,8 @@ $(document).on('click', '.btn-delete-transaction', function () {
                     Swal.fire('Terhapus!', res.message, 'success');
                     $('#transactions-table').DataTable().ajax.reload(null, false);
                 },
-                error: function () {
-                    Swal.fire('Gagal', 'Terjadi kesalahan saat menghapus transaksi.', 'error');
+                error: function (xhr) {
+                    Swal.fire('Gagal', xhr.responseJSON?.message || 'Terjadi kesalahan saat menghapus transaksi.', 'error');
                 }
             });
         }

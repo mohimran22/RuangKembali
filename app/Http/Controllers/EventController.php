@@ -1052,16 +1052,14 @@ public function update(Request $request, Event $event)
             );
     }
 }
-public function show($id)
+public function show(Event $event)
 {
-    $event = Event::with('category', 'galleries', 'youtubeLinks')
-        ->findOrFail($id);
+    $event->load('category', 'galleries', 'youtubeLinks');
 
     $user = auth()->user();
-
-    // Pengelola dihitung dari PERAN AKTIF, bukan semua peran
     $canViewAll = in_array(ActiveRole::name(), ['Super-Admin', 'Tim']);
 
+    abort_unless($canViewAll || $event->is_published, 404);
     $registrations = $event->registrations()
         ->with('user')
         ->when(!$canViewAll, function ($q) use ($user) {

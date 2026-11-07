@@ -19,6 +19,7 @@ class Transaction extends Model
         'proof_of_payment',
         'status',
         'paid_at',
+        'proof_uploaded_by',
     ];
 
     protected $casts = [
@@ -39,5 +40,10 @@ class Transaction extends Model
 public function registrations()
 {
     return $this->hasMany(EventRegistration::class, 'transaction_id');
+}
+
+public function proofUploader()
+{
+    return $this->belongsTo(User::class, 'proof_uploaded_by');
 }
 }

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Support\Str;
 
 class Event extends Model
 {
@@ -238,5 +239,40 @@ public function rundowns()
         ->orderBy('rundown_date')
         ->orderBy('sort_order')
         ->orderBy('start_time');
+}
+
+protected static function booted(): void
+{
+    static::creating(function (Event $event) {
+        if (empty($event->slug)) {
+            $event->slug = static::generateUniqueSlug($event->name);
+        }
+    });
+}
+
+public static function generateUniqueSlug(string $name): string
+{
+    $base = Str::slug($name) ?: 'event';
+    $slug = $base;
+    $i = 2;
+
+    // withTrashed: slug event yang sudah dihapus lunak tetap terpakai di indeks unik
+    while (static::withTrashed()->where('slug', $slug)->exists()) {
+        $slug = $base . '-' . $i++;
+    }
+
+    return $slug;
+}
+
+// Terima slug maupun UUID, supaya link lama tetap hidup
+public function resolveRouteBinding($value, $field = null)
+{
+    if ($field !== null) {
+        return parent::resolveRouteBinding($value, $field);
+    }
+
+    return Str::isUuid($value)
+        ? $this->where('id', $value)->first()
+        : $this->where('slug', $value)->first();
 }
 }
