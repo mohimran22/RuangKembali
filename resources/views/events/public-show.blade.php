@@ -971,10 +971,18 @@
 
                 <div class="event-sidebar-card event-sidebar-cta">
                     @if (!$event->is_full && $event->is_registration_open)
-                        <a href="{{ route('register') }}" class="btn-daftar-event">
-                            <i class="ti ti-ticket"></i>
-                            Daftar Sekarang
-                        </a>
+                        @auth
+                            <a href="{{ route('events.register', $event->id) }}" class="btn-daftar-event">
+                                <i class="ti ti-ticket"></i> Daftar Sekarang
+                            </a>
+                        @else
+                            <a href="{{ route('login') }}" class="btn-daftar-event">
+                                <i class="ti ti-login"></i> Masuk untuk Mendaftar
+                            </a>
+                            <p class="text-center mt-2 mb-0 small">
+                                Belum punya akun? <a href="{{ route('register') }}">Daftar akun</a>
+                            </p>
+                        @endauth
                     @elseif ($event->is_full)
                         <span class="badge-sold-out">Kuota Penuh</span>
                     @else

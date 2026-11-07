@@ -19,6 +19,7 @@ use App\Models\Event;
 use App\Models\EventRegistration;
 use App\Models\EventYoutubeLink;
 use App\Models\User;
+use App\Helpers\ActiveRole;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
@@ -28,6 +29,16 @@ use Illuminate\Support\Facades\Storage;
 
 class EventController extends Controller
 {
+    private function authorizePermission(string $permission): void
+{
+    abort_unless(ActiveRole::hasPermission($permission), 403);
+}
+
+private function isEventStaff(): bool
+{
+    return in_array(ActiveRole::name(), ['Super-Admin', 'Tim']);
+}
+
 public function index(Request $request)
 {
     $auth = auth()->user();
@@ -182,7 +193,7 @@ public function index(Request $request)
 
                 $buttons = '<div class="btn-list">';
 
-                if (auth()->user()->can('lihat data event')) {
+                if (ActiveRole::hasPermission('lihat data event')) {
                     $buttons .= '
                         <a href="' . route('events.manage', $event->id) . '"
                            class="btn btn-icon btn-sm btn-primary"
@@ -192,7 +203,7 @@ public function index(Request $request)
                     ';
                 }
 
-                if (auth()->user()->can('ubah data event')) {
+                if (ActiveRole::hasPermission('ubah data event')) {
                     $buttons .= '
                         <a href="' . route('events.edit', $event->id) . '"
                            class="btn btn-icon btn-sm btn-warning"
@@ -202,7 +213,7 @@ public function index(Request $request)
                     ';
                 }
 
-                if (auth()->user()->can('hapus data event')) {
+                if (ActiveRole::hasPermission('hapus data event')) {
                     $buttons .= '
                         <button type="button"
                                 data-id="' . $event->id . '"
@@ -237,6 +248,8 @@ public function index(Request $request)
 
 public function create()
 {
+    $this->authorizePermission('tambah data event');
+
     $categories = EventCategory::orderBy('name')->get();
 
     $speakers = User::where('is_speakers', true)->get();
@@ -292,6 +305,8 @@ public function create()
 
 public function store(Request $request)
 {
+    $this->authorizePermission('tambah data event');
+
     $request->validate([
         'name' => 'required|string|max:255',
         'event_category_id' => 'required|exists:event_categories,id',
@@ -492,6 +507,8 @@ private function generateEventCode(): string
 }
 public function edit(Event $event)
 {
+    $this->authorizePermission('ubah data event');
+
     $categories = EventCategory::orderBy('name')->get();
 
     $eventTypes = [
@@ -547,10 +564,7 @@ public function edit(Event $event)
 
 public function update(Request $request, Event $event)
 {
-    abort_if(
-        auth()->user()->cannot('ubah data event'),
-        403
-    );
+    $this->authorizePermission('ubah data event');
 
     $request->validate([
         'name' => 'required|string|max:255',
@@ -1043,33 +1057,52 @@ public function show($id)
     $event = Event::with('category', 'galleries', 'youtubeLinks')
         ->findOrFail($id);
 
-    $registrationsQuery = $event->registrations()
+    $user = auth()->user();
+
+    // Pengelola dihitung dari PERAN AKTIF, bukan semua peran
+    $canViewAll = in_array(ActiveRole::name(), ['Super-Admin', 'Tim']);
+
+    $registrations = $event->registrations()
         ->with('user')
-        ->latest();
+        ->when(!$canViewAll, function ($q) use ($user) {
+            $q->where(function ($w) use ($user) {
+                $w->where('user_id', $user->id)           // atas nama saya
+                  ->orWhere('registered_by', $user->id);  // yang saya daftarkan
+            });
+        })
+        ->latest()
+        ->get();
 
-    if (!auth()->user()->hasAnyRole(['Super-Admin', 'Tim'])) {
-        $registrationsQuery->where('user_id', auth()->id());
-    }
-
-    $registrations = $registrationsQuery->get();
-
-    return view('events.show', compact(
-        'event',
-        'registrations'
-    ));
+    return view('events.show', compact('event', 'registrations', 'canViewAll'));
 }
-     public function destroy(Event $event) 
-    {
-        if ($event) {
-            $event->delete();
-            return response()->json(['status' => 'success', 'message' => 'Event deleted successfully']);
-        }
+public function destroy(Event $event)
+{
+    $this->authorizePermission('hapus data event');
 
-        return response()->json(['status' => 'failed', 'message' => 'Unable to delete']);
+    // Event yang sudah punya pendaftar berbayar jangan dihapus begitu saja
+    $hasPaid = $event->registrations()
+        ->whereIn('status', ['paid', 'confirmed', 'attended'])
+        ->exists();
+
+    if ($hasPaid) {
+        return response()->json([
+            'status'  => 'failed',
+            'message' => 'Event sudah memiliki peserta yang membayar, tidak bisa dihapus.',
+        ], 422);
     }
 
-    public function lookupParticipant(Request $request, Event $event)
+    $event->delete();
+
+    return response()->json([
+        'status'  => 'success',
+        'message' => 'Event deleted successfully',
+    ]);
+}
+
+public function lookupParticipant(Request $request, Event $event)
 {
+    abort_unless($this->isEventStaff(), 403);
+
     $validated = $request->validate([
         'ticket_code' => ['required', 'string'],
     ]);
@@ -1089,8 +1122,8 @@ public function show($id)
     return response()->json([
         'success' => true,
         'participant' => [
-            'name'   => $registration->user->fullname ?? '-',
-            'email'  => $registration->user->email ?? '-',
+            'name'   => $registration->participant_name ?? '-',
+            'email'  => $registration->participant_email ?? '-',
             'status' => $registration->status,
         ],
     ]);
@@ -1098,13 +1131,14 @@ public function show($id)
 
 public function checkinScan(Request $request, Event $event)
 {
+    abort_unless($this->isEventStaff(), 403);
+
     $validated = $request->validate([
         'ticket_code' => ['required', 'string'],
     ]);
 
     $registration = EventRegistration::where('event_id', $event->id)
         ->where('ticket_code', $validated['ticket_code'])
-        ->with('user:id,fullname,email')
         ->first();
 
     if (!$registration) {
@@ -1115,8 +1149,8 @@ public function checkinScan(Request $request, Event $event)
     }
 
     $participantData = [
-        'name'   => $registration->user->fullname ?? '-',
-        'email'  => $registration->user->email ?? '-',
+        'name'   => $registration->participant_name ?? '-',
+        'email'  => $registration->participant_email ?? '-',
         'status' => $registration->status,
     ];
 
@@ -1136,15 +1170,27 @@ public function checkinScan(Request $request, Event $event)
         ], 422);
     }
 
-    $registration->update([
-        'status'         => 'attended',
-        'checked_in_at'  => now(),
-        'checked_in_by'  => auth()->id(),
-    ]);
+    // Update bersyarat: kalau dua petugas scan tiket yang sama bersamaan,
+    // hanya satu yang berhasil
+    $updated = EventRegistration::where('id', $registration->id)
+        ->whereIn('status', ['paid', 'confirmed'])
+        ->update([
+            'status'        => 'attended',
+            'checked_in_at' => now(),
+            'checked_in_by' => auth()->id(),
+        ]);
+
+    if (!$updated) {
+        return response()->json([
+            'success'     => false,
+            'message'     => 'Peserta ini sudah check-in sebelumnya.',
+            'participant' => array_merge($participantData, ['status' => 'attended']),
+        ], 422);
+    }
 
     return response()->json([
         'success'     => true,
-        'message'     => $registration->user->fullname . ' berhasil di-check-in.',
+        'message'     => $participantData['name'] . ' berhasil di-check-in.',
         'participant' => array_merge($participantData, ['status' => 'attended']),
     ]);
 }

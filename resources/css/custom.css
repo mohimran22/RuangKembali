@@ -510,7 +510,7 @@ z-index: 1035;
 }
 
 .btn,
-.btn-sm
+.btn-sm,
 .btn-list {
     font-family: 'Montserrat', sans-serif;
     font-weight: 400 !important;
@@ -871,9 +871,9 @@ col.just-hidden {
         flex: 0 1 280px;
     }
 }
-.d-none {
+/* .d-none {
     display: none;
-}
+} */
 .week-foot.d-none,
 .just-foot.d-none {
     display: none !important;
@@ -899,14 +899,21 @@ col.just-hidden {
     background: #fff;
 }
 
-.progress-table thead .sticky-col{
-    z-index: 50;
-    background: #fff !important;
+.event-sticky-cta {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1030;
+    padding: 10px 16px;
+    background: #fff;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, .08);
 }
 
-
-.progress-table tbody .sticky-col{
-    z-index: 40;
+@media (max-width: 767.98px) {
+    .page-wrapper {
+        padding-bottom: 80px; /* supaya konten terakhir tidak tertutup */
+    }
 }
 tr.row-tambahan-item td.sticky-col{
     background:#fff3cd;

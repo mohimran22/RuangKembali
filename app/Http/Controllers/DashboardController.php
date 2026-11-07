@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\AccountingAccount;
 use App\Models\AccountingJournalDetail;
-use App\Models\Attendance;
+use App\Helpers\ActiveRole;
 use App\Models\Religion;
 use App\Models\Province;
 use App\Models\City;
@@ -28,16 +28,9 @@ class DashboardController extends Controller
 
     public function index()
     {
-        $user       = auth()->user();
-        $activeRole = session('active_role'); // sesuaikan nama key dengan dropdown peran
+        $user = auth()->user();
 
-        // Pakai peran aktif dari dropdown kalau ada dan memang dimiliki user;
-        // kalau tidak, jatuh ke pengecekan peran biasa.
-        $isMember = ($activeRole && $user->hasRole($activeRole))
-            ? $activeRole === 'Member'
-            : ($user->hasRole('Member') && !$user->hasRole('Super-Admin'));
-
-        if ($isMember) {
+        if (ActiveRole::name() === 'Member') {
             return $this->memberDashboard($user);
         }
         $events = Event::query()

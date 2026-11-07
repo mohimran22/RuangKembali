@@ -83,7 +83,7 @@ Route::get('/member/profile', [DashboardController::class, 'edit'])->name('membe
 Route::put('/member/profile', [DashboardController::class, 'update'])->name('member.update');
 Route::get('/affiliators/profile', [DashboardController::class, 'edit'])->name('affiliators.profile');
 Route::put('/affiliators/profile', [DashboardController::class, 'update'])->name('affiliators.updates');
-
+Route::middleware('auth')->group(function () {
     Route::get(
         '/events/{event}/register',
         [EventRegistrationController::class, 'create']
@@ -93,7 +93,7 @@ Route::put('/affiliators/profile', [DashboardController::class, 'update'])->name
         '/events/{event}/register',
         [EventRegistrationController::class, 'store']
     )->name('events.register.store');
-
+});
 Route::middleware(['auth', 'permission:lihat daftar tim|lihat data tim', 'activerole:Tim'])->group(function () {
     Route::resource('/teams', TeamController::class)->whereUuid('team');
 });
@@ -183,14 +183,9 @@ Route::middleware(['auth', 'permission:lihat daftar tukang|lihat data tukang', '
    Route::resource('/workers', WorkerController::class);
 });
 
-Route::middleware(['auth', 'permission:lihat daftar kontraktor|lihat data kontraktor', 'activerole:Mitra Kontraktor'])->group(function () {
-    Route::get('/contractors/generate-SupplierId', [ContractorController::class, 'generateContractorIdAjax'])->name('contractors.generateContractorId');
-    Route::resource('/contractors', ContractorController::class);
-});
-
 Route::get('/accounting/generate-code', [AccountingAccountController::class, 'generateCode']);
 
-Route::middleware(['auth', 'role:Super-Admin|Akuntan'])
+Route::middleware(['auth', 'permission:lihat akun-akuntansi'])
         ->resource('accounting', AccountingAccountController::class)
          ->parameters(['accounting' => 'account']);
 
@@ -201,16 +196,18 @@ Route::get('/journals/{journal}/print', [AccountingJournalController::class, 'pr
 
 Route::get('/journals/report', [AccountingJournalController::class, 'report'])
     ->name('journals.report')
-    ->middleware(['role:Super-Admin|Akuntan|Pemilik Lisensi']);
+    ->middleware(['auth', 'permission:lihat transaksi']);
 
 Route::get('/journals/general', [AccountingJournalController::class, 'generalJournal'])
     ->name('journals.general')
-    ->middleware(['role:Super-Admin|Akuntan|Pemilik Lisensi']);
+    ->middleware(['auth', 'permission:lihat jurnal umum']);
+
 Route::get('/journals/export/pdf', [AccountingJournalController::class, 'exportPDF'])->name('journals.export.pdf');
 
 Route::get('/journals/ledger', [AccountingJournalController::class, 'ledger'])
     ->name('journals.ledger')
-    ->middleware(['role:Super-Admin|Akuntan|Pemilik Lisensi']);
+    ->middleware(['auth', 'permission:lihat buku besar']);
+
 Route::get('/journals/ledgerpdf', [AccountingJournalController::class, 'exportLedgerPdf'])->name('ledgerpdf');
 
 Route::get('/journals/export/trial-pdf', [AccountingJournalController::class, 'exportTrial'])
@@ -220,13 +217,13 @@ Route::get('/journals/income/pdf', [AccountingJournalController::class, 'exportI
     ->name('journals.income.pdf');
 Route::get('/check-period', [AccountingJournalController::class, 'checkPeriod']);
 
-Route::middleware(['role:Super-Admin|Akuntan'])->group(function () {
+Route::middleware(['auth', 'permission:lihat jurnal'])->group(function () {
     Route::resource('/journals', AccountingJournalController::class);
 });
 
 Route::get('/reports/balance_sheet', [AccountingJournalController::class, 'balanceSheet'])
     ->name('reports.balance_sheet')
-    ->middleware(['role:Super-Admin|Akuntan|Pemilik Lisensi']);
+    ->middleware(['auth', 'permission:lihat neraca']);
 
 Route::get('/reports/income-statement', [AccountingReportController::class, 'incomeStatement'])
     ->name('reports.income_statement');
@@ -326,33 +323,6 @@ Route::prefix('admin')
         Route::delete('/transactions/{transaction}', [TransactionController::class, 'destroy'])
             ->name('transactions.destroy');
     });
-Route::post('/job-categories/{id}/duplicate', [JobCategoryController::class, 'duplicate'])
-    ->name('job-categories.duplicate');
-Route::resource('/job-categories', JobCategoryController::class)
-    ->except(['show']);
-Route::post('job-categories/{jobCategory}/items',
-    [JobCategoryController::class, 'addItem'])->name('job-categories.items.store');
-
-Route::put('job-categories-items/{item}',
-    [JobCategoryController::class, 'updateItem'])->name('job-categories.items.update');
-
-Route::delete('job-categories-items/{item}',
-    [JobCategoryController::class, 'deleteItem'])->name('job-categories.items.delete');
-    
-Route::post(
-    'job-categories/{jobCategory}/overhead-profit',
-    [JobCategoryController::class, 'saveOverheadProfit']
-)->name('job-categories.save-overhead-profit');
-
-Route::get('/ajax/items/{type}', [JobCategoryController::class, 'getItems']);
-Route::get('/ajax/item-detail/{type}/{id}', [JobCategoryController::class, 'getItemDetail']);
-Route::get('/ajax/product/{id}/suppliers', [JobCategoryController::class, 'getvendorsByProduct']);
-Route::get('/ajax/product-supplier/{supplierId}', [JobCategoryController::class, 'getProductSupplierById']);
-
-Route::get('/job-categories/{id}/simple', [JobCategoryController::class, 'simple']);
-Route::post('/job-categories/update-effective/{id}', 
-    [JobCategoryController::class, 'updateEffective']
-)->name('job-categories.update-effective');
 
 Route::post('/job-items/{item}/change-supplier', [\App\Http\Controllers\JobCategoryItemController::class, 'changeSupplier']);
 Route::post('/job-items/{item}/change-uraian', 
@@ -375,59 +345,6 @@ Route::post('/notifications/read-all', function () {
     return response()->json(['status' => 'ok']);
 });
 
-
-Route::middleware(['auth'])->group(function () {
-    Route::get('consultations/{consultation}/pdf', [\App\Http\Controllers\ConsultationController::class, 'pdf'])
-    ->name('consultations.pdf');
-    Route::get('plannings/{planning}/pdf', [\App\Http\Controllers\PlanningController::class, 'pdf'])
-    ->name('plannings.pdf');
-    Route::get('surveys/{survey}/pdf', [\App\Http\Controllers\SurveyController::class, 'pdf'])
-    ->name('surveys.pdf');
-    Route::get('/projects/offers/{offer}/pdf', [\App\Http\Controllers\OfferController::class, 'printPdf'])
-    ->name('projects.offers.desain.pdf');
-    Route::get('/projects/offer/{offer}/pdf', [\App\Http\Controllers\OfferRABController::class, 'printPdf'])
-    ->name('projects.offers.rab.pdf');
-    Route::get('/projects/{project}/build/pdf', [\App\Http\Controllers\OfferBuildController::class, 'printPdf'])
-    ->name('projects.offers.build.pdf');
-    Route::get('/projects/{project}/rab/pdf', [\App\Http\Controllers\RabProcessController::class, 'exportPdf'])
-    ->name('projects.rab.pdf');
-    Route::get('/tasks/files/{file}', [\App\Http\Controllers\ProjectTaskController::class, 'viewFile'])
-    ->name('tasks.files.view');
-    Route::post('/tasks/{task}/approve', [\App\Http\Controllers\ProjectTaskController::class, 'approve'])
-    ->name('tasks.approve');
-    Route::post('/tasks/{task}/reject', [\App\Http\Controllers\ProjectTaskController::class, 'reject'])
-    ->name('tasks.reject');
-    Route::get(
-    '/projects/{project}/invoice-final',
-    [\App\Http\Controllers\InvoiceController::class, 'invoiceFinal']
-)->name('projects.invoice.final');
-Route::get(
-    'projects/{project}/contract/pdf',
-    [\App\Http\Controllers\ContractController::class, 'pdf']
-)->name('projects.contract.pdf');
-
-Route::get(
-    'projects/{project}/contract/buildpdf',
-    [\App\Http\Controllers\ContractBuildController::class, 'buildpdf']
-)->name('projects.contract.buildpdf');
-
-Route::get(
-    'projects/{project}/invoice/pdf',
-    [\App\Http\Controllers\InvoiceController::class, 'invoiceDp']
-)->name('projects.invoice.pdf');
-
-Route::get(
-    'projects/{project}/invoice/invoice-rab',
-    [\App\Http\Controllers\InvoiceController::class, 'invoiceRab']
-)->name('projects.invoice.rab');
-Route::post(
-    '/projects/{project}/contract/approve',
-    [\App\Http\Controllers\ContractController::class, 'approve']
-)->name('projects.contract.approve');
-Route::post(
-    '/projects/{project}/contract/approvebuild',
-    [\App\Http\Controllers\ContractBuildController::class, 'approve']
-)->name('projects.contract.build.approve');
 
 Route::post(
     '/projects/{project}/invoice/approve',
@@ -504,21 +421,6 @@ Route::post('/offers/{offer}/approve', [\App\Http\Controllers\OfferController::c
 Route::post('/offers/{offer}/reject', [\App\Http\Controllers\OfferController::class, 'reject'])
     ->name('offers.reject');
 
-Route::post('projects/offer', [\App\Http\Controllers\OfferRABController::class, 'store'])
-    ->name('projects.offer.store');
-    
-// Route::put('offer/{offer}', [\App\Http\Controllers\OfferRABController::class, 'update'])
-//     ->name('offer.update');
-
-Route::put('offer-rab/{offer}', [\App\Http\Controllers\OfferRABController::class, 'update']) 
-    ->name('offer-rab.update');
-
-Route::post('/offer/{offer}/approve', [\App\Http\Controllers\OfferRABController::class, 'approve'])
-    ->name('offer.approve');
-
-Route::post('/offer/{offer}/reject', [\App\Http\Controllers\OfferRABController::class, 'reject'])
-    ->name('offer.reject');
-
 Route::post('projects/rab', [\App\Http\Controllers\RabProcessController::class, 'store'])
     ->name('projects.rab.store');
 Route::put('/projects/{project}/rab/{rab}', [\App\Http\Controllers\RabProcessController::class, 'update'])
@@ -571,33 +473,12 @@ Route::delete(
 Route::post('/projects/{project}/sync-tasks',
     [\App\Http\Controllers\ProjectTaskController::class, 'syncFromOffer']
 )->name('projects.tasks.sync');
-// Route::get('/survey-invoice/{invoice}/approve', [\App\Http\Controllers\SurveyInvoiceController::class, 'approve'])
-//     ->name('survey.approve');
 
-// Route::post('/survey-invoice/{invoice}/reject', [\App\Http\Controllers\SurveyInvoiceController::class, 'reject'])
-//     ->name('survey.reject.form');
 
-Route::post(
-    '/projects/{project}/final',
-    [\App\Http\Controllers\FinalEventController::class, 'store']
-)->name('projects.finals.store');
-Route::delete(
-    '/projects/{project}/final',
-    [\App\Http\Controllers\FinalEventController::class, 'destroy']
-)->name('projects.finals.destroy');
-Route::post(
-    '/projects/{project}/finalBuild',
-    [\App\Http\Controllers\FinalBuildEventController::class, 'store']
-)->name('projects.finals-build.store');
-Route::delete(
-    '/projects/{project}/finalBuild',
-    [\App\Http\Controllers\FinalBuildEventController::class, 'destroy']
-)->name('projects.finals-build.destroy');
 });
 
 Route::middleware(['auth', 'permission:lihat daftar user'])->group(function () {
     route::resource('/users', UsersController::class);
-});
 });
 
 Route::prefix('projects/{project}')
@@ -624,40 +505,6 @@ Route::prefix('projects/{project}')
         )->name('projects.invoice.build.approve');
     });
 
-Route::middleware(['auth'])
-    ->post('/build-items/update-bobot',
-        [BuildProcessItemController::class, 'updateBobot']
-    )->name('build-items.update-bobot');
-Route::post('/build-items/tambahan', 
-    [BuildProcessItemController::class, 'storeTambahan']
-)->name('build-items.store-tambahan');
-Route::post(
-    '/projects/{project}/weekly-report',
-    [BuildWeeklyController::class, 'store']
-)->name('weekly-report.store');
-Route::post('/build-weekly/update',
-    [BuildWeeklyController::class,'update']
-)->name('build-weekly.update');
-
-Route::post('/build-week-plan/update', 
-    [BuildWeeklyPlanController::class,'update']
-)->name('build-week-plan.update');
-
-Route::post('/build-daily/store',
-    [BuildDailyController::class,'store']
-)->name('build.daily.store');
-Route::get('/daily/{id}/detail', [BuildDailyController::class, 'detail'])
-    ->name('build.daily.detail');
-Route::delete('/daily-work/{id}', [BuildDailyController::class, 'deleteWork']);
-Route::delete('/daily-worker/{id}', [BuildDailyController::class, 'deleteWorker']);
-Route::delete('/daily-material/{id}', [BuildDailyController::class, 'deleteMaterial']);
-Route::get('/reports/{id}/edit', [BuildDailyController::class, 'editPage'])->name('build.daily.edit');
-Route::post('/daily/{id}/update-all', 
-    [BuildDailyController::class, 'updateAll']);
-Route::delete('/daily/documentation/{id}',
-    [BuildDailyController::class, 'deleteDocumentation']);
-Route::delete('/reports/{id}', [BuildDailyController::class, 'destroy']);
-Route::get('/reports/next-date/{project}', [BuildDailyController::class,'nextDate']);
 Route::get('/projects/{project}/invoice-panel',
 [EventController::class,'invoicePanel'])
 ->name('projects.invoice.panel');
@@ -683,9 +530,7 @@ Route::get(
     '/projects/{project}/build-process-partial',
     [EventController::class, 'buildProcessPartial']
 )->name('projects.build-process.partial');
-Route::get('/projects/{project}/export-pdf', 
-    [BuildWeeklyController::class, 'exportPdf'])
-    ->name('projects.export-pdf');
+
 Route::middleware(['auth', 'permission:lihat daftar role'])->group(function () {
     Route::resource('/roles', RoleController::class);
     Route::post('/roles/{role}/update-permissions', [RoleController::class, 'updatePermissions'])->name('roles.updatePermissions');
@@ -696,10 +541,6 @@ Route::middleware(['auth', 'role:Super-Admin'])->group(function () {
 Route::middleware(['auth', 'permission:kelola akun'])->group(function () {
     Route::get('/accounts', [AccountController::class, 'index'])->name('accounts.index');
     Route::post('/accounts/update-role', [AccountController::class, 'updateRole'])->name('accounts.update-role');
-});
-
-Route::middleware(['auth', 'permission:lihat daftar dokumen'])->group(function () {
-    route::resource('/documents', DocumentController::class);
 });
 
 Route::middleware(['auth'])->group(function () {

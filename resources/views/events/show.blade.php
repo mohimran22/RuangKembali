@@ -36,31 +36,6 @@
                         Daftar Sekarang
 
                     </a>
-                    @can('tambah data event')
-                    <div class="dropdown">
-                        <button class="btn btn-outline-secondary dropdown-toggle"
-                                data-bs-toggle="dropdown">
-                            <i class="ti ti-dots-vertical"></i>
-                        </button>
-
-                        <div class="dropdown-menu dropdown-menu-end">
-
-                            <a href="{{ route('events.edit', $event->id) }}"
-                               class="dropdown-item">
-                                <i class="ti ti-edit me-2"></i>
-                                Edit Event
-                            </a>
-
-                            <button type="button"
-                                    class="dropdown-item text-danger"
-                                    onclick="confirmDelete()">
-                                <i class="ti ti-trash me-2"></i>
-                                Hapus Event
-                            </button>
-
-                        </div>
-                    </div>
-                    @endcan
                 </div>
             </div>
 
@@ -160,9 +135,8 @@
 
                         </div>
 
-
                         <div class="card-body">
-                            <div class="d-flex flex-wrap gap-2 mb-3">
+                            <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
 
                                 @if($event->category)
                                     <span class="badge bg-primary-lt">
@@ -186,7 +160,23 @@
                                     </span>
 
                                 @endif
-
+                                @if(\App\Helpers\ActiveRole::hasPermission('ubah data event'))
+                                    <div class="dropdown ms-auto">
+                                        <button class="btn btn-outline-secondary btn-sm dropdown-toggle"
+                                                data-bs-toggle="dropdown">
+                                            <i class="ti ti-dots-vertical"></i>
+                                            <span class="ms-1">Aksi</span>
+                                        </button>
+                                        <div class="dropdown-menu dropdown-menu-end">
+                                            <a href="{{ route('events.edit', $event->id) }}" class="dropdown-item">
+                                                <i class="ti ti-edit me-2"></i> Edit Event
+                                            </a>
+                                            <button type="button" class="dropdown-item text-danger" onclick="confirmDelete()">
+                                                <i class="ti ti-trash me-2"></i> Hapus Event
+                                            </button>
+                                        </div>
+                                    </div>
+                                @endif
                             </div>
                             <h1 class="event-title">
                                 {{ $event->name }}
@@ -199,8 +189,6 @@
                                 {{ $event->event_code }}
                             </div>
 
-
-                            {{-- Description --}}
                             @if($event->description)
 
                                 <div class="event-description">
@@ -487,8 +475,6 @@
                         </div>
 
                     </div>
-
-
                     {{-- Registration --}}
                     <div class="card mb-4">
 
@@ -1106,7 +1092,7 @@
 
                     <div class="header-actions">
 
-                        @hasanyrole(['Tim', 'Super-Admin'])
+                        @if($canViewAll)
 
                             <button type="button"
                                     class="btn btn-success btn-sm"
@@ -1116,7 +1102,7 @@
                                 Check-in Peserta
                             </button>
 
-                        @endhasanyrole
+                        @endif
 
                         <span class="badge bg-primary-lt">
                             {{ $registrations->count() }} Peserta
@@ -1172,42 +1158,34 @@
                                             </td>
                                             <td>
 
-                                                @if($registration->status === 'confirmed')
-
-                                                    <span class="badge bg-success-lt">
-                                                        <i class="ti ti-circle-check me-1"></i>
-                                                        Confirmed
-                                                    </span>
-
+                                                @if(in_array($registration->status, ['paid', 'confirmed', 'attended']))
+                                                <span class="badge bg-success-lt">
+                                                    <i class="ti ti-circle-check me-1"></i>
+                                                    Lunas
+                                                </span>
                                                 @elseif($registration->status === 'pending')
-
                                                     <span class="badge bg-warning-lt">
                                                         <i class="ti ti-clock me-1"></i>
                                                         Pending
                                                     </span>
-
                                                 @elseif($registration->status === 'cancelled')
-
                                                     <span class="badge bg-danger-lt">
                                                         <i class="ti ti-circle-x me-1"></i>
                                                         Cancelled
                                                     </span>
-
                                                 @else
-
                                                     <span class="badge bg-secondary-lt">
                                                         {{ ucfirst($registration->status ?? '-') }}
                                                     </span>
-
                                                 @endif
 
                                             </td>
 
                                             <td>
-                                                {{ $registration->created_at?->translatedFormat('d F Y') }}
+                                                {{ ($registration->registered_at ?? $registration->created_at)?->translatedFormat('d F Y') }}
 
                                                 <div class="text-secondary small">
-                                                    {{ $registration->created_at?->format('H:i') }} WIB
+                                                    {{ ($registration->registered_at ?? $registration->created_at)?->format('H:i') }} WIB
                                                 </div>
                                             </td>
 
@@ -1264,7 +1242,15 @@
 
         </div>
     </div>
-
+    <div class="event-sticky-cta d-md-none">
+        <a href="{{ route('events.register', $event->id) }}"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="btn btn-primary w-100">
+            <i class="ti ti-ticket me-1"></i>
+            Daftar Sekarang
+        </a>
+    </div>
     <form id="delete-form"
         action="{{ route('events.destroy', $event->id) }}"
         method="POST"
@@ -1274,7 +1260,7 @@
         @method('DELETE')
 
     </form>
-    @hasanyrole(['Tim', 'Super-Admin'])
+    @if($canViewAll)
 
         <div class="modal modal-blur fade" id="checkinModal" tabindex="-1" role="dialog" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered" role="document">
@@ -1538,7 +1524,7 @@
         </script>
         @endpush
 
-    @endhasanyrole
+    @endif
 </div>
 
 @endsection

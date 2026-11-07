@@ -7,7 +7,7 @@
             <div class="row g-2 align-items-center">
                 <div class="col-12 col-md-auto ms-auto d-print-none">
                     <div class="btn-list">
-                 @can('tambah data member')       
+                 @if(\App\Helpers\ActiveRole::hasPermission('tambah data member'))        
                         <a href="{{ route("members.create") }}" class="btn btn-primary" >
                             <!-- Download SVG icon from http://tabler-icons.io/i/plus -->
                             <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24"
@@ -19,7 +19,7 @@
                             </svg>
                             Tambah Data member
                         </a>
-                 @endcan
+                 @endif
                         
                     </div>
                 </div>
@@ -57,7 +57,7 @@
             </div>
         </div>
     </div>
-@can('tambah data member')
+@if(\App\Helpers\ActiveRole::hasPermission('tambah data member')) 
 <a href="{{ route('members.create') }}"
    class="mobile-fab d-md-none">
 
@@ -78,7 +78,7 @@
     </svg>
 
 </a>
-@endcan
+@endif
 @endsection
 
 @push('js')
