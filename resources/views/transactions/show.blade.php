@@ -166,7 +166,19 @@
                             </div>
                         @endif
 
-                    @elseif($transaction->status === 'rejected')
+                        @elseif($transaction->status === 'expired')
+
+                            <div class="alert alert-secondary">
+                                <div class="d-flex">
+                                    <i class="ti ti-clock-off fs-2 me-3"></i>
+                                    <div>
+                                        <h3 class="alert-title">Transaksi Kadaluarsa</h3>
+                                        <div class="text-secondary">Batas waktu pembayaran sudah lewat. Silakan daftar ulang ke event ini.</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        @elseif($transaction->status === 'rejected')
 
                         <div class="alert alert-danger mb-3">
                             <div class="d-flex">
@@ -180,38 +192,61 @@
 
                         @include('transactions.upload-form')
 
-                    @elseif($transaction->payment_method === 'transfer')
+@elseif($transaction->payment_method === 'transfer')
 
-                        <div class="alert alert-info mb-3">
-                            <i class="ti ti-info-circle me-2"></i>
-                            Silakan transfer ke rekening berikut, lalu upload bukti transfer.
-                        </div>
+    @php $event = $transaction->event; @endphp
 
-                        {{-- TODO: ganti dengan nomor rekening asli dari konfigurasi/setting --}}
-                        <div class="card card-sm border mb-3">
-                            <div class="card-body">
-                                <div class="text-secondary small">Bank Transfer</div>
-                                <div class="fw-semibold fs-3">1234567890</div>
-                                <div class="text-secondary">a.n. Ruang Kembali</div>
-                            </div>
-                        </div>
+    @if($event->transfer_account_number)
 
-                        @include('transactions.upload-form')
+        <div class="alert alert-info mb-3">
+            <i class="ti ti-info-circle me-2"></i>
+            Silakan transfer ke rekening berikut, lalu upload bukti transfer.
+        </div>
 
-                    @elseif($transaction->payment_method === 'gateway')
+        <div class="card card-sm border mb-3">
+            <div class="card-body">
+                <div class="text-secondary small">{{ $event->transfer_bank_name }}</div>
+                <div class="d-flex align-items-center gap-2">
+                    <div class="fw-semibold fs-3">{{ $event->transfer_account_number }}</div>
+                    <button type="button"
+                            class="btn btn-sm btn-outline-secondary"
+                            data-copy="{{ $event->transfer_account_number }}"
+                            onclick="navigator.clipboard.writeText(this.dataset.copy); this.textContent = 'Tersalin';">
+                        Salin
+                    </button>
+                </div>
+                <div class="text-secondary">a.n. {{ $event->transfer_account_holder }}</div>
+                <div class="text-secondary small mt-2">
+                    Nominal: <strong>Rp {{ number_format($transaction->total_amount, 0, ',', '.') }}</strong>
+                </div>
+            </div>
+        </div>
 
-                        <div class="alert alert-info">
-                            <i class="ti ti-info-circle me-2"></i>
-                            Kamu memilih Payment Gateway. Klik tombol di bawah untuk melanjutkan pembayaran.
-                        </div>
+        @include('transactions.upload-form')
 
-                        {{-- TODO: ganti dengan redirect ke Midtrans/Xendit snap token/link --}}
-                        <button class="btn btn-primary w-100" disabled>
-                            <i class="ti ti-credit-card me-1"></i>
-                            Bayar Sekarang (integrasi belum aktif)
-                        </button>
+    @else
 
-                    @endif
+        <div class="alert alert-warning">
+            <i class="ti ti-alert-triangle me-2"></i>
+            Informasi rekening untuk event ini belum diatur panitia. Silakan hubungi panitia event sebelum melakukan pembayaran.
+        </div>
+
+    @endif
+
+@elseif($transaction->payment_method === 'gateway')
+
+    <div class="alert alert-info">
+        <i class="ti ti-info-circle me-2"></i>
+        Kamu memilih Payment Gateway. Klik tombol di bawah untuk melanjutkan pembayaran.
+    </div>
+
+    {{-- TODO: ganti dengan redirect ke Midtrans/Xendit snap token/link --}}
+    <button class="btn btn-primary w-100" disabled>
+        <i class="ti ti-credit-card me-1"></i>
+        Bayar Sekarang (integrasi belum aktif)
+    </button>
+
+@endif
 
                 </div>
 

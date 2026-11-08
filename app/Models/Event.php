@@ -36,6 +36,9 @@ class Event extends Model
         'sponsorship_qris',
         'cash_account_id',
         'income_account_id',
+        'transfer_bank_name',
+        'transfer_account_number',
+        'transfer_account_holder',
     ];
 
     protected $casts = [

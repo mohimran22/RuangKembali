@@ -205,7 +205,7 @@ public function index(Request $request)
 
                 if (ActiveRole::hasPermission('ubah data event')) {
                     $buttons .= '
-                        <a href="' . route('events.edit', $event->id) . '"
+                        <a href="' . route('events.edit', $event->slug) . '"
                            class="btn btn-icon btn-sm btn-warning"
                            title="Edit">
                             <i class="ti ti-edit"></i>
@@ -323,6 +323,15 @@ public function store(Request $request)
             'numeric',
             'min:0',
         ],
+        'transfer_bank_name' => ['required_if:event_type,paid', 'nullable', 'string', 'max:100'],
+        'transfer_account_number' => [
+            'required_if:event_type,paid',
+            'nullable',
+            'string',
+            'max:50',
+            'regex:/^[0-9][0-9\s\-]*$/',
+        ],
+        'transfer_account_holder' => ['required_if:event_type,paid', 'nullable', 'string', 'max:150'],
         'cash_account_id' => [
             'required',
             'uuid',
@@ -392,6 +401,9 @@ public function store(Request $request)
             'price' => $request->event_type === 'free'
                 ? 0
                 : ($request->price ?? 0),
+            'transfer_bank_name'      => $request->event_type === 'free' ? null : $request->transfer_bank_name,
+            'transfer_account_number' => $request->event_type === 'free' ? null : $request->transfer_account_number,
+            'transfer_account_holder' => $request->event_type === 'free' ? null : $request->transfer_account_holder,
             'quota' => $request->quota,
             'poster' => $poster,
             'thumbnail' => $thumbnail,
@@ -577,6 +589,15 @@ public function update(Request $request, Event $event)
         'end_at' => 'required|date|after:start_at',
         'location' => 'nullable|string|max:255',
         'price' => 'nullable|numeric|min:0',
+        'transfer_bank_name' => ['required_if:event_type,paid', 'nullable', 'string', 'max:100'],
+        'transfer_account_number' => [
+            'required_if:event_type,paid',
+            'nullable',
+            'string',
+            'max:50',
+            'regex:/^[0-9][0-9\s\-]*$/',
+        ],
+        'transfer_account_holder' => ['required_if:event_type,paid', 'nullable', 'string', 'max:150'],
         'quota' => 'nullable|integer|min:1',
         'is_published' => 'required|boolean',
         'poster' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
@@ -728,7 +749,9 @@ public function update(Request $request, Event $event)
             'price' => $request->event_type === 'free'
                 ? 0
                 : ($request->price ?? 0),
-
+            'transfer_bank_name'      => $request->event_type === 'free' ? null : $request->transfer_bank_name,
+            'transfer_account_number' => $request->event_type === 'free' ? null : $request->transfer_account_number,
+            'transfer_account_holder' => $request->event_type === 'free' ? null : $request->transfer_account_holder,
             'quota' => $request->quota,
             'description' => $request->description,
             'is_published' => $request->boolean('is_published'),

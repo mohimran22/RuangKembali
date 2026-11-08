@@ -1143,95 +1143,203 @@
                                 </div>
 
                             </div>
+                            <div class="card mb-4" id="transfer-fields">
+
+    <div class="card-header">
+        <div>
+            <h3 class="card-title mb-1">
+                Pembayaran Tiket
+            </h3>
+
+            <div class="text-secondary small">
+                Rekening tujuan transfer untuk peserta event berbayar
+            </div>
+        </div>
+    </div>
+
+    <div class="card-body">
+
+        <div class="card card-sm border">
+
+            <div class="card-body">
+
+                <div class="d-flex align-items-center gap-3 mb-3">
+
+                    <span class="avatar avatar-lg bg-orange-lt">
+                        <i class="ti ti-building-bank fs-2"></i>
+                    </span>
+
+                    <div>
+                        <div class="fw-semibold">
+                            Transfer Bank
+                        </div>
+
+                        <div class="text-secondary small">
+                            Rekening ini ditampilkan kepada peserta saat melakukan pembayaran.
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="row g-3">
+
+                    <div class="col-md-4">
+                        <div class="input-group">
+                            <input type="text"
+                                name="transfer_bank_name"
+                                class="form-control @error('transfer_bank_name') is-invalid @enderror"
+                                value="{{ old('transfer_bank_name', $event->transfer_bank_name) }}"
+                                aria-label="Nama bank"
+                                placeholder="Contoh: Bank Syariah Indonesia">
+
+                            <span class="input-group-text">
+                                <i class="ti ti-building-bank"></i>
+                            </span>
+                        </div>
+                        @error('transfer_bank_name')
+                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="input-group">
+                            <input type="text"
+                                name="transfer_account_number"
+                                inputmode="numeric"
+                                class="form-control @error('transfer_account_number') is-invalid @enderror"
+                                value="{{ old('transfer_account_number', $event->transfer_account_number) }}"
+                                aria-label="Nomor rekening"
+                                placeholder="Contoh: 7123456789">
+
+                            <span class="input-group-text">
+                                <i class="ti ti-credit-card"></i>
+                            </span>
+                        </div>
+                        @error('transfer_account_number')
+                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="input-group">
+                            <input type="text"
+                                name="transfer_account_holder"
+                                class="form-control @error('transfer_account_holder') is-invalid @enderror"
+                                value="{{ old('transfer_account_holder', $event->transfer_account_holder) }}"
+                                aria-label="Atas nama"
+                                placeholder="Contoh: Ruang Kembali">
+
+                            <span class="input-group-text">
+                                <i class="ti ti-user"></i>
+                            </span>
+                        </div>
+                        @error('transfer_account_holder')
+                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                </div>
+
+                <div class="form-hint">
+                    Nomor rekening hanya boleh berisi angka. Wajib diisi untuk event berbayar.
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
                             <div class="card mb-4">
-                            <div class="card-header">
-                                    <div>
-                                        <h3 class="card-title mb-1">
-                                            Akun Keuangan Event
-                                        </h3>
+                                <div class="card-header">
+                                        <div>
+                                            <h3 class="card-title mb-1">
+                                                Akun Keuangan Event
+                                            </h3>
 
-                                        <div class="text-secondary small">
-                                            Tentukan akun yang digunakan untuk pencatatan transaksi event.
-                                        </div>
-                                    </div>
-                            </div>
-
-                            <div class="card-body">
-                                <div class="row g-3">
-
-                                    {{-- AKUN KAS / BANK --}}
-                                    <div class="col-md-6">
-                                        <label class="form-label required">
-                                            Akun Kas / Bank
-                                        </label>
-
-                                        <select name="cash_account_id"
-                                                class="form-select select2"
-                                                required>
-
-                                            <option value="">
-                                                Pilih Akun Kas / Bank
-                                            </option>
-
-                                            @foreach($cashAccounts as $account)
-                                                <option value="{{ $account->id }}"
-                                                    {{ old('cash_account_id', $event->cash_account_id) == $account->id ? 'selected' : '' }}>
-                                                    {{ $account->account_code }}
-                                                    - {{ $account->account_name }}
-                                                </option>
-                                            @endforeach
-
-                                        </select>
-
-                                        <div class="form-hint">
-                                            Akun yang digunakan untuk menerima pembayaran peserta.
-                                        </div>
-
-                                        @error('cash_account_id')
-                                            <div class="text-danger small mt-1">
-                                                {{ $message }}
+                                            <div class="text-secondary small">
+                                                Tentukan akun yang digunakan untuk pencatatan transaksi event.
                                             </div>
-                                        @enderror
-                                    </div>
-
-
-                                    {{-- AKUN PENDAPATAN --}}
-                                    <div class="col-md-6">
-                                        <label class="form-label required">
-                                            Akun Pendapatan
-                                        </label>
-
-                                        <select name="income_account_id"
-                                                class="form-select select2"
-                                                required>
-
-                                            <option value="">
-                                                Pilih Akun Pendapatan
-                                            </option>
-
-                                            @foreach($incomeAccounts as $account)
-                                                <option value="{{ $account->id }}"
-                                                    {{ old('income_account_id', $event->income_account_id) == $account->id ? 'selected' : '' }}>
-                                                    {{ $account->account_code }}
-                                                    - {{ $account->account_name }}
-                                                </option>
-                                            @endforeach
-
-                                        </select>
-
-                                        <div class="form-hint">
-                                            Akun pendapatan khusus untuk event ini.
                                         </div>
-
-                                        @error('income_account_id')
-                                            <div class="text-danger small mt-1">
-                                                {{ $message }}
-                                            </div>
-                                        @enderror
-                                    </div>
-
                                 </div>
-                            </div>
+
+                                <div class="card-body">
+                                    <div class="row g-3">
+
+                                        {{-- AKUN KAS / BANK --}}
+                                        <div class="col-md-6">
+                                            <label class="form-label required">
+                                                Akun Kas / Bank
+                                            </label>
+
+                                            <select name="cash_account_id"
+                                                    class="form-select select2"
+                                                    required>
+
+                                                <option value="">
+                                                    Pilih Akun Kas / Bank
+                                                </option>
+
+                                                @foreach($cashAccounts as $account)
+                                                    <option value="{{ $account->id }}"
+                                                        {{ old('cash_account_id', $event->cash_account_id) == $account->id ? 'selected' : '' }}>
+                                                        {{ $account->account_code }}
+                                                        - {{ $account->account_name }}
+                                                    </option>
+                                                @endforeach
+
+                                            </select>
+
+                                            <div class="form-hint">
+                                                Akun yang digunakan untuk menerima pembayaran peserta.
+                                            </div>
+
+                                            @error('cash_account_id')
+                                                <div class="text-danger small mt-1">
+                                                    {{ $message }}
+                                                </div>
+                                            @enderror
+                                        </div>
+
+
+                                        {{-- AKUN PENDAPATAN --}}
+                                        <div class="col-md-6">
+                                            <label class="form-label required">
+                                                Akun Pendapatan
+                                            </label>
+
+                                            <select name="income_account_id"
+                                                    class="form-select select2"
+                                                    required>
+
+                                                <option value="">
+                                                    Pilih Akun Pendapatan
+                                                </option>
+
+                                                @foreach($incomeAccounts as $account)
+                                                    <option value="{{ $account->id }}"
+                                                        {{ old('income_account_id', $event->income_account_id) == $account->id ? 'selected' : '' }}>
+                                                        {{ $account->account_code }}
+                                                        - {{ $account->account_name }}
+                                                    </option>
+                                                @endforeach
+
+                                            </select>
+
+                                            <div class="form-hint">
+                                                Akun pendapatan khusus untuk event ini.
+                                            </div>
+
+                                            @error('income_account_id')
+                                                <div class="text-danger small mt-1">
+                                                    {{ $message }}
+                                                </div>
+                                            @enderror
+                                        </div>
+
+                                    </div>
+                                </div>
                             </div>
                             <div class="d-flex flex-column
                                         flex-sm-row
@@ -1276,9 +1384,30 @@
 
         const $eventType = $('#event_type');
         const $price = $('#price');
+        const $transferFields = $('#transfer-fields');
 
         function handleEventType() {
 
+            const type = $eventType.val();
+
+            if (type === 'free') {
+
+                // Event gratis → harga selalu 0
+                $price.val(0);
+
+                // Disable input harga
+                $price.prop('disabled', true);
+
+            } else {
+
+                // Event berbayar → harga bisa diisi
+                $price.prop('disabled', false);
+
+                // Jika sebelumnya 0, kosongkan agar user langsung mengisi
+                if ($price.val() === '0') {
+                    $price.val('');
+                }
+            }
             const type = $eventType.val();
 
             if (type === 'free') {
@@ -1290,6 +1419,11 @@
                     $price.val('');
                 }
             }
+
+            // Rekening hanya relevan untuk event berbayar
+            const isFree = type === 'free';
+            $transferFields.toggleClass('d-none', isFree);
+            $transferFields.find('input').prop('disabled', isFree);
         }
         handleEventType();
         $eventType.on('change', function () {

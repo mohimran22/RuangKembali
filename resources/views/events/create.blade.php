@@ -498,11 +498,7 @@
                             <div class="card-body">
 
                                 <div id="faqContainer">
-
-                                    {{-- old FAQs / empty state kamu di sini --}}
-
                                 </div>
-
                             </div>
 
                         </div>
@@ -613,6 +609,113 @@
                                 </div>
 
                             </div>
+                        </div>
+                        <div class="card mb-4" id="transfer-fields">
+
+                            <div class="card-header">
+                                <div>
+                                    <h3 class="card-title mb-1">
+                                        Pembayaran Tiket
+                                    </h3>
+
+                                    <div class="text-secondary small">
+                                        Rekening tujuan transfer untuk peserta event berbayar
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card-body">
+
+                                <div class="card card-sm border">
+
+                                    <div class="card-body">
+
+                                        <div class="d-flex align-items-center gap-3 mb-3">
+
+                                            <span class="avatar avatar-lg bg-orange-lt">
+                                                <i class="ti ti-building-bank fs-2"></i>
+                                            </span>
+
+                                            <div>
+                                                <div class="fw-semibold">
+                                                    Transfer Bank
+                                                </div>
+
+                                                <div class="text-secondary small">
+                                                    Rekening ini ditampilkan kepada peserta saat melakukan pembayaran.
+                                                </div>
+                                            </div>
+
+                                        </div>
+
+                                        <div class="row g-3">
+
+                                            <div class="col-md-4">
+                                                <div class="input-group">
+                                                    <input type="text"
+                                                        name="transfer_bank_name"
+                                                        class="form-control @error('transfer_bank_name') is-invalid @enderror"
+                                                        value="{{ old('transfer_bank_name') }}"
+                                                        aria-label="Nama bank"
+                                                        placeholder="Contoh: Bank Syariah Indonesia">
+
+                                                    <span class="input-group-text">
+                                                        <i class="ti ti-building-bank"></i>
+                                                    </span>
+                                                </div>
+                                                @error('transfer_bank_name')
+                                                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                                                @enderror
+                                            </div>
+
+                                            <div class="col-md-4">
+                                                <div class="input-group">
+                                                    <input type="text"
+                                                        name="transfer_account_number"
+                                                        inputmode="numeric"
+                                                        class="form-control @error('transfer_account_number') is-invalid @enderror"
+                                                        value="{{ old('transfer_account_number') }}"
+                                                        aria-label="Nomor rekening"
+                                                        placeholder="Contoh: 7123456789">
+
+                                                    <span class="input-group-text">
+                                                        <i class="ti ti-credit-card"></i>
+                                                    </span>
+                                                </div>
+                                                @error('transfer_account_number')
+                                                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                                                @enderror
+                                            </div>
+
+                                            <div class="col-md-4">
+                                                <div class="input-group">
+                                                    <input type="text"
+                                                        name="transfer_account_holder"
+                                                        class="form-control @error('transfer_account_holder') is-invalid @enderror"
+                                                        value="{{ old('transfer_account_holder') }}"
+                                                        aria-label="Atas nama"
+                                                        placeholder="Contoh: Ruang Kembali">
+
+                                                    <span class="input-group-text">
+                                                        <i class="ti ti-user"></i>
+                                                    </span>
+                                                </div>
+                                                @error('transfer_account_holder')
+                                                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                                                @enderror
+                                            </div>
+
+                                        </div>
+
+                                        <div class="form-hint">
+                                            Nomor rekening hanya boleh berisi angka. Wajib diisi untuk event berbayar.
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
 
                         </div>
                         <div class="card mb-4">
@@ -714,6 +817,7 @@
         });
         const $eventType = $('#event_type');
         const $price = $('#price');
+        const $transferFields = $('#transfer-fields');
 
         function handleEventType() {
 
@@ -737,6 +841,22 @@
                     $price.val('');
                 }
             }
+            const type = $eventType.val();
+
+            if (type === 'free') {
+                $price.val(0);
+                $price.prop('disabled', true);
+            } else {
+                $price.prop('disabled', false);
+                if ($price.val() === '0') {
+                    $price.val('');
+                }
+            }
+
+            // Rekening hanya relevan untuk event berbayar
+            const isFree = type === 'free';
+            $transferFields.toggleClass('d-none', isFree);
+            $transferFields.find('input').prop('disabled', isFree);
         }
 
         // Jalankan saat halaman pertama kali dibuka

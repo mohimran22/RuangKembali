@@ -16,7 +16,7 @@ class EventRegistrationController extends Controller
         abort_unless($event->is_published, 404);
 
         $user = auth()->user();
-        $registration = EventRegistration::where('event_id', $event->slug)
+        $registration = EventRegistration::where('event_id', $event->id)
             ->where('user_id', $user->id)
             ->first();
         $transactionCode = $this->generateTransactionCode();
