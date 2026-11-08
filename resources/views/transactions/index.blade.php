@@ -165,29 +165,54 @@ $(function () {
 <script>
 $(document).on('click', '.btn-delete-transaction', function () {
     const transactionId = $(this).data('id');
+    const isPaid = Number($(this).data('paid')) === 1;
+
+    const config = isPaid
+        ? {
+            title: 'Hapus transaksi LUNAS?',
+            html: 'Tindakan ini menghapus <b>jurnal akuntansi</b> yang terhubung dan <b>semua peserta</b> pada transaksi ini. Tidak bisa dikembalikan.',
+            icon: 'warning',
+            input: 'textarea',
+            inputPlaceholder: 'Alasan penghapusan (wajib)',
+            inputAttributes: { 'aria-label': 'Alasan penghapusan' },
+            inputValidator: (value) =>
+                (!value || value.trim().length < 5) ? 'Alasan minimal 5 karakter.' : null,
+            confirmButtonText: 'Ya, hapus semuanya',
+        }
+        : {
+            title: 'Yakin hapus transaksi ini?',
+            text: 'Data yang sudah dihapus tidak bisa dikembalikan.',
+            icon: 'warning',
+            confirmButtonText: 'Ya, hapus',
+        };
 
     Swal.fire({
-        title: 'Yakin hapus transaksi ini?',
-        text: 'Data yang sudah dihapus tidak bisa dikembalikan.',
-        icon: 'warning',
+        ...config,
         showCancelButton: true,
-        confirmButtonText: 'Ya, hapus',
+        confirmButtonColor: '#d33',
         cancelButtonText: 'Batal',
     }).then((result) => {
-        if (result.isConfirmed) {
-            $.ajax({
-                url: `/admin/transactions/${transactionId}`,
-                type: 'DELETE',
-                data: { _token: $('meta[name="csrf-token"]').attr('content') },
-                success: function (res) {
-                    Swal.fire('Terhapus!', res.message, 'success');
-                    $('#transactions-table').DataTable().ajax.reload(null, false);
-                },
-                error: function (xhr) {
-                    Swal.fire('Gagal', xhr.responseJSON?.message || 'Terjadi kesalahan saat menghapus transaksi.', 'error');
-                }
-            });
-        }
+        if (!result.isConfirmed) return;
+
+        $.ajax({
+            url: `/admin/transactions/${transactionId}`,
+            type: 'DELETE',
+            data: {
+                _token: $('meta[name="csrf-token"]').attr('content'),
+                reason: isPaid ? result.value : null,
+            },
+            success: function (res) {
+                Swal.fire('Terhapus!', res.message, 'success');
+                $('#transactions-table').DataTable().ajax.reload(null, false);
+            },
+            error: function (xhr) {
+                Swal.fire(
+                    'Gagal',
+                    xhr.responseJSON?.message || 'Terjadi kesalahan saat menghapus transaksi.',
+                    'error'
+                );
+            }
+        });
     });
 });
 </script>

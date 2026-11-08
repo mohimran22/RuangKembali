@@ -34,7 +34,7 @@
                                             @if($event->location) · {{ $event->location }} @endif
                                         </div>
                                         <div class="mt-2">
-                                            👥 {{ $event->registrations_count }}{{ $event->quota ? ' / '.$event->quota : '' }} peserta
+                                            👥 {{ $event->quota ? 'Kuota '.$event->quota.' peserta' : 'Kuota tidak terbatas' }}
                                         </div>
                                     </div>
                                 </div>

@@ -4,9 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Helpers\ActiveRole;
 use App\Models\Transaction;
+use App\Notifications\PaymentProofUploadedNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Yajra\DataTables\Facades\DataTables;
+use App\Models\AccountingJournal;
+use App\Models\AccountingJournalDetail;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class TransactionController extends Controller
 {
@@ -170,24 +175,34 @@ public function index(Request $request)
                     ';
                 }
 
-                if ($isAdmin && $transaction->status !== 'paid') {
-                    $editRoute = route('transactions.edit', $transaction->id);
+                if ($isAdmin) {
+                    $isPaid     = $transaction->status === 'paid';
+                    $canDelete  = !$isPaid || ActiveRole::name() === 'Super-Admin';
 
-                    $html .= '
-                        <a href="' . $editRoute . '"
-                        class="btn btn-sm btn-secondary"
-                        title="Edit Transaksi">
-                            <i class="ti ti-edit"></i>
-                        </a>
-                        <button type="button"
-                                class="btn btn-sm btn-danger btn-delete-transaction"
-                                data-id="' . $transaction->id . '"
-                                title="Hapus Transaksi">
-                            <i class="ti ti-trash"></i>
-                        </button>
-                    ';
+                    if (!$isPaid) {
+                        $editRoute = route('transactions.edit', $transaction->id);
+
+                        $html .= '
+                            <a href="' . $editRoute . '"
+                            class="btn btn-sm btn-secondary"
+                            title="Edit Transaksi">
+                                <i class="ti ti-edit"></i>
+                            </a>
+                        ';
+                    }
+
+                    if ($canDelete) {
+                        $html .= '
+                            <button type="button"
+                                    class="btn btn-sm btn-danger btn-delete-transaction"
+                                    data-id="' . $transaction->id . '"
+                                    data-paid="' . ($isPaid ? 1 : 0) . '"
+                                    title="Hapus Transaksi">
+                                <i class="ti ti-trash"></i>
+                            </button>
+                        ';
+                    }
                 }
-
                 $html .= '</div>';
 
                 return $html;
@@ -252,6 +267,17 @@ public function uploadProof(Request $request, Transaction $transaction)
     if ($oldProof && Storage::disk('public')->exists($oldProof)) {
         Storage::disk('public')->delete($oldProof);
     }
+    try {
+        $transaction->refresh()->load(['event', 'registrations.user', 'registeredBy']);
+
+        if ($transaction->registeredBy) {
+            $transaction->registeredBy->notify(
+                new PaymentProofUploadedNotification($transaction)
+            );
+        }
+    } catch (\Throwable $e) {
+        report($e);
+    }
 
     return back()->with(
         'success',
@@ -313,27 +339,112 @@ public function update(Request $request, Transaction $transaction)
         ->route('transactions.index')
         ->with('success', 'Transaksi berhasil diperbarui.');
 }
-
-public function destroy(Transaction $transaction)
+public function destroy(Request $request, Transaction $transaction)
 {
     $this->authorizeAdminOrTim();
 
-    $locked = $transaction->status === 'paid'
-        || $transaction->registrations()->where('status', 'attended')->exists();
+    $licenseId = config('app.license_id');
+    $deletedJournals = 0;
+    $deletedRegistrations = 0;
+    $snapshot = [];
 
-    if ($locked) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Transaksi yang sudah lunas atau pesertanya sudah check-in tidak bisa dihapus.',
-        ], 422);
-    }
+    DB::transaction(function () use ($request, $transaction, $licenseId, &$deletedJournals, &$deletedRegistrations, &$snapshot) {
 
-    \DB::transaction(function () use ($transaction) {
-        $transaction->registrations()->delete();
-        $transaction->delete();
+        // Kunci baris dan cek ulang status di dalam kunci, supaya tidak
+        // bentrok dengan approve yang berjalan bersamaan
+        $locked = Transaction::whereKey($transaction->id)
+            ->lockForUpdate()
+            ->firstOrFail();
+
+        $isPaid = $locked->status === 'paid';
+
+        if ($isPaid) {
+            abort_unless(
+                ActiveRole::name() === 'Super-Admin',
+                403,
+                'Hanya Super-Admin yang boleh menghapus transaksi yang sudah lunas.'
+            );
+
+            $request->validate([
+                'reason' => ['required', 'string', 'min:5', 'max:500'],
+            ]);
+        }
+
+        // Peserta yang sudah hadir tidak boleh hilang dari catatan
+        $hasAttended = $locked->registrations()
+            ->where(function ($q) {
+                $q->where('status', 'attended')->orWhereNotNull('checked_in_at');
+            })
+            ->exists();
+
+        abort_if(
+            $hasAttended,
+            422,
+            'Transaksi ini memiliki peserta yang sudah check-in, jadi tidak bisa dihapus.'
+        );
+
+        // Jurnal yang terhubung (lewat transaction_id, atau kode referensi untuk data lama)
+        $journalIds = AccountingJournal::where('license_id', $licenseId)
+            ->where(function ($q) use ($locked) {
+                $q->where('transaction_id', $locked->id)
+                  ->orWhere('reference_code', $locked->transaction_code);
+            })
+            ->pluck('id');
+
+        $snapshot = [
+            'transaction_code' => $locked->transaction_code,
+            'status'           => $locked->status,
+            'total_amount'     => $locked->total_amount,
+            'event_id'         => $locked->event_id,
+            'reason'           => $request->input('reason'),
+            'deleted_by'       => auth()->id(),
+            'journal_ids'      => $journalIds->all(),
+        ];
+
+        if ($journalIds->isNotEmpty()) {
+            AccountingJournalDetail::whereIn('journal_id', $journalIds)->delete();
+            $deletedJournals = AccountingJournal::whereIn('id', $journalIds)->delete();
+        }
+
+        $deletedRegistrations = $locked->registrations()->delete();
+
+        $locked->delete();
     });
 
-    return response()->json(['success' => true, 'message' => 'Transaksi berhasil dihapus.']);
+    if ($snapshot['status'] === 'paid') {
+        Log::warning('Transaksi lunas dihapus', $snapshot + [
+            'registrations_deleted' => $deletedRegistrations,
+            'journals_deleted'      => $deletedJournals,
+        ]);
+    }
+
+    return response()->json([
+        'success' => true,
+        'message' => $deletedJournals > 0
+            ? "Transaksi dihapus beserta {$deletedJournals} jurnal dan {$deletedRegistrations} peserta."
+            : 'Transaksi berhasil dihapus.',
+    ]);
 }
+// public function destroy(Transaction $transaction)
+// {
+//     $this->authorizeAdminOrTim();
+
+//     $locked = $transaction->status === 'paid'
+//         || $transaction->registrations()->where('status', 'attended')->exists();
+
+//     if ($locked) {
+//         return response()->json([
+//             'success' => false,
+//             'message' => 'Transaksi yang sudah lunas atau pesertanya sudah check-in tidak bisa dihapus.',
+//         ], 422);
+//     }
+
+//     \DB::transaction(function () use ($transaction) {
+//         $transaction->registrations()->delete();
+//         $transaction->delete();
+//     });
+
+//     return response()->json(['success' => true, 'message' => 'Transaksi berhasil dihapus.']);
+// }
 
 }

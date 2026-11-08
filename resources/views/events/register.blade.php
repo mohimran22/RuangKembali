@@ -45,7 +45,6 @@
 
     @endif
 
-
     <div class="row g-4">
 
         {{-- Informasi Event --}}
@@ -261,28 +260,28 @@
 
                                 </div>
                                 <div class="mb-2">
-    <button type="button" class="btn btn-sm btn-link px-0" id="toggleGuestFormBtn">
-        <i class="ti ti-user-plus me-1"></i>
-        Peserta belum punya akun? Tambahkan manual
-    </button>
-</div>
+                                    <button type="button" class="btn btn-sm btn-link px-0" id="toggleGuestFormBtn">
+                                        <i class="ti ti-user-plus me-1"></i>
+                                        Peserta belum punya akun? Tambahkan manual
+                                    </button>
+                                </div>
 
-<div id="guestFormBox" class="card card-sm border mb-3" style="display: none;">
-    <div class="card-body">
-        <div class="row g-2">
-            <div class="col-md-5">
-                <input type="text" class="form-control form-control-sm" id="guestNameInput" placeholder="Nama lengkap">
-            </div>
-            <div class="col-md-5">
-                <input type="email" class="form-control form-control-sm" id="guestEmailInput" placeholder="Email">
-            </div>
-            <div class="col-md-2">
-                <button type="button" class="btn btn-sm btn-primary w-100" id="addGuestBtn">Tambah</button>
-            </div>
-        </div>
-        <div class="text-secondary small mt-2" id="guestFormError" style="display:none;"></div>
-    </div>
-</div>
+                                <div id="guestFormBox" class="card card-sm border mb-3" style="display: none;">
+                                    <div class="card-body">
+                                        <div class="row g-2">
+                                            <div class="col-md-5">
+                                                <input type="text" class="form-control form-control-sm" id="guestNameInput" placeholder="Nama lengkap">
+                                            </div>
+                                            <div class="col-md-5">
+                                                <input type="email" class="form-control form-control-sm" id="guestEmailInput" placeholder="Email">
+                                            </div>
+                                            <div class="col-md-2">
+                                                <button type="button" class="btn btn-sm btn-primary w-100" id="addGuestBtn">Tambah</button>
+                                            </div>
+                                        </div>
+                                        <div class="text-secondary small mt-2" id="guestFormError" style="display:none;"></div>
+                                    </div>
+                                </div>
                             </div>
 
                             {{-- Hidden input transaction_code: selalu ikut ke-submit, terlepas jenis event --}}

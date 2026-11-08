@@ -23,7 +23,7 @@ class TransactionApprovedNotification extends Notification
 
         return (new MailMessage)
             ->subject('Pembayaran Dikonfirmasi - ' . $transaction->transaction_code)
-            ->greeting('Halo, ' . ($notifiable->fullname ?? $notifiable->name) . '!')
+            ->greeting('Assalamualaikum, ' . ($notifiable->fullname ?? $notifiable->name) . '!')
             ->line('Pembayaran untuk pendaftaran event berikut telah kami konfirmasi.')
             ->line('**Event:** ' . $transaction->event->name)
             ->line('**No. Transaksi:** ' . $transaction->transaction_code)

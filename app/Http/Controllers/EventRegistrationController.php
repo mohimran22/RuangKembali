@@ -8,6 +8,7 @@ use App\Models\Transaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use App\Notifications\EventRegistrationSuccessNotification;
 
 class EventRegistrationController extends Controller
 {
@@ -142,7 +143,17 @@ class EventRegistrationController extends Controller
             }
 
             DB::commit();
+            try {
+                $transaction->load(['event', 'registrations.user', 'registeredBy']);
 
+                if ($transaction->registeredBy) {
+                    $transaction->registeredBy->notify(
+                        new EventRegistrationSuccessNotification($transaction)
+                    );
+                }
+            } catch (\Throwable $mailError) {
+                report($mailError);
+            }
             if ($event->event_type === 'free') {
                 return redirect()
                     ->route('events.register', $event->slug)

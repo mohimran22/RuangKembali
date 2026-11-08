@@ -42,7 +42,7 @@
         </nav>
         <div class="website-icons">
             <a href="#"><i class="ti ti-search"></i></a>
-            <a href="#"><i class="ti ti-shopping-bag"></i></a>
+            {{-- <a href="#"><i class="ti ti-shopping-bag"></i></a> --}}
             <div class="user-dropdown" id="userDropdown">
                 <button class="user-btn" id="userBtn">
                     <i class="ti ti-user"></i>
@@ -68,7 +68,7 @@
                             @csrf
                             <button type="submit">
                                 <i class="ti ti-logout"></i>
-                                Logout
+                                Keluar
                             </button>
                         </form>
                     @endguest
