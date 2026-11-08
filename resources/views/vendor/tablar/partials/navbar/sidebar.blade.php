@@ -304,14 +304,14 @@ document.addEventListener('click', function(e){
     }
 
     /* logo expand tampil lagi */
-    .logo-expand{
-        display:block !important;
-    }
-
-    .logo-collapse{
+    /* .logo-expand{
         display:none !important;
     }
 
+    .logo-collapse{
+        display:block !important;
+    }
+    .logo-collapse img { height: 40px; width: auto; } */
     /* submenu mobile jadi accordion */
     .submenu{
 

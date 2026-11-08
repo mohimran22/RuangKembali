@@ -37,9 +37,9 @@
                     <div class="mb-3">
                         <div class="text-secondary small">Pendaftar</div>
                         <div class="fw-semibold">
-                            {{ $transaction->registeredBy->fullname ?? $transaction->registeredBy->name }}
+                            {{ $transaction->registeredBy?->fullname ?? $transaction->registeredBy?->name }}
                         </div>
-                        <div class="text-secondary small">{{ $transaction->registeredBy->email }}</div>
+                        <div class="text-secondary small">{{ $transaction->registeredBy?->email }}</div>
                     </div>
 
                     <div class="mb-3">
@@ -107,7 +107,7 @@
                                 <div>
                                     <h3 class="alert-title">Sudah Disetujui</h3>
                                     <div class="text-secondary">
-                                        Dikonfirmasi pada {{ $transaction->paid_at->translatedFormat('d F Y, H:i') }} WIB.
+                                        Dikonfirmasi pada {{ $transaction->paid_at?->translatedFormat('d F Y, H:i') ?? '-' }} WIB.
                                     </div>
                                 </div>
                             </div>
@@ -140,15 +140,28 @@
 
                             @endif
 
+                            @if($transaction->proof_of_payment)
+    <div class="mb-4">
+        <div class="text-secondary small mb-2">Bukti Transfer</div>
 
-                    @if($transaction->proofUploader)
-                        <div class="text-secondary small mt-2">
-                            Diunggah oleh {{ $transaction->proofUploader->fullname }}
-                            @if($transaction->proof_uploaded_by !== $transaction->registered_by)
-                                <span class="badge bg-orange-lt ms-1">Atas nama peserta</span>
-                            @endif
-                        </div>
-                    @endif
+        <a href="{{ asset('storage/' . $transaction->proof_of_payment) }}" target="_blank">
+            <img src="{{ asset('storage/' . $transaction->proof_of_payment) }}"
+                 alt="Bukti pembayaran"
+                 class="img-fluid rounded border"
+                 style="max-height: 400px;"
+                 onerror="this.replaceWith(Object.assign(document.createElement('div'), {className: 'alert alert-warning', textContent: 'Gambar bukti tidak dapat dimuat. File mungkin hilang dari server.'}))">
+        </a>
+
+        @if($transaction->proofUploader)
+            <div class="text-secondary small mt-2">
+                Diunggah oleh {{ $transaction->proofUploader->fullname }}
+                @if($transaction->proof_uploaded_by !== $transaction->registered_by)
+                    <span class="badge bg-orange-lt ms-1">Atas nama peserta</span>
+                @endif
+            </div>
+        @endif
+    </div>
+@endif
 
 
                     @if($transaction->status === 'waiting_confirmation')

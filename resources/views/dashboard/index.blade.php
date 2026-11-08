@@ -83,10 +83,10 @@
 
                     <div class="row g-3 mb-4">
                         <div class="col-6 col-md-4 col-xl">
-                            <div class="dash-stat">
+                            <a href="{{ route('events.index') }}" class="dash-stat">
                                 <div class="dash-stat-label">Total Event</div>
                                 <div class="dash-stat-value text-primary">{{ $totalEvent }}</div>
-                            </div>
+                            </a>
                         </div>
                         <div class="col-6 col-md-4 col-xl">
                             <div class="dash-stat">
@@ -129,7 +129,11 @@
                             <tbody>
                                 @forelse($events as $event)
                                     <tr>
-                                        <td>{{ $event->name }}</td>
+                                        <td>
+                                            <a href="{{ route('events.manage', $event->slug) }}" class="text-reset fw-medium">
+                                                {{ $event->name }}
+                                            </a>
+                                        </td>
                                         <td>{{ $event->start_at->translatedFormat('d M Y') }}</td>
                                         <td>{{ $event->status_label }}</td>
                                         <td class="text-end fw-bold">

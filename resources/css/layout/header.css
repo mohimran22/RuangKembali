@@ -291,18 +291,34 @@ header.navbar .d-flex {
         opacity: 1;
         visibility: visible;
     }
-    .sidebar-logo-wrapper{
-        display: none !important;
-    }
+.sidebar-header{
+    display: flex !important;
+    align-items: center;
+    justify-content: center !important;
+    width: 100%;
+    padding: 64px 16px 0 !important; /* 60px header + 4px jarak */
+}
 
-    .sidebar-header{
-        display: none !important;
-    }
+.sidebar-logo-wrapper{
+    display: flex !important;
+    justify-content: center;
+    width: 100%;
+}
 
-    .sidebar-menu-wrapper{
-        padding-top: 10px;
-    }
+.sidebar-logo-wrapper .logo-collapse img{
+    height: 36px;
+    width: auto;
+    display: block;
+    margin: 0 auto;
+}
 
+.sidebar-menu-wrapper{
+    padding-top: 0 !important;
+}
+
+.navbar-vertical .navbar-nav.flex-row.d-lg-none{
+    min-height: 0 !important;
+}
     .navbar-vertical.navbar-expand-lg{
         flex-direction: column !important;
         align-items: stretch !important;
