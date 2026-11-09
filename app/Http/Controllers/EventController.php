@@ -1155,11 +1155,13 @@ public function checkinScan(Request $request, Event $event)
     abort_unless($this->isEventStaff(), 403);
 
     $validated = $request->validate([
-        'ticket_code' => ['required', 'string'],
+        'ticket_code' => ['required', 'string', 'max:50'],
     ]);
 
+    $ticketCode = strtoupper(trim($validated['ticket_code']));
+
     $registration = EventRegistration::where('event_id', $event->id)
-        ->where('ticket_code', $validated['ticket_code'])
+        ->where('ticket_code', $ticketCode)
         ->first();
 
     if (!$registration) {

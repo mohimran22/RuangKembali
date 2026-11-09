@@ -1125,6 +1125,7 @@
                                         <th width="60">No</th>
                                         <th>Peserta</th>
                                         <th>Pembayaran</th>
+                                        <th>Kode Tiket</th>
                                         <th>Waktu terdaftar</th>
                                         <th>Status Check-in</th>
                                     </tr>
@@ -1189,7 +1190,7 @@
                                                 @endif
 
                                             </td>
-
+                                            <td>{{ $registration->ticket_code }}</td>
                                             <td>
                                                 {{ ($registration->registered_at ?? $registration->created_at)?->translatedFormat('d F Y') }}
 
@@ -1197,7 +1198,7 @@
                                                     {{ ($registration->registered_at ?? $registration->created_at)?->format('H:i') }} WIB
                                                 </div>
                                             </td>
-
+                                            
                                             <td class="checkin-status-cell">
 
                                                 @if($registration->status === 'attended')
@@ -1303,7 +1304,10 @@
                                 Masukkan atau scan kode tiket, lalu tekan Enter atau klik Cari untuk menampilkan data peserta.
                             </div>
                         </div>
-
+                        <button type="button" class="btn btn-outline-primary w-100 mt-2" id="startScanBtn">
+                            <i class="ti ti-camera me-1"></i> Scan dengan Kamera
+                        </button>
+                        <div id="qr-reader" class="mt-3 d-none"></div>
                         {{-- Kartu preview peserta hasil pencarian --}}
                         <div id="checkinParticipantCard" class="card card-sm border d-none">
                             <div class="card-body">
@@ -1353,6 +1357,7 @@
         </div>
 
         @push('js')
+        <script src="https://unpkg.com/html5-qrcode"></script>
         <script>
             document.addEventListener('DOMContentLoaded', function () {
 
@@ -1374,7 +1379,30 @@
 
                 let foundTicketCode = null;
                 let foundEligible = false;
+                let scanner = null;
+                const readerEl = document.getElementById('qr-reader');
 
+                document.getElementById('startScanBtn').addEventListener('click', async () => {
+                    readerEl.classList.remove('d-none');
+                    scanner = new Html5Qrcode('qr-reader');
+                    await scanner.start(
+                        { facingMode: 'environment' },
+                        { fps: 10, qrbox: 220 },
+                        (decodedText) => {
+                            ticketInput.value = decodedText.trim();
+                            stopScanner();
+                            searchTicket();           // otomatis tampilkan data peserta
+                        }
+                    );
+                });
+
+                async function stopScanner() {
+                    if (scanner) { await scanner.stop(); scanner.clear(); scanner = null; }
+                    readerEl.classList.add('d-none');
+                }
+
+                // matikan kamera saat modal ditutup
+                modalEl.addEventListener('hidden.bs.modal', stopScanner);
                 function resetModalState() {
                     ticketInput.value = '';
                     participantCard.classList.add('d-none');
@@ -1425,7 +1453,7 @@
                 }
 
                 async function searchTicket() {
-                    const ticketCode = ticketInput.value.trim();
+                    const ticketCode = ticketInput.value.trim().toUpperCase();
 
                     hideResult();
                     participantCard.classList.add('d-none');

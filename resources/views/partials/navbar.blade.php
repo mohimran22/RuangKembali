@@ -61,7 +61,7 @@
                     @else
                         <a href="{{ route('dashboard') }}">
                             <i class="ti ti-layout-dashboard"></i>
-                            Dashboard
+                            Beranda
                         </a>
 
                         <form action="{{ route('logout') }}" method="POST">

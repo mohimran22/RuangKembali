@@ -279,6 +279,7 @@ Route::middleware(['auth', 'active.permission:lihat daftar event|lihat data even
     Route::get('/events/{event}/manage', [EventController::class, 'show'])->name('events.manage');
 
     Route::get('/events/{event}/participants/lookup', [EventController::class, 'lookupParticipant'])
+        ->middleware('throttle:60,1')
         ->name('events.participants.lookup');
 
     Route::post('/events/{event}/participants/checkin-scan', [EventController::class, 'checkinScan'])
