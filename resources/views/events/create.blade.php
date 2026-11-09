@@ -841,18 +841,6 @@
                     $price.val('');
                 }
             }
-            const type = $eventType.val();
-
-            if (type === 'free') {
-                $price.val(0);
-                $price.prop('disabled', true);
-            } else {
-                $price.prop('disabled', false);
-                if ($price.val() === '0') {
-                    $price.val('');
-                }
-            }
-
             // Rekening hanya relevan untuk event berbayar
             const isFree = type === 'free';
             $transferFields.toggleClass('d-none', isFree);
