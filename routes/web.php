@@ -287,11 +287,12 @@ Route::middleware(['auth', 'active.permission:lihat daftar event|lihat data even
 Route::get('/events/{event:event_code}', [EventController::class, 'showPublic'])
     ->name('events.show')
     ->where('event', '^EVT\d{7}$');
+    Route::middleware('auth')->group(function () {
 Route::get('/transactions', [TransactionController::class, 'index'])->name('transactions.index');
 Route::get('/transactions/{transaction}', [TransactionController::class, 'show'])->name('transactions.show');
 Route::post('/transactions/{transaction}/upload-proof', [TransactionController::class, 'uploadProof'])
     ->name('transactions.upload-proof');
-
+    });
 Route::middleware('active.role:Super-Admin|Tim')->group(function () {
     Route::get('/transactions/{transaction}/edit', [TransactionController::class, 'edit'])
         ->name('transactions.edit');

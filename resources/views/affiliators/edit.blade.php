@@ -5,11 +5,11 @@
     <div class="container-xl">
         <div class="row align-items-center">
             <div class="col d-flex align-items-center">
-                <a href="{{ route('affiliators.index') }}" class="btn btn-primary d-flex align-items-center" style="margin-left: 30px;">
+                <a href="{{ route('affiliators.index') }}" class="btn btn-primary d-flex align-items-center">
                     <i class="ti ti-arrow-left"></i>
                 </a>
                 
-                    <h2 class="page-title mb-0">Edit Data Affiliator</h2>
+                    <h2 class="page-title mb-0">Ubah Data Affiliator</h2>
                 
             </div>
         </div>

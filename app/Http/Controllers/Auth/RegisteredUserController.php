@@ -35,10 +35,21 @@ class RegisteredUserController extends Controller
         if ($request->filled('website')) {
             abort(422);
         }
-
+        $request->merge(['email' => strtolower(trim($request->email))]);
         $request->validate([
             'fullname' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:' . User::class],
+            'email' => [
+                'required', 'string', 'lowercase', 'email:rfc,dns', 'max:255',
+                'unique:' . User::class,
+                function ($attribute, $value, $fail) {
+                    $typos = ['gmai.com', 'gmial.com', 'gmail.co', 'gamil.com', 'yahooo.com', 'yaho.com'];
+                    $domain = substr(strrchr($value, '@'), 1);
+
+                    if (in_array($domain, $typos, true)) {
+                        $fail('Domain email sepertinya salah ketik. Maksud Anda gmail.com?');
+                    }
+                },
+            ],
             // Opsional: format nomor HP Indonesia. Longgarkan jika Anda menerima nomor luar negeri.
             'phone' => ['required', 'string', 'regex:/^(\+62|62|0)8[0-9]{8,12}$/'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],

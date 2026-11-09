@@ -21,6 +21,7 @@
         "mpdf/mpdf": "^8.3",
         "phpoffice/phpspreadsheet": "^5.3",
         "resend/resend-laravel": "^1.4",
+        "simplesoftwareio/simple-qrcode": "^4.2",
         "spatie/laravel-permission": "^6.18",
         "takielias/tablar": "^12",
         "yajra/laravel-datatables-oracle": "^12.3"

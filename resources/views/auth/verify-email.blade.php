@@ -36,7 +36,7 @@
         justify-content: center;
     }
 
-    .verify-card h1 {
+    .verify-card h2 {
         font-size: 1.5rem;
         font-weight: 700;
         color: #111827;
@@ -139,7 +139,32 @@
                     Kirim Ulang Email Verifikasi
                 </button>
             </form>
+            <button type="button"
+                    class="btn btn-link"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#changeEmailBox"
+                    aria-expanded="{{ $errors->has('email') ? 'true' : 'false' }}">
+                Salah ketik email? Ganti email
+            </button>
 
+            <div class="collapse {{ $errors->has('email') ? 'show' : '' }}" id="changeEmailBox">
+                <form method="POST" action="{{ route('verification.change') }}" class="text-start mt-2">
+                    @csrf
+                    <input type="email"
+                        name="email"
+                        value="{{ old('email') }}"
+                        class="form-control @error('email') is-invalid @enderror"
+                        placeholder="Masukkan email yang benar"
+                        required>
+                    @error('email')
+                        <div class="invalid-feedback d-block">{{ $message }}</div>
+                    @enderror
+
+                    <button type="submit" class="btn btn-dark mt-2 w-100">
+                        Simpan & Kirim Verifikasi
+                    </button>
+                </form>
+            </div>
             <form method="POST" action="{{ route('logout') }}">
                 @csrf
                 <button type="submit" class="btn btn-link">

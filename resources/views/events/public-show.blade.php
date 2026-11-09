@@ -233,6 +233,46 @@
     object-fit:cover;
     border-radius:12px;
 }
+.event-detail-gallery img{
+    cursor:zoom-in;
+}
+
+.event-lightbox{
+    position:fixed;
+    inset:0;
+    z-index:9999;
+    background:rgba(0,0,0,.88);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    touch-action:pan-y;
+}
+.event-lightbox.open{ display:flex; }
+
+.event-lightbox img{
+    max-width:100%;
+    max-height:90vh;
+    border-radius:12px;
+    object-fit:contain;
+}
+
+.event-lightbox-close,
+.event-lightbox-nav{
+    position:absolute;
+    background:rgba(255,255,255,.15);
+    color:#fff;
+    border:0;
+    width:44px;
+    height:44px;
+    border-radius:50%;
+    font-size:26px;
+    line-height:1;
+    cursor:pointer;
+}
+.event-lightbox-close{ top:16px; right:16px; }
+.event-lightbox-nav.prev{ left:12px; top:50%; transform:translateY(-50%); }
+.event-lightbox-nav.next{ right:12px; top:50%; transform:translateY(-50%); }
 
 .event-detail-video-scroll{
     display:flex;
@@ -675,7 +715,7 @@
     .event-detail-hero{
         padding:120px 5% 20px;
     }
-
+    .event-lightbox-nav{ display:none; }
     .event-detail-hero h1{
         font-size:24px;
     }
@@ -769,7 +809,7 @@
 
                         <div class="event-detail-gallery">
                             @foreach ($event->galleries as $gallery)
-                                <img src="{{ asset('storage/' . $gallery->image) }}" alt="{{ $event->name }}">
+                                <img src="{{ asset('storage/' . $gallery->image) }}" alt="{{ $event->name }}" class="js-gallery-img">
                             @endforeach
                         </div>
                     @endif
@@ -1060,7 +1100,12 @@
         </div>
     </div>
 </section>
-
+<div class="event-lightbox" id="eventLightbox">
+    <button type="button" class="event-lightbox-close" id="lbClose" aria-label="Tutup">&times;</button>
+    <button type="button" class="event-lightbox-nav prev" id="lbPrev" aria-label="Sebelumnya">&#8249;</button>
+    <img src="" alt="" id="lbImage">
+    <button type="button" class="event-lightbox-nav next" id="lbNext" aria-label="Berikutnya">&#8250;</button>
+</div>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
 
@@ -1086,7 +1131,61 @@ document.addEventListener('DOMContentLoaded', function () {
             btn.closest('.event-faq-item')?.classList.toggle('open');
         });
     });
+        // ---- Gallery lightbox ----
+    const lightbox = document.getElementById('eventLightbox');
+    const lbImage = document.getElementById('lbImage');
+    const galleryImgs = Array.from(document.querySelectorAll('.js-gallery-img'));
+    let lbIndex = 0;
 
+    function showLightbox(i) {
+        lbIndex = (i + galleryImgs.length) % galleryImgs.length;
+        lbImage.src = galleryImgs[lbIndex].src;
+        lightbox.classList.add('open');
+        document.body.style.overflow = 'hidden';
+    }
+    function closeLightbox() {
+        lightbox.classList.remove('open');
+        document.body.style.overflow = '';
+    }
+
+    galleryImgs.forEach(function (img, i) {
+        img.addEventListener('click', function () { showLightbox(i); });
+    });
+
+    document.getElementById('lbClose').addEventListener('click', closeLightbox);
+    document.getElementById('lbPrev').addEventListener('click', function (e) { e.stopPropagation(); showLightbox(lbIndex - 1); });
+    document.getElementById('lbNext').addEventListener('click', function (e) { e.stopPropagation(); showLightbox(lbIndex + 1); });
+
+    lightbox.addEventListener('click', function (e) {
+        if (e.target === lightbox) closeLightbox();
+    });
+
+    document.addEventListener('keydown', function (e) {
+        if (!lightbox.classList.contains('open')) return;
+        if (e.key === 'Escape') closeLightbox();
+        if (e.key === 'ArrowLeft') showLightbox(lbIndex - 1);
+        if (e.key === 'ArrowRight') showLightbox(lbIndex + 1);
+    });
+    // ---- Swipe di HP ----
+    let touchStartX = 0;
+    let touchStartY = 0;
+
+    lightbox.addEventListener('touchstart', function (e) {
+        touchStartX = e.changedTouches[0].clientX;
+        touchStartY = e.changedTouches[0].clientY;
+    }, { passive: true });
+
+    lightbox.addEventListener('touchend', function (e) {
+        if (galleryImgs.length < 2) return;
+
+        const dx = e.changedTouches[0].clientX - touchStartX;
+        const dy = e.changedTouches[0].clientY - touchStartY;
+
+        // hanya dianggap swipe kalau geseran horizontal cukup jauh dan lebih dominan dari vertikal
+        if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
+            showLightbox(dx < 0 ? lbIndex + 1 : lbIndex - 1);
+        }
+    }, { passive: true });
 });
 </script>
 @endsection

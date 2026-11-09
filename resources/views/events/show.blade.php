@@ -1159,15 +1159,19 @@
                                             <td>
 
                                                 @if(in_array($registration->status, ['paid', 'confirmed', 'attended']))
+                                                    {{-- <div class="mt-2">
+                                                        {!! QrCode::size(110)->generate($registration->ticket_code) !!}
+                                                    </div> --}}
+
                                                 <span class="badge bg-success-lt">
                                                     <i class="ti ti-circle-check me-1"></i>
                                                     Lunas
                                                 </span>
                                                   @elseif($registration->status === 'pending')
-      <span class="badge bg-warning-lt">
-          <i class="ti ti-clock me-1"></i>
-          {{ $registration->transaction?->status === 'waiting_confirmation' ? 'Menunggu Konfirmasi' : 'Menunggu Pembayaran' }}
-      </span>
+                                                    <span class="badge bg-warning-lt">
+                                                        <i class="ti ti-clock me-1"></i>
+                                                        {{ $registration->transaction?->status === 'waiting_confirmation' ? 'Menunggu Konfirmasi' : 'Menunggu Pembayaran' }}
+                                                    </span>
                                                 {{-- @elseif($registration->status === 'pending')
                                                     <span class="badge bg-warning-lt">
                                                         <i class="ti ti-clock me-1"></i>

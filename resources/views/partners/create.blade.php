@@ -9,7 +9,7 @@
                     <i class="ti ti-arrow-left"></i>
                 </a>
                 
-                    <h2 class="page-title mb-0">Tambah Data Arsitek</h2>
+                    <h2 class="page-title mb-0">Tambah Data Mitra</h2>
                 
             </div>
         </div>
@@ -372,7 +372,6 @@
     <script>
         $(document).ready(function() {
             $('.select2').select2({
-                placeholder: "-- Pilih --",
                 width: '100%'
             });
         });
@@ -436,8 +435,6 @@
         }
     });
     </script>
-
-    
 
 <script>
     $('#user_province').change(function () {

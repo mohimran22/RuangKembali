@@ -9,6 +9,9 @@ class ActiveRole
     public static function role()
     {
         $user = Auth::user();
+        if (! $user) {
+            return null;
+        }
         $active = $user->activeRole;
 
         // Pakai peran aktif hanya kalau masih dimiliki user
