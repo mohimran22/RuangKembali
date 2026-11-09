@@ -1190,7 +1190,23 @@
                                                 @endif
 
                                             </td>
-                                            <td>{{ $registration->ticket_code }}</td>
+                                            <td>
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <span>{{ $registration->ticket_code }}</span>
+
+                                                    @if(in_array($registration->status, ['paid', 'confirmed', 'attended']))
+                                                        <button type="button"
+                                                                class="btn btn-icon btn-sm btn-outline-secondary"
+                                                                data-bs-toggle="modal"
+                                                                data-bs-target="#ticketQrModal"
+                                                                data-ticket-code="{{ $registration->ticket_code }}"
+                                                                data-name="{{ $registration->participant_name }}"
+                                                                title="Tampilkan QR Code">
+                                                            <i class="ti ti-qrcode"></i>
+                                                        </button>
+                                                    @endif
+                                                </div>
+                                            </td>
                                             <td>
                                                 {{ ($registration->registered_at ?? $registration->created_at)?->translatedFormat('d F Y') }}
 
@@ -1270,6 +1286,31 @@
         @method('DELETE')
 
     </form>
+    <div class="modal modal-blur fade" id="ticketQrModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-sm modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="ti ti-qrcode me-2"></i>
+                        QR Code Tiket
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <div class="fw-semibold" id="ticketQrName">-</div>
+                    <div class="text-secondary small mb-3" id="ticketQrCode">-</div>
+
+                    <div class="d-inline-block border rounded p-3 bg-white">
+                        <div id="ticketQrBox"></div>
+                    </div>
+
+                    <div class="text-secondary small mt-3">
+                        Tunjukkan QR ini ke panitia saat check-in.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
     @if($canViewAll)
 
         <div class="modal modal-blur fade" id="checkinModal" tabindex="-1" role="dialog" aria-hidden="true">
@@ -1358,6 +1399,7 @@
 
         @push('js')
         <script src="https://unpkg.com/html5-qrcode"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
         <script>
             document.addEventListener('DOMContentLoaded', function () {
 
@@ -1561,7 +1603,37 @@
         </script>
         @endpush
 
-    @endif
+    @endif   {{-- penutup @if($canViewAll) --}}
+
+@push('js')
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const modalEl = document.getElementById('ticketQrModal');
+            if (!modalEl) return;
+
+            const box = document.getElementById('ticketQrBox');
+
+            modalEl.addEventListener('show.bs.modal', function (event) {
+                const btn = event.relatedTarget;
+                if (!btn) return;
+
+                const code = btn.dataset.ticketCode;
+
+                document.getElementById('ticketQrName').textContent = btn.dataset.name;
+                document.getElementById('ticketQrCode').textContent = code;
+
+                box.innerHTML = '';
+                new QRCode(box, {
+                    text: code,
+                    width: 220,
+                    height: 220,
+                    correctLevel: QRCode.CorrectLevel.M,
+                });
+            });
+        });
+    </script>
+@endpush
 </div>
 
 @endsection
