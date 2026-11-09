@@ -4,7 +4,7 @@
       class="mb-3">
     @csrf
 
-    <label class="form-label">Bukti Pembayaran (diunggah oleh staf)</label>
+    <label class="form-label">Bukti Pembayaran (Silahkan unggah bukti pembayaran disini)</label>
     <input type="file"
            name="proof_of_payment"
            accept="image/*"

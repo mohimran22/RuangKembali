@@ -192,69 +192,76 @@
 
                         @include('transactions.upload-form')
 
-@elseif($transaction->payment_method === 'transfer')
+                        @elseif($transaction->payment_method === 'transfer')
 
-    @php $event = $transaction->event; @endphp
+                            @php $event = $transaction->event; @endphp
 
-    @if($event->transfer_account_number)
+                            @if($event->transfer_account_number)
 
-        <div class="alert alert-info mb-3">
-            <i class="ti ti-info-circle me-2"></i>
-            Silakan transfer ke rekening berikut, lalu upload bukti transfer.
-            @if($transaction->expires_at)
-                <div class="alert alert-warning mb-3">
-                    <i class="ti ti-clock me-2"></i>
-                    Selesaikan pembayaran dan upload bukti sebelum
-                    <strong>{{ $transaction->expires_at->translatedFormat('d F Y, H:i') }} WIB</strong>,
-                    atau pendaftaran akan otomatis dibatalkan.
-                </div>
-            @endif
-        </div>
+                                <div class="alert alert-info mb-3">
+                                    <div class="d-flex">
+                                        <i class="ti ti-info-circle fs-2 me-3"></i>
+                                        <div>Silakan transfer ke rekening berikut, lalu upload bukti transfer.</div>
+                                    </div>
+                                </div>
 
-        <div class="card card-sm border mb-3">
-            <div class="card-body">
-                <div class="text-secondary small">{{ $event->transfer_bank_name }}</div>
-                <div class="d-flex align-items-center gap-2">
-                    <div class="fw-semibold fs-3">{{ $event->transfer_account_number }}</div>
-                    <button type="button"
-                            class="btn btn-sm btn-outline-secondary"
-                            data-copy="{{ $event->transfer_account_number }}"
-                            onclick="navigator.clipboard.writeText(this.dataset.copy); this.textContent = 'Tersalin';">
-                        Salin
-                    </button>
-                </div>
-                <div class="text-secondary">a.n. {{ $event->transfer_account_holder }}</div>
-                <div class="text-secondary small mt-2">
-                    Nominal: <strong>Rp {{ number_format($transaction->total_amount, 0, ',', '.') }}</strong>
-                </div>
-            </div>
-        </div>
+                                @if($transaction->expires_at)
+                                    <div class="alert alert-warning mb-3">
+                                        <div class="d-flex">
+                                            <i class="ti ti-clock fs-2 me-3"></i>
+                                            <div>
+                                                Selesaikan pembayaran dan upload bukti sebelum
+                                                <strong>{{ $transaction->expires_at->translatedFormat('d F Y, H:i') }} WIB</strong>,
+                                                atau pendaftaran akan otomatis dibatalkan.
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endif
 
-        @include('transactions.upload-form')
+                                <div class="card card-sm border mb-3">
+                                    <div class="card-body">
+                                        <div class="text-secondary small">{{ $event->transfer_bank_name }}</div>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="fw-semibold fs-3">{{ $event->transfer_account_number }}</div>
+                                            <button type="button"
+                                                    class="btn btn-sm btn-outline-secondary"
+                                                    data-copy="{{ $event->transfer_account_number }}"
+                                                    onclick="navigator.clipboard.writeText(this.dataset.copy); this.textContent = 'Tersalin';">
+                                                Salin
+                                            </button>
+                                        </div>
+                                        <div class="text-secondary">a.n. {{ $event->transfer_account_holder }}</div>
+                                        <div class="text-secondary small mt-2">
+                                            Nominal: <strong>Rp {{ number_format($transaction->total_amount, 0, ',', '.') }}</strong>
+                                        </div>
+                                    </div>
+                                </div>
 
-    @else
+                                @include('transactions.upload-form')
 
-        <div class="alert alert-warning">
-            <i class="ti ti-alert-triangle me-2"></i>
-            Informasi rekening untuk event ini belum diatur panitia. Silakan hubungi panitia event sebelum melakukan pembayaran.
-        </div>
+                            @else
 
-    @endif
+                                <div class="alert alert-warning">
+                                    <i class="ti ti-alert-triangle me-2"></i>
+                                    Informasi rekening untuk event ini belum diatur panitia. Silakan hubungi panitia event sebelum melakukan pembayaran.
+                                </div>
 
-@elseif($transaction->payment_method === 'gateway')
+                            @endif
 
-    <div class="alert alert-info">
-        <i class="ti ti-info-circle me-2"></i>
-        Kamu memilih Payment Gateway. Klik tombol di bawah untuk melanjutkan pembayaran.
-    </div>
+                        @elseif($transaction->payment_method === 'gateway')
 
-    {{-- TODO: ganti dengan redirect ke Midtrans/Xendit snap token/link --}}
-    <button class="btn btn-primary w-100" disabled>
-        <i class="ti ti-credit-card me-1"></i>
-        Bayar Sekarang (integrasi belum aktif)
-    </button>
+                            <div class="alert alert-info">
+                                <i class="ti ti-info-circle me-2"></i>
+                                Kamu memilih Payment Gateway. Klik tombol di bawah untuk melanjutkan pembayaran.
+                            </div>
 
-@endif
+                            {{-- TODO: ganti dengan redirect ke Midtrans/Xendit snap token/link --}}
+                            <button class="btn btn-primary w-100" disabled>
+                                <i class="ti ti-credit-card me-1"></i>
+                                Bayar Sekarang (integrasi belum aktif)
+                            </button>
+
+                    @endif
 
                 </div>
 

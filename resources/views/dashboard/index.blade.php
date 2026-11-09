@@ -106,6 +106,12 @@
                                 <div class="dash-stat-value text-warning">{{ $totalPending }}</div>
                             </div>
                         </div>
+                        <div class="col-6 col-md-4 col-xl">
+                            <a href="{{ route('transactions.index') }}" class="dash-stat">
+                                <div class="dash-stat-label">Menunggu Konfirmasi</div>
+                                <div class="dash-stat-value text-primary">{{ $totalConfirming }}</div>
+                            </a>
+                        </div>
                         <div class="col-12 col-md-6 col-xl">
                             <div class="dash-stat">
                                 <div class="dash-stat-label">Sudah Check-in</div>
@@ -123,6 +129,7 @@
                                     <th>Status</th>
                                     <th class="text-end">Peserta / Kuota</th>
                                     <th class="text-end">Menunggu Bayar</th>
+                                    <th class="text-end">Menunggu Konfirmasi</th>
                                     <th class="text-end">Check-in</th>
                                 </tr>
                             </thead>
@@ -140,10 +147,11 @@
                                             {{ $event->registrations_count }}{{ $event->quota ? ' / '.$event->quota : '' }}
                                         </td>
                                         <td class="text-end text-warning">{{ $event->pending_count }}</td>
+                                        <td class="text-end text-primary">{{ $event->confirming_count }}</td>
                                         <td class="text-end">{{ $event->checked_in_count }}</td>
                                     </tr>
                                 @empty
-                                    <tr><td colspan="6" class="text-secondary">Belum ada event.</td></tr>
+                                    <tr><td colspan="7" class="text-secondary">Belum ada event.</td></tr>
                                 @endforelse
                             </tbody>
                         </table>
@@ -152,8 +160,6 @@
                 </div>
             </div>
         </div>
-
-            {{-- ============ FINANCE ============ --}}
 
             @can('lihat akun-akuntansi')
             <div class="col-12">

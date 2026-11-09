@@ -2,11 +2,19 @@
 
 @section('content')
 @php
-    $badge = fn ($s) => match ($s) {
-        'pending'  => ['warning', 'Menunggu Pembayaran'],
-        'paid'     => ['success', 'Terdaftar'],
-        'attended' => ['info',    'Sudah Hadir'],
-        default    => ['secondary', ucfirst($s)],
+    // Status ditentukan dari pendaftaran DAN transaksinya
+    $regStatus = function ($reg) {
+        $trx = $reg->transaction?->status;
+
+        return match (true) {
+            $reg->status === 'attended' => ['info', 'Sudah Hadir', null],
+            $reg->status === 'paid' => ['success', 'Terdaftar', null],
+            $reg->status === 'pending' && $trx === 'waiting_confirmation' => ['blue', 'Menunggu Konfirmasi', 'Lihat'],
+            $reg->status === 'pending' && $trx === 'rejected' => ['danger', 'Bukti Ditolak', 'Upload Ulang'],
+            $reg->status === 'pending' => ['warning', 'Menunggu Pembayaran', 'Bayar'],
+            $reg->status === 'cancelled' => ['danger', 'Dibatalkan', null],
+            default => ['secondary', ucfirst($reg->status), null],
+        };
     };
 @endphp
 
@@ -51,40 +59,42 @@
                 <div class="card shadow-sm border-0 rounded-4">
                     <div class="card-header"><h5 class="mb-0">🎟 Event yang Saya Daftar</h5></div>
                     <div class="card-body p-4">
-                        <div class="table-responsive">
-                            <table class="table table-vcenter table-sm">
-                                <thead>
+                    <div class="table-responsive">
+                        <table class="table table-vcenter table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Nama Event</th>
+                                    <th>Peserta</th>
+                                    <th>Tanggal</th>
+                                    <th>Kode Tiket</th>
+                                    <th>Status</th>
+                                    <th class="text-end">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($myRegistrations as $reg)
+                                    @php [$color, $label, $action] = $regStatus($reg); @endphp
                                     <tr>
-                                        <th>Nama Event</th>
-                                        <th>Tanggal</th>
-                                        <th>Kode Tiket</th>
-                                        <th>Status</th>
-                                        <th class="text-end">Peserta / Kuota</th>
-                                        <th></th>
+                                        <td>{{ $reg->event?->name ?? '-' }}</td>
+                                        <td>{{ $reg->participant_name ?? '-' }}</td>
+                                        <td>{{ $reg->event?->start_at?->translatedFormat('d M Y') ?? '-' }}</td>
+                                        <td><code>{{ $reg->ticket_code }}</code></td>
+                                        <td><span class="badge bg-{{ $color }}-lt">{{ $label }}</span></td>
+                                        <td class="text-end">
+                                            @if($action && $reg->transaction_id)
+                                                <a href="{{ route('transactions.show', $reg->transaction_id) }}"
+                                                class="btn btn-sm btn-outline-{{ $color === 'blue' ? 'primary' : $color }}">
+                                                    {{ $action }}
+                                                </a>
+                                            @endif
+                                        </td>
                                     </tr>
-                                </thead>
-                                <tbody>
-                                    @forelse($myRegistrations as $reg)
-                                        @php [$color, $label] = $badge($reg->status); @endphp
-                                        <tr>
-                                            <td>{{ $reg->event?->name ?? '-' }}</td>
-                                            <td>{{ $reg->event?->start_at?->translatedFormat('d M Y') ?? '-' }}</td>
-                                            <td><code>{{ $reg->ticket_code }}</code></td>
-                                            <td><span class="badge bg-{{ $color }}-lt">{{ $label }}</span></td>
-                                            <td class="text-end">
-                                                @if($reg->status === 'pending' && $reg->transaction_id)
-                                                    <a href="{{ route('transactions.show', $reg->transaction_id) }}"
-                                                       class="btn btn-sm btn-warning">Bayar</a>
-                                                @endif
-                                            </td>
-                                            <td>{{ $reg->participant_name ?? '-' }}</td>
-                                        </tr>
-                                    @empty
-                                        <tr><td colspan="5" class="text-secondary">Kamu belum mendaftar event apa pun.</td></tr>
-                                    @endforelse
-                                </tbody>
-                            </table>
-                        </div>
+                                @empty
+                                    <tr><td colspan="6" class="text-secondary">Kamu belum mendaftar event apa pun.</td></tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
                     </div>
                 </div>
             </div>

@@ -33,20 +33,32 @@ class DashboardController extends Controller
         if (ActiveRole::name() === 'Member') {
             return $this->memberDashboard($user);
         }
+        $awaitingPayment = fn ($q) => $q->where('status', 'pending')
+            ->where(function ($w) {
+                $w->whereDoesntHave('transaction')
+                ->orWhereHas('transaction', fn ($t) => $t->whereIn('status', ['pending', 'rejected']));
+            });
+
+        // Bukti sudah diunggah, tinggal diverifikasi staf
+        $awaitingConfirmation = fn ($q) => $q->where('status', 'pending')
+            ->whereHas('transaction', fn ($t) => $t->where('status', 'waiting_confirmation'));
+
         $events = Event::query()
             ->withCount([
                 'registrations as registrations_count' => fn ($q) => $q->whereIn('status', self::COUNTED_STATUS),
-                'registrations as pending_count'       => fn ($q) => $q->where('status', 'pending'),
+                'registrations as pending_count'       => $awaitingPayment,
+                'registrations as confirming_count'    => $awaitingConfirmation,
                 'registrations as checked_in_count'    => fn ($q) => $q->whereNotNull('checked_in_at'),
             ])
             ->orderByDesc('start_at')
             ->take(6)
             ->get();
-
+        $totalPending      = $awaitingPayment(EventRegistration::query())->count();
+        $totalConfirming   = $awaitingConfirmation(EventRegistration::query())->count();
         $totalEvent        = Event::count();
         $upcomingEvent     = Event::where('start_at', '>=', now())->count();
         $totalRegistration = EventRegistration::whereIn('status', self::COUNTED_STATUS)->count();
-        $totalPending      = EventRegistration::where('status', 'pending')->count();
+        // $totalPending      = EventRegistration::where('status', 'pending')->count();
         $totalCheckedIn    = EventRegistration::whereNotNull('checked_in_at')->count();
 
         // ================= FINANCE =================
@@ -81,7 +93,7 @@ class DashboardController extends Controller
             ->sum('credit');
 
         return view('dashboard.index', compact(
-            'events', 'totalEvent', 'upcomingEvent', 'totalRegistration', 'totalCheckedIn', 'totalPending',
+            'events', 'totalEvent', 'upcomingEvent', 'totalRegistration', 'totalCheckedIn', 'totalPending', 'totalConfirming',
             'cashAccounts', 'totalCashBank', 'cashInThisMonth', 'cashOutThisMonth', 'monthlyRevenue'
         ));
     }
@@ -156,7 +168,7 @@ class DashboardController extends Controller
     private function memberDashboard($user)
 {
     // Event yang saya daftar
-    $myRegistrations = EventRegistration::with('event:id,name,start_at,end_at,location,quota')
+    $myRegistrations = EventRegistration::with('event:id,name,start_at,end_at,location,quota','transaction:id,status')
         ->where(fn ($q) => $q->where('user_id', $user->id)->orWhere('registered_by', $user->id))
         ->latest('registered_at')
         ->get();
