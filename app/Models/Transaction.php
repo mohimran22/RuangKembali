@@ -20,11 +20,13 @@ class Transaction extends Model
         'status',
         'paid_at',
         'proof_uploaded_by',
+        'expires_at'
     ];
 
     protected $casts = [
         'total_amount' => 'decimal:2',
         'paid_at' => 'datetime',
+        'expires_at' => 'datetime'
     ];
 
     public function event()

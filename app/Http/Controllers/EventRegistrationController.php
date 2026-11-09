@@ -18,7 +18,9 @@ class EventRegistrationController extends Controller
 
         $user = auth()->user();
         $registration = EventRegistration::where('event_id', $event->id)
-            ->where('user_id', $user->id)
+            ->where('user_id', auth()->id())
+            ->whereNotIn('status', ['cancelled'])
+            ->latest()
             ->first();
         $transactionCode = $this->generateTransactionCode();
         return view('events.register', compact(
@@ -79,6 +81,7 @@ class EventRegistrationController extends Controller
 
         $alreadyRegistered = EventRegistration::where('event_id', $event->id)
             ->whereIn('user_id', $userIds)
+            ->whereNotIn('status', ['cancelled'])
             ->with('user:id,fullname')
             ->get();
 
@@ -119,6 +122,7 @@ class EventRegistrationController extends Controller
                 'event_id' => $event->id,
                 'registered_by' => auth()->id(),
                 'total_amount' => $totalAmount,
+                'expires_at' => $event->event_type === 'free' ? null : now()->addDay(),
                 'payment_method' => $request->payment_method,
                 'status' => $event->event_type === 'free' ? 'paid' : 'pending',
                 'paid_at' => $event->event_type === 'free' ? now() : null,

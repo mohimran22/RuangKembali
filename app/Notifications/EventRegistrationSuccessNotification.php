@@ -89,6 +89,9 @@ class EventRegistrationSuccessNotification extends Notification
             } else {
                 $mail->line('Informasi rekening untuk event ini belum diatur panitia. Silakan hubungi panitia event sebelum melakukan pembayaran.');
             }
+            if ($t->expires_at) {
+                $mail->line('**Batas waktu pembayaran: ' . $t->expires_at->translatedFormat('d F Y, H:i') . ' WIB.** Jika belum upload bukti sampai batas ini, pendaftaran otomatis dibatalkan.');
+            }
         } elseif ($t->payment_method === 'gateway') {
             $mail->line('Kamu memilih Payment Gateway. Silakan lanjutkan pembayaran melalui halaman detail transaksi.');
         }

@@ -201,6 +201,14 @@
         <div class="alert alert-info mb-3">
             <i class="ti ti-info-circle me-2"></i>
             Silakan transfer ke rekening berikut, lalu upload bukti transfer.
+            @if($transaction->expires_at)
+                <div class="alert alert-warning mb-3">
+                    <i class="ti ti-clock me-2"></i>
+                    Selesaikan pembayaran dan upload bukti sebelum
+                    <strong>{{ $transaction->expires_at->translatedFormat('d F Y, H:i') }} WIB</strong>,
+                    atau pendaftaran akan otomatis dibatalkan.
+                </div>
+            @endif
         </div>
 
         <div class="card card-sm border mb-3">

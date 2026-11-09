@@ -247,6 +247,14 @@ public function uploadProof(Request $request, Transaction $transaction)
         'Transaksi ini sudah tidak bisa diupload buktinya.'
     );
 
+    abort_if(
+        $transaction->status === 'pending'
+            && $transaction->expires_at
+            && now()->gte($transaction->expires_at),
+        400,
+        'Batas waktu pembayaran sudah lewat. Silakan daftar ulang ke event ini.'
+    );
+
     $request->validate([
         'proof_of_payment' => ['required', 'image', 'max:5120'],
     ]);
