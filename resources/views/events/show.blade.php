@@ -1163,15 +1163,20 @@
                                                     <i class="ti ti-circle-check me-1"></i>
                                                     Lunas
                                                 </span>
-                                                @elseif($registration->status === 'pending')
+                                                  @elseif($registration->status === 'pending')
+      <span class="badge bg-warning-lt">
+          <i class="ti ti-clock me-1"></i>
+          {{ $registration->transaction?->status === 'waiting_confirmation' ? 'Menunggu Konfirmasi' : 'Menunggu Pembayaran' }}
+      </span>
+                                                {{-- @elseif($registration->status === 'pending')
                                                     <span class="badge bg-warning-lt">
                                                         <i class="ti ti-clock me-1"></i>
                                                         Pending
-                                                    </span>
+                                                    </span> --}}
                                                 @elseif($registration->status === 'cancelled')
                                                     <span class="badge bg-danger-lt">
                                                         <i class="ti ti-circle-x me-1"></i>
-                                                        Cancelled
+                                                        Dibatalkan
                                                     </span>
                                                 @else
                                                     <span class="badge bg-secondary-lt">
@@ -1393,11 +1398,11 @@
                     participantEmail.textContent = participant.email ?? '';
 
                     const statusMap = {
-                        attended: { label: 'Sudah Check-in', class: 'bg-success-lt' },
-                        paid: { label: 'Paid', class: 'bg-primary-lt' },
-                        confirmed: { label: 'Confirmed', class: 'bg-primary-lt' },
-                        pending: { label: 'Pending', class: 'bg-warning-lt' },
-                        cancelled: { label: 'Cancelled', class: 'bg-danger-lt' },
+                        attended:  { label: 'Sudah Check-in',       class: 'bg-success-lt' },
+                        paid:      { label: 'Lunas',                class: 'bg-primary-lt' },
+                        confirmed: { label: 'Terkonfirmasi',        class: 'bg-primary-lt' },
+                        pending:   { label: 'Menunggu Pembayaran',  class: 'bg-warning-lt' },
+                        cancelled: { label: 'Dibatalkan',           class: 'bg-danger-lt' },
                     };
                     const info = statusMap[participant.status] ?? { label: participant.status ?? '-', class: 'bg-secondary-lt' };
 

@@ -164,10 +164,9 @@
                                     </h3>
 
                                     <div class="text-secondary">
-                                        Kamu sudah memiliki pendaftaran
-                                        untuk event ini.
+                                        Kamu sudah memiliki pendaftaran untuk event ini.
+                                        Kamu masih bisa mendaftarkan peserta lain di bawah.
                                     </div>
-
                                 </div>
 
                             </div>
@@ -193,20 +192,31 @@
                                     <div class="text-secondary small">
                                         Status
                                     </div>
-
-                                    <span class="badge bg-success-lt">
-                                        {{ ucfirst($registration->status) }}
-                                    </span>
-
+                                    @php
+                                        $regTrx = $registration->transaction;
+                                        $badge = match (true) {
+                                            $registration->status === 'paid'     => ['success', 'Terdaftar'],
+                                            $registration->status === 'attended' => ['info', 'Sudah Hadir'],
+                                            $regTrx?->status === 'waiting_confirmation' => ['blue', 'Menunggu Konfirmasi'],
+                                            default => ['warning', 'Menunggu Pembayaran'],
+                                        };
+                                    @endphp
+                                    <span class="badge bg-{{ $badge[0] }}-lt">{{ $badge[1] }}</span>
+                                    @if($registration->status === 'pending' && $registration->transaction_id)
+                                        <a href="{{ route('transactions.show', $registration->transaction_id) }}"
+                                        class="btn btn-sm btn-warning mt-2">
+                                            {{ $regTrx?->status === 'waiting_confirmation' ? 'Lihat Transaksi' : 'Bayar Sekarang' }}
+                                        </a>
+                                    @endif
                                 </div>
 
                             </div>
 
                         </div>
 
-                        @else
+                        @endif
 
-                        <form action="{{ route('events.register.store', $event->id) }}"
+                        <form action="{{ route('events.register.store', $event->slug) }}"
                             method="POST"
                             id="registrationForm">
 
@@ -228,10 +238,9 @@
                                 </div>
 
                                 <div id="participantsWrapper">
-
-                                    @unless(auth()->user()->hasRole('Super-Admin'))
+                                    @if(!$registration && \App\Helpers\ActiveRole::name() !== 'Super-Admin')
                                         {{-- Peserta pertama = akun yang login, tidak bisa dihapus --}}
-                                        <div class="card card-sm border mb-3 participant-row" data-user-id="{{ auth()->id() }}">
+    <div class="card card-sm border mb-3 participant-row" data-user-id="{{ auth()->id() }}">
                                             <div class="card-body d-flex justify-content-between align-items-center">
                                                 <div>
                                                     <div class="text-secondary small fw-semibold">Kamu (Pendaftar)</div>
@@ -239,9 +248,9 @@
                                                     <div class="text-secondary small">{{ auth()->user()->email }}</div>
                                                 </div>
                                             </div>
-                                            <input type="hidden" name="participants[0][user_id]" value="{{ auth()->id() }}">
+        <input type="hidden" name="participants[0][user_id]" value="{{ auth()->id() }}">
                                         </div>
-                                    @endunless
+                                    @endif
 
                                 </div>
 
@@ -407,9 +416,6 @@
                             </div>
 
                         </form>
-
-                    @endif
-
                 </div>
 
             </div>

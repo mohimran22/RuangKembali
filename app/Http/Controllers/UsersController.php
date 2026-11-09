@@ -309,7 +309,8 @@ public function show(User $user)
             })
             ->when($eventId, function ($q) use ($eventId) {
                 $q->whereDoesntHave('registrations', function ($sub) use ($eventId) {
-                    $sub->where('event_id', $eventId);
+                    $sub->where('event_id', $eventId)
+                        ->where('status', '!=', 'cancelled');
                 });
             })
             ->limit(10)

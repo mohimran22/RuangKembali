@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Event;
 use App\Models\EventRegistration;
 use App\Models\Transaction;
+use App\Helpers\ActiveRole;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -15,8 +16,6 @@ class EventRegistrationController extends Controller
     public function create(Event $event)
     {
         abort_unless($event->is_published, 404);
-
-        $user = auth()->user();
         $registration = EventRegistration::where('event_id', $event->id)
             ->where('user_id', auth()->id())
             ->whereNotIn('status', ['cancelled'])
@@ -75,35 +74,17 @@ class EventRegistrationController extends Controller
             return back()->withInput()->with('error', 'Terdapat email peserta manual yang sama, cek kembali.');
         }
 
-        if (!auth()->user()->hasRole('Super-Admin') && !in_array(auth()->id(), $userIds)) {
+        $iAmRegistered = EventRegistration::where('event_id', $event->id)
+            ->where('user_id', auth()->id())
+            ->where('status', '!=', 'cancelled')
+            ->exists();
+
+        if (ActiveRole::name() !== 'Super-Admin'
+            && !$iAmRegistered
+            && !in_array(auth()->id(), $userIds)) {
             return back()->withInput()->with('error', 'Kamu wajib ikut sebagai salah satu peserta.');
         }
-
-        $alreadyRegistered = EventRegistration::where('event_id', $event->id)
-            ->whereIn('user_id', $userIds)
-            ->whereNotIn('status', ['cancelled'])
-            ->with('user:id,fullname')
-            ->get();
-
-        if ($alreadyRegistered->isNotEmpty()) {
-            $names = $alreadyRegistered->pluck('user.fullname')->implode(', ');
-            return back()->withInput()->with('error', "Peserta berikut sudah terdaftar di event ini: {$names}");
-        }
-
         $totalParticipants = count($validated['participants']);
-
-        if ($event->quota) {
-            $registeredCount = EventRegistration::where('event_id', $event->id)
-                ->whereIn('status', ['pending', 'paid', 'attended'])
-                ->count();
-
-            $remainingQuota = $event->quota - $registeredCount;
-
-            if ($totalParticipants > $remainingQuota) {
-                return back()->withInput()->with('error', "Kuota tersisa hanya {$remainingQuota} peserta, kamu mencoba mendaftarkan {$totalParticipants} peserta.");
-            }
-        }
-
         $pricePerParticipant = $event->event_type === 'free' ? 0 : $event->price;
         $totalAmount = $pricePerParticipant * $totalParticipants;
         $transactionCode = $request->transaction_code;
@@ -114,7 +95,40 @@ class EventRegistrationController extends Controller
         DB::beginTransaction();
 
         try {
+            Event::whereKey($event->id)->lockForUpdate()->first();
 
+            $alreadyRegistered = EventRegistration::where('event_id', $event->id)
+                ->whereIn('user_id', $userIds)
+                ->where('status', '!=', 'cancelled')
+                ->with('user:id,fullname')
+                ->get();
+
+            if ($alreadyRegistered->isNotEmpty()) {
+                DB::rollBack();
+                $names = $alreadyRegistered->pluck('user.fullname')->implode(', ');
+                return back()->withInput()->with('error', "Peserta berikut sudah terdaftar di event ini: {$names}");
+            }
+            $guestEmailsExisting = EventRegistration::where('event_id', $event->id)
+                ->whereIn(DB::raw('LOWER(guest_email)'), $guestEmails)
+                ->where('status', '!=', 'cancelled')
+                ->exists();
+
+            if ($guestEmailsExisting) {
+                DB::rollBack();
+                return back()->withInput()->with('error', 'Ada email peserta manual yang sudah terdaftar di event ini.');
+            }
+            if ($event->quota) {
+                $registeredCount = EventRegistration::where('event_id', $event->id)
+                    ->whereIn('status', ['pending', 'paid', 'attended'])
+                    ->count();
+
+                $remainingQuota = $event->quota - $registeredCount;
+
+                if ($totalParticipants > $remainingQuota) {
+                    DB::rollBack();
+                    return back()->withInput()->with('error', "Kuota tersisa hanya {$remainingQuota} peserta, kamu mencoba mendaftarkan {$totalParticipants} peserta.");
+                }
+            }
             // 1. Buat transaksi induk
             $transaction = Transaction::create([
                 'id' => (string) Str::uuid(),
@@ -147,6 +161,12 @@ class EventRegistrationController extends Controller
             }
 
             DB::commit();
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            report($e);
+
+            return back()->withInput()->with('error', 'Pendaftaran gagal diproses. Silakan coba lagi.');
+        }
             try {
                 $transaction->load(['event', 'registrations.user', 'registeredBy']);
 
@@ -168,13 +188,6 @@ class EventRegistrationController extends Controller
             return redirect()
                 ->route('transactions.show', $transaction->id)
                 ->with('success', 'Pendaftaran berhasil dibuat. Silakan selesaikan pembayaran.');
-
-        } catch (\Throwable $e) {
-
-            DB::rollBack();
-
-            return back()->withInput()->with('error', 'Gagal melakukan pendaftaran: ' . $e->getMessage());
-        }
     }
 
     private function generateTransactionCode(): string
