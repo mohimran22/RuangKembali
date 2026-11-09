@@ -20,6 +20,7 @@ use App\Models\EventRegistration;
 use App\Models\EventYoutubeLink;
 use App\Models\User;
 use App\Helpers\ActiveRole;
+use Artesaos\SEOTools\Facades\SEOTools;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
@@ -1184,7 +1185,13 @@ public function checkinScan(Request $request, Event $event)
             'participant' => $participantData,
         ], 422);
     }
-
+    if ($registration->status === 'cancelled') {
+        return response()->json([
+            'success'     => false,
+            'message'     => 'Pendaftaran ini sudah dibatalkan (kadaluarsa).',
+            'participant' => $participantData,
+        ], 422);
+    }
     if (!in_array($registration->status, ['paid', 'confirmed'])) {
         return response()->json([
             'success'     => false,
@@ -1222,6 +1229,35 @@ public function showPublic(Event $event)
     abort_unless($event->is_published, 404);
 
     $event->load('category', 'galleries', 'faqs', 'sponsors', 'speakers', 'rundowns');
+
+    $description = Str::limit(
+        trim(preg_replace('/\s+/', ' ', strip_tags($event->description ?? ''))),
+        140
+    );
+
+    $description = $event->start_at->translatedFormat('d F Y')
+        . ($event->location ? ' · ' . $event->location : '')
+        . ($description ? ' — ' . $description : '');
+
+    $image = $event->poster
+        ? asset('storage/' . $event->poster)
+        : null;
+
+    SEOTools::setTitle($event->name);
+    SEOTools::setDescription($description);
+    SEOTools::setCanonical(url()->current());
+
+    SEOTools::opengraph()->setUrl(url()->current());
+    SEOTools::opengraph()->setSiteName('Ruang Kembali');
+    SEOTools::opengraph()->addProperty('type', 'website');
+
+    SEOTools::twitter()->setTitle($event->name);
+    SEOTools::twitter()->setDescription($description);
+
+    if ($image) {
+        SEOTools::opengraph()->addImage($image);
+        SEOTools::twitter()->setImage($image);
+    }
 
     return view('events.public-show', compact('event'));
 }
