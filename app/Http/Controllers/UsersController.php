@@ -18,7 +18,8 @@ use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
- 
+use App\Helpers\ActiveRole;
+
 class UsersController extends Controller
 {
     
@@ -27,18 +28,17 @@ class UsersController extends Controller
     
         if ($request->ajax()) {
 
-            $auth = auth()->user();
+            $users = User::query()->with([
+                'province', 'city', 'district', 'subDistrict', 'postalCode', 'religion',
+            ]);
 
-            if ($auth->hasRole('Customer')) {
-                 $users = User::query();
-            }  else if ($auth->hasAnyRole(['Pemilik Lisensi', 'Karyawan'])) {
-                $users = User::where('license_id', $auth->license_id)
-                 ->whereHas('roles', function ($q) {
-                     $q->whereIn('name', ['Pemilik Lisensi', 'Karyawan']);
-                 });
-            } else {
-            // Default: hanya user itu sendiri
-                $users = User::all();
+            // Hanya Super-Admin dan Tim yang boleh melihat semua user
+            if (! in_array(ActiveRole::name(), ['Super-Admin', 'Tim'])) {
+                $users->where('id', auth()->id());
+            }
+
+            if ($request->verifikasi === 'belum') {
+                $users->whereNull('email_verified_at');
             }
 
             return Datatables::of($users)
@@ -56,6 +56,19 @@ class UsersController extends Controller
             ->addColumn('identity_number', fn($row) => $row->identity_number ?? '-')
             ->addColumn('npwp', fn($row) => $row->npwp ?? '-')
             ->addColumn('phone', fn($row) => $row->phone ?? '-')
+            ->addColumn('verifikasi', function ($row) {
+                if ($row->email_verified_at) {
+                    $tgl = Carbon::parse($row->email_verified_at)->translatedFormat('d F Y H:i');
+
+                    return '<span class="badge bg-success-lt" title="' . e($tgl) . '">
+                                <i class="ti ti-circle-check me-1"></i> Terverifikasi
+                            </span>';
+                }
+
+                return '<span class="badge bg-warning-lt">
+                            <i class="ti ti-clock me-1"></i> Belum Verifikasi
+                        </span>';
+            })
             ->editColumn('fullname', function ($row) {
                     $url = route('users.show', $row->id);
                     $name = Str::title($row->fullname ?? '-');
@@ -70,7 +83,7 @@ class UsersController extends Controller
             //         <button data-id="'.$user->id.'" class="btn btn-danger btn-sm delete-user">Delete</button>
             //     '; 
             // })
-
+            ->orderColumn('verifikasi', 'email_verified_at $1')
             ->addColumn('action', function ($user) {
                     $buttons = '';
                     {
@@ -91,7 +104,7 @@ class UsersController extends Controller
                     return $buttons;
                 })
 
-            ->rawColumns(['action', 'fullname'])
+            ->rawColumns(['action', 'fullname', 'verifikasi'])
             ->make(true);
         }
           

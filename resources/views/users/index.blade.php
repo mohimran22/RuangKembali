@@ -61,6 +61,7 @@
                                         <th>Kelurahan</th>
                                         <th>Kode Pos</th>
                                         <th>Telepon</th>
+                                        <th>Verifikasi Email</th>
                                         <th class="action">Aksi</th>
                                     </tr>
                                 </thead>
@@ -137,6 +138,7 @@ $(function () {
             { data: 'sub_district_name', name: 'sub_district_name' },
             { data: 'postal_code', name: 'postal_code' },
             { data: 'phone', name: 'phone' },
+            { data: 'verifikasi', name: 'email_verified_at', orderable: true, searchable: false },
             { data: 'action', name: 'action', orderable: false, searchable: false },
         ],
 
