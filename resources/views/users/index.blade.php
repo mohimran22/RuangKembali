@@ -7,7 +7,7 @@
             <div class="row align-items-center">
                 <div class="col-12 col-md-auto ms-auto d-print-none">
                     <div class="btn-list">
-                            @can('tambah data user')
+                                @if(\App\Helpers\ActiveRole::hasPermission('tambah data member'))
                                     <a href="{{ route("users.create") }}" class="btn btn-primary" >
                                         <!-- Download SVG icon from http://tabler-icons.io/i/plus -->
                                         <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24"
@@ -19,7 +19,7 @@
                                         </svg>
                                         Tambah Pengguna Baru
                                     </a>
-                            @endcan
+                                @endIF
                     </div>
                 </div>
             </div>
@@ -33,11 +33,15 @@
                 <div class="col-12">
                     <div class="card">
                         <div class="card-header">
-                            <div class="d-flex align-items-center justify-content-between w-100">
-                                <p class="mb-0"
-                                    style="font-size:1.4rem;font-weight:400;font-family:'Montserra',sans-serif;">
+                            <div class="d-flex align-items-center justify-content-between w-100 flex-wrap gap-2">
+                                <p class="mb-0">
                                     Daftar Pengguna
                                 </p>
+
+                                <select id="filterVerifikasi" class="form-select w-auto">
+                                    <option value="">Semua Status Email</option>
+                                    <option value="belum">Belum Verifikasi</option>
+                                </select>
                             </div>
                         </div>
                         <div class="table-responsive">
@@ -169,7 +173,9 @@ $(function () {
 
         }
     });
-
+    $('#filterVerifikasi').on('change', function () {
+        table.ajax.reload();
+    });
     // DELETE USER
     $('#tableUsers').on('click', '.delete-user', function () {
 
@@ -243,7 +249,7 @@ $(function () {
         Swal.fire({
             icon: 'success',
             title: 'Sukses!',
-            text: '{{ session('success') }}',
+            text: @json(session('success')),
             timer: 2000,
             showConfirmButton: false
         });

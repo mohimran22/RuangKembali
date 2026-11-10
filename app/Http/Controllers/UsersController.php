@@ -65,7 +65,7 @@ class UsersController extends Controller
                             </span>';
                 }
 
-                return '<span class="badge bg-warning-lt">
+                return '<span class="badge bg-warning">
                             <i class="ti ti-clock me-1"></i> Belum Verifikasi
                         </span>';
             })
