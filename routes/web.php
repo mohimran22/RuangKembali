@@ -83,7 +83,7 @@ Route::get('/member/profile', [DashboardController::class, 'edit'])->name('membe
 Route::put('/member/profile', [DashboardController::class, 'update'])->name('member.update');
 Route::get('/affiliators/profile', [DashboardController::class, 'edit'])->name('affiliators.profile');
 Route::put('/affiliators/profile', [DashboardController::class, 'update'])->name('affiliators.updates');
-Route::middleware('auth')->group(function () {
+Route::middleware('auth', 'verified')->group(function () {
     Route::get(
         '/events/{event}/register',
         [EventRegistrationController::class, 'create']
@@ -288,7 +288,7 @@ Route::middleware(['auth', 'active.permission:lihat daftar event|lihat data even
 Route::get('/events/{event:event_code}', [EventController::class, 'showPublic'])
     ->name('events.show')
     ->where('event', '^EVT\d{7}$');
-    Route::middleware('auth')->group(function () {
+    Route::middleware('auth', 'verified')->group(function () {
 Route::get('/transactions', [TransactionController::class, 'index'])->name('transactions.index');
 Route::get('/transactions/{transaction}', [TransactionController::class, 'show'])->name('transactions.show');
 Route::post('/transactions/{transaction}/upload-proof', [TransactionController::class, 'uploadProof'])
