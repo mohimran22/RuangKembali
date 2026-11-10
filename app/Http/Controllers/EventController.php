@@ -1143,6 +1143,7 @@ public function lookupParticipant(Request $request, Event $event)
 
     return response()->json([
         'success' => true,
+        'checkin_open' => $event->isCheckinOpen(),
         'participant' => [
             'name'   => $registration->participant_name ?? '-',
             'email'  => $registration->participant_email ?? '-',
@@ -1154,7 +1155,13 @@ public function lookupParticipant(Request $request, Event $event)
 public function checkinScan(Request $request, Event $event)
 {
     abort_unless($this->isEventStaff(), 403);
-
+    if (! $event->isCheckinOpen()) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Check-in baru dibuka pada hari acara ('
+                . $event->start_at->translatedFormat('d F Y') . ').',
+        ], 422);
+    }
     $validated = $request->validate([
         'ticket_code' => ['required', 'string', 'max:50'],
     ]);

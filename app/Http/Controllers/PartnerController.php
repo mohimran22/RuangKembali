@@ -240,7 +240,7 @@ public function generateArchitectIdAjax()
     $lastNumber = Partner::selectRaw("MAX(CAST(SUBSTRING(architect_id, 3) AS INTEGER)) as max_architect_id")->value('max_architect_id');
     $newNumber = ($lastNumber ?? 0) + 1;
 
-    $newArchitectId = 'K-' . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
+    $newArchitectId = 'MIT-' . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
 
     return response()->json([
         'architect_id' => $newArchitectId

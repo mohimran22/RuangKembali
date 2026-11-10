@@ -66,7 +66,7 @@ public function scopeLoyalty($query, $level)
         $lastNumber = self::selectRaw("MAX(CAST(SUBSTRING(architect_id, 3) AS INTEGER)) as max_architect_id")->value('max_architect_id');
         $newNumber = ($lastNumber ?? 0) + 1;
 
-        return 'AR-' . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
+        return 'MIT-' . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
     }
 
     public static function getDefaultAttributes($user)

@@ -278,4 +278,14 @@ public function resolveRouteBinding($value, $field = null)
         ? $this->where('id', $value)->first()
         : $this->where('slug', $value)->first();
 }
+
+public function isCheckinOpen(): bool
+{
+    $now = now();
+
+    return $now->betweenIncluded(
+        $this->start_at->copy()->startOfDay(),
+        $this->end_at->copy()->endOfDay()
+    );
+}
 }

@@ -45,7 +45,7 @@
                                         <th>ID Mitra</th>
                                         <th>Nama Pengguna</th>
                                         <th>Email Pengguna</th>
-                                        <th>Nama Arsitek</th>
+                                        <th>Nama Mitra</th>
                                         <th>Telpon Kantor</th>
                                         <th>Alamat Kantor</th>
                                         <th width="15%">Aksi</th>

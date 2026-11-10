@@ -1324,7 +1324,17 @@
                         </h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-
+                    @unless($event->isCheckinOpen())
+                        <div class="alert alert-warning">
+                            <div class="d-flex">
+                                <i class="ti ti-clock-pause fs-2 me-3"></i>
+                                <div>
+                                    Check-in belum dibuka. Check-in hanya bisa dilakukan pada hari acara,
+                                    <strong>{{ $event->start_at->translatedFormat('d F Y') }}</strong>.
+                                </div>
+                            </div>
+                        </div>
+                    @endunless
                     <div class="modal-body">
 
                         <div class="mb-3">
@@ -1524,7 +1534,10 @@
                             showParticipantCard(data.participant);
                             foundTicketCode = ticketCode;
 
-                            if (data.participant.status === 'attended') {
+                            if (data.checkin_open === false) {
+                                showResult(false, 'Check-in Belum Dibuka', 'Check-in hanya bisa dilakukan pada hari acara.');
+                                foundEligible = false;
+                            } else if (data.participant.status === 'attended') {
                                 showResult(false, 'Sudah Check-in', 'Peserta ini sudah check-in sebelumnya.');
                                 foundEligible = false;
                             } else if (['paid', 'confirmed'].includes(data.participant.status)) {
