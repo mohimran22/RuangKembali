@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Helpers\ActiveRole;
 use App\Models\Vendor;
 use App\Models\Religion;
 use App\Models\Province;
@@ -36,7 +37,7 @@ class VendorController extends Controller
 
         $query = Vendor::with(['user.roles']);
 
-        if ($auth->can('lihat data vendor') && !$auth->can('lihat daftar vendor')) {
+        if (!ActiveRole::hasPermission('lihat daftar vendor')) {
             $query->where('user_id', $auth->id);
         }
 
@@ -72,25 +73,25 @@ class VendorController extends Controller
                 
                 ->addColumn('action', function ($vendor) {
                     $buttons = '';
-                    if (auth()->user()->can('ubah data vendor')) {
+                    if (ActiveRole::hasPermission('ubah data vendor')) {
                         $buttons .= '<a href="' . route('vendors.edit', $vendor->id) . '" class="btn btn-icon btn-sm btn-warning me-1" title="Ubah">
                                         <i class="ti ti-edit"></i>
                                     </a>';
                     }
-                    if (auth()->user()->can('lihat data vendor')) {
+                    if (ActiveRole::hasPermission('lihat data vendor')) {
                         $buttons .= '<a href="' . route('vendors.show', $vendor->id) . '" class="btn btn-icon btn-sm btn-primary me-1" title="Lihat">
                                         <i class="ti ti-eye"></i>
                                     </a>';
 
                     }
-                    if (auth()->user()->can('hapus data vendor')) {
+                    if (ActiveRole::hasPermission('hapus data vendor')) {
                         $buttons .= '<button data-id="' . $vendor->id . '" class="btn btn-icon btn-sm btn-danger delete-vendors" title="Hapus">
                                         <i class="ti ti-trash"></i>
                                     </button>';
                     }
                     return $buttons;
                 })
-                ->rawColumns(['fullname', 'action', 'membership'])
+                ->rawColumns(['fullname', 'action'])
                 ->make(true);
         }
 
@@ -200,6 +201,7 @@ class VendorController extends Controller
                 'sub_district_id' => $validated['user_sub_district_id'],
                 'postal_code_id' => $validated['user_postal_code_id'],
                 'email' => $validated['email'],
+                'email_verified_at' => now(),
                 'password' => Hash::make($password),
                 'phone' => $validated['phone'] ?? null,
                 'gender' => $validated['gender'] ?? null,

@@ -7,7 +7,7 @@
             <div class="row align-items-center">
                 <div class="col-12 col-md-auto ms-auto d-print-none">
                     <div class="btn-list">
-                                @if(\App\Helpers\ActiveRole::hasPermission('tambah data member'))
+                                @if(\App\Helpers\ActiveRole::hasPermission('tambah data user'))
                                     <a href="{{ route("users.create") }}" class="btn btn-primary" >
                                         <!-- Download SVG icon from http://tabler-icons.io/i/plus -->
                                         <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24"
@@ -78,7 +78,7 @@
             </div>
         </div>
     </div>
-@can('tambah data user')
+@if(\App\Helpers\ActiveRole::hasPermission('tambah data user')) 
 <a href="{{ route('users.create') }}"
    class="mobile-fab d-md-none">
 
@@ -99,7 +99,7 @@
     </svg>
 
 </a>
-@endcan
+@endif
 @endsection
 
 @push('js')
