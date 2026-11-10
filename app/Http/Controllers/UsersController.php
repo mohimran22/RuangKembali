@@ -60,7 +60,7 @@ class UsersController extends Controller
                 if ($row->email_verified_at) {
                     $tgl = Carbon::parse($row->email_verified_at)->translatedFormat('d F Y H:i');
 
-                    return '<span class="badge bg-success-lt" title="' . e($tgl) . '">
+                    return '<span class="badge bg-success" title="' . e($tgl) . '">
                                 <i class="ti ti-circle-check me-1"></i> Terverifikasi
                             </span>';
                 }

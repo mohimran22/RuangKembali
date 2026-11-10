@@ -118,7 +118,10 @@ $(function () {
         processing: true,
         responsive: false,
 
-        ajax: '{{ route("users.index") }}',
+        ajax: {
+            url: '{{ route("users.index") }}',
+            data: function (d) { d.verifikasi = $('#filterVerifikasi').val(); }
+        },
 
         columns: [
             { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },

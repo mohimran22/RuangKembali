@@ -132,7 +132,8 @@ $(function () {
 
         language: {
             processing: 'Memuat data...',
-            search: 'Cari:',
+            search: "",
+            searchPlaceholder: "Cari transaksi...",
             lengthMenu: 'Tampilkan _MENU_ data',
             info: 'Menampilkan _START_ sampai _END_ dari _TOTAL_ transaksi',
             infoEmpty: 'Tidak ada transaksi',
