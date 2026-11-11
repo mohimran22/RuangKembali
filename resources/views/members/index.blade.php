@@ -81,9 +81,9 @@
                     <div class="text-secondary small">Semua data pelanggan dalam satu tempat.</div>
                 </div>
                 <div class="col-12 col-md-auto ms-auto d-print-none">
-                    @can('tambah data customer')
-                        <a href="{{ route('members.create') }}" class="btn btn-dark">
-                            <i class="ti ti-plus me-1"></i> Tambah Data Customer
+                    @can('tambah data member')
+                        <a href="{{ route('members.create') }}" class="btn btn-primary">
+                            <i class="ti ti-plus me-1"></i> Tambah Data Member
                         </a>
                     @endcan
                 </div>
@@ -164,7 +164,7 @@
         </div>
     </div>
 
-    @can('tambah data customer')
+    @can('tambah data member')
         <a href="{{ route('members.create') }}" class="mobile-fab d-md-none">
             <i class="ti ti-plus" style="font-size:26px"></i>
         </a>

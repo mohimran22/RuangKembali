@@ -202,7 +202,8 @@ class MembersController extends Controller
         'role' => 'nullable|array',
         'role.*' => 'string|exists:roles,name',
         'category' => 'nullable|in:1,2,3,4',
-        'loyalty_level' => 'nullable|in:1,2,3,4,5'
+        'channel' => ['nullable', Rule::in(array_keys(Customer::CHANNELS))],
+        'loyalty_level' => 'nullable|in:1,2,3,4,5,6'
     ]);
 
     if ($request->hasFile('photo')) {
@@ -286,6 +287,7 @@ class MembersController extends Controller
             'sub_district_id' => $validated['sub_district_id'],
             'postal_code_id' => $validated['postal_code_id'],
             'category' => $validated['category'] ?? null,
+            'channel' => $validated['channel'] ?? null,
             'loyalty_level' => !empty($validated['loyalty_level'])
                 ? (int) $validated['loyalty_level']
                 : 1,
@@ -413,7 +415,8 @@ public function update(Request $request, Customer $member)
         'sub_district_id' => 'nullable|exists:sub_districts,id',
         'postal_code_id' => 'nullable|exists:postal_codes,id',
         'category' => 'nullable|in:1,2,3,4',
-        'loyalty_level' => 'nullable|in:1,2,3,4,5',
+        'loyalty_level' => 'nullable|in:1,2,3,4,5,6',
+        'channel' => ['nullable', Rule::in(array_keys(Customer::CHANNELS))],
         'role' => 'nullable|array',
         'role.*' => ['string', Rule::exists('roles', 'name')->where('role_group', 'Eksternal')],
     ]);
@@ -495,6 +498,7 @@ public function update(Request $request, Customer $member)
                 'district_id' => $validated['district_id'] ?? null,
                 'sub_district_id' => $validated['sub_district_id'] ?? null,
                 'postal_code_id' => $validated['postal_code_id'] ?? null,
+                'channel' => $validated['channel'] ?? null,
                 'category' => $canManage
                     ? ($validated['category'] ?? null)
                     : $customer->category,

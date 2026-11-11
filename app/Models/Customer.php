@@ -128,6 +128,22 @@ public static function generateNic(): string
 //         default => 'Lead',
 //     };
 // }
+
+public const CHANNELS = [
+    'instagram' => 'Instagram',
+    'whatsapp'  => 'WhatsApp',
+    'facebook'  => 'Facebook',
+    'tiktok'    => 'TikTok',
+    'google'    => 'Google / Website',
+    'referral'  => 'Referensi / Teman',
+    'event'     => 'Event / Pameran',
+    'other'     => 'Lainnya',
+];
+
+public function getReadableChannelAttribute()
+{
+    return self::CHANNELS[$this->channel] ?? '-';
+}
     protected function displayNameWithTitle(): Attribute
 {
     return Attribute::make(
