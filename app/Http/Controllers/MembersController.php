@@ -36,84 +36,99 @@ class MembersController extends Controller
 
     public function index(Request $request)
     {
-        $auth = auth()->user();
-
-        $query = Customer::with(['user.roles']);
-
+        // Query dasar (sudah dibatasi hak akses). Dipakai untuk tabel DAN kartu statistik.
+        $baseQuery = Customer::with(['user.roles']);
+    
         if (!ActiveRole::hasPermission('lihat daftar member')) {
-            $query->where('user_id', $auth->id);
+            $baseQuery->where('user_id', $auth->id);
         }
 
         if ($request->ajax()) {
+            // withCount hanya di query tabel (bukan di $baseQuery) supaya perhitungan kartu tidak terganggu
+            $query = (clone $baseQuery)->withCount('registrations');
+    
+            // Filter tab (Lead, Prospek, New Customer, Silver, Gold, Platinum)
+            if ($request->filled('loyalty')) {
+                $query->where('loyalty_level', $request->loyalty);
+            }
+    
             $customers = $query->get();
-
-        return DataTables::of($customers)
+    
+            return DataTables::of($customers)
                 ->addIndexColumn()
-                ->addColumn('fullname', function ($row) {
-                    return optional($row->user)->fullname ?? '-';
-                })
-                ->addColumn('email', function ($row) {
-                    return $row->user->email ?? '-';
-                })
-                ->addColumn('category', fn($row) => $this->readableCategory($row->category))
-                // ->addColumn('loyalty', fn($row) => $this->readableLoyaltyLevel($row->loyalty_level))
-                ->editColumn('fullname', function ($row) {
+                ->addColumn('customer', function ($row) {
+                    $name     = Str::title($row->user->fullname ?? '-');
+                    $email    = $row->user->email ?? '-';
+                    $initials = collect(explode(' ', trim($name)))
+                        ->filter()->take(2)
+                        ->map(fn($w) => mb_substr($w, 0, 1))
+                        ->implode('');
                     $url = route('members.show', $row->id);
-                    $name = Str::title($row->user->fullname ?? '-');
-                    return '<a href="'.$url.'">'.e($name).'</a>';
+    
+                    return '<div class="d-flex align-items-center">
+                                <span class="cust-avatar av-' . (crc32($name) % 5) . '">' . e(strtoupper($initials)) . '</span>
+                                <div class="ms-3">
+                                    <a href="' . $url . '" class="cust-name">' . e($name) . '</a>
+                                    <div class="cust-email">' . e($email) . '</div>
+                                </div>
+                            </div>';
                 })
-                // ->addColumn('loyalty', function ($row) {
-                //     $level = ucfirst($row->readable_loyalty_level);
-                //     $color = match ($row->readable_loyalty_level) {
-                //         '1' => 'secondary',
-                //         '2' => 'warning',
-                //         '3' => 'info',
-                //         '4' => 'success',
-                //         '5' => 'dark',
-                //         default => 'secondary',
-                //     };
-                //     return '<span class="badge bg-' . $color . '">' . $level . '</span>';
-                // })
+                ->editColumn('channel', fn($row) => $row->readable_channel)
+                ->addColumn('category', fn($row) => $this->readableCategory($row->category))
+                ->addColumn('orders', fn($row) => (int) $row->registrations_count)
+                ->addColumn('created_at', fn($row) => $row->created_at
+                    ? $row->created_at->locale('id')->diffForHumans()   // "3 hari yang lalu"
+                    : '-')
+                ->addColumn('last_contact', fn($row) => $row->last_contact
+                    ? $row->last_contact->locale('id')->diffForHumans()   // "3 hari yang lalu"
+                    : '-')
                 ->addColumn('loyalty', function ($row) {
-
-                    $color = match ($row->readable_loyalty_level) {
-                        '1' => 'secondary',
-                        '2' => 'warning',
-                        '3' => 'info',
-                        '4' => 'success',
-                        '5' => 'dark',
-                        default => 'secondary',
-                    };
-
-                    return '<span class="badge bg-' . $color . '">' . $row->readable_loyalty_level . '</span>';
+                    // NOTE: pakai angka loyalty_level untuk warna (bukan teks),
+                    // karena sebelumnya match('1','2',...) tidak pernah cocok dengan teks "Lead", dst.
+                    $level = (int) $row->loyalty_level;
+                    return '<span class="lv-badge lv-' . $level . '">' . e($row->readable_loyalty_level) . '</span>';
                 })
                 ->addColumn('action', function ($customer) {
-                    $buttons = '';
+                    $buttons = '<div class="d-flex justify-content-end gap-1">';
                     if (ActiveRole::hasPermission('ubah data member')) {
-                        $buttons .= '<a href="' . route('members.edit', $customer->id) . '" class="btn btn-icon btn-sm btn-warning me-1" title="Ubah">
-                                        <i class="ti ti-edit"></i>
-                                    </a>';
+                        $buttons .= '<a href="' . route('members.edit', $customer->id) . '" class="btn btn-icon btn-sm btn-ghost-dark" title="Ubah"><i class="ti ti-edit"></i></a>';
                     }
                     if (ActiveRole::hasPermission('lihat data member')) {
-                        $buttons .= '<a href="' . route('members.show', $customer->id) . '" class="btn btn-icon btn-sm btn-primary me-1" title="Lihat">
-                                        <i class="ti ti-eye"></i>
-                                    </a>';
-
+                        $buttons .= '<a href="' . route('members.show', $customer->id) . '" class="btn btn-icon btn-sm btn-ghost-dark" title="Lihat"><i class="ti ti-eye"></i></a>';
                     }
+                    // if (auth()->user()->can('lihat data crm')) {
+                    //     $buttons .= '<a href="' . route('crm.customers.show', $customer->id) . '" class="btn btn-icon btn-sm btn-ghost-dark" title="CRM"><i class="ti ti-address-book"></i></a>';
+                    // }
                     if (ActiveRole::hasPermission('hapus data member')) {
-                        $buttons .= '<button data-id="' . $customer->id . '" class="btn btn-icon btn-sm btn-danger delete-member" title="Hapus">
-                                        <i class="ti ti-trash"></i>
-                                    </button>';
+                        $buttons .= '<button data-id="' . $customer->id . '" class="btn btn-icon btn-sm btn-ghost-danger delete-customer" title="Hapus"><i class="ti ti-trash"></i></button>';
                     }
-                    return $buttons;
+                    return $buttons . '</div>';
                 })
-                ->rawColumns(['fullname', 'action', 'loyalty'])
+                ->rawColumns(['customer', 'loyalty', 'action'])
+                ->with('stats', $this->loyaltyStats($baseQuery)) // supaya kartu ikut ter-update setelah hapus
                 ->make(true);
         }
-
-        return view('members.index');
+    
+        return view('members.index', [
+            'stats' => $this->loyaltyStats($baseQuery),
+        ]);
     }
-
+        private function loyaltyStats($baseQuery): array
+    {
+        $counts = (clone $baseQuery)
+            ->toBase()
+            ->reorder()
+            ->selectRaw('loyalty_level, COUNT(*) as total')
+            ->groupBy('loyalty_level')
+            ->pluck('total', 'loyalty_level');
+    
+        $stats = [];
+        foreach (range(1, 6) as $level) {
+            $stats[$level] = (int) ($counts[$level] ?? 0);
+        }
+    
+        return $stats;
+    }
     private function readableCategory($value)
     {
         return match ((int) $value) {

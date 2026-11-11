@@ -42,9 +42,9 @@ class Customer extends Model
     return $this->belongsTo(PostalCode::class, 'postal_code_id');
 }
 
-    public function projects()
+public function registrations()
 {
-    return $this->hasMany(Project::class);
+    return $this->hasMany(EventRegistration::class, 'user_id', 'user_id');
 }
 
 public function scopeLoyalty($query, $level)
@@ -98,10 +98,11 @@ public static function generateNic(): string
     {
     return [
         1 => 'Lead',
-        2 => 'New Member',
-        3 => 'Silver',
-        4 => 'Gold',
-        5 => 'Platinum',
+        2 => 'Prospek',
+        3 => 'New Member',
+        4 => 'Silver',
+        5 => 'Gold',
+        6 => 'Platinum',
     ][$this->loyalty_level] ?? 'Tidak diketahui';
     }
 
@@ -112,7 +113,7 @@ public static function generateNic(): string
         2 => 'Perusahaan',
         3 => 'Instansi',
         4 => 'Lainnya',
-    ][$this->loyalty_level] ?? 'Tidak diketahui';
+    ][$this->category] ?? 'Tidak diketahui';
     }
 //     public function getLoyaltyLevelAttribute()
 // {
@@ -150,7 +151,6 @@ public static function generateNic(): string
     protected $table = 'customers';
     protected $keyType = 'string';
     public $incrementing = false;
-    public $timestamps = false;
 
     protected $fillable = [
         'user_id',
@@ -168,6 +168,7 @@ public static function generateNic(): string
         'notes',
         'is_active',
         'signature',
+        'channel'
     ];
 
 }
