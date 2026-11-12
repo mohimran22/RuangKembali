@@ -29,7 +29,7 @@ class EventRegistrationController extends Controller
         if ($missingProfile) {
             session(['url.intended' => url()->current()]);
         }
-        $canGiveComplimentary = auth()->user()->hasAnyRole(['Super-Admin', 'NAMA-ROLE-PANITIA']);
+        $canGiveComplimentary = in_array(ActiveRole::name(), ['Super-Admin', 'Tim'], true);
         return view('events.register', compact(
             'event',
             'registration',
