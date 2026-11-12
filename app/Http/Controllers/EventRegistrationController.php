@@ -41,6 +41,14 @@ class EventRegistrationController extends Controller
 
     public function store(Request $request, Event $event)
     {
+        $type = $request->input('registration_type', 'regular');
+        $isComplimentary = in_array($type, ['sponsor', 'invitation'], true);
+
+        // Sesuaikan dengan role/permission staf di aplikasimu
+        abort_if(
+            $isComplimentary && ! in_array(ActiveRole::name(), ['Super-Admin', 'Tim'], true),
+            403
+        );
         abort_unless($event->is_published, 404);
 
         if ($event->registration_open && now()->lt($event->registration_open)) {
@@ -57,8 +65,10 @@ class EventRegistrationController extends Controller
             'participants.*.name' => ['nullable', 'string', 'max:255'],
             'participants.*.email' => ['nullable', 'email', 'max:255'],
             'participants.*.gender' => ['nullable', 'in:1,2'],
-            'payment_method' => [
-                $event->event_type !== 'free' ? 'required' : 'nullable',
+            'registration_type'  => ['nullable', 'in:regular,sponsor,invitation'],
+            'complimentary_note' => ['nullable', 'string', 'max:255'],
+            'payment_method'     => [
+                ($event->event_type !== 'free' && ! $isComplimentary) ? 'required' : 'nullable',
                 'in:transfer,gateway',
             ],
             'transaction_code' => ['nullable', 'string'],
@@ -66,10 +76,12 @@ class EventRegistrationController extends Controller
 
         foreach ($validated['participants'] as $p) {
             $hasUserId = !empty($p['user_id']);
-            $hasGuestInfo = !empty($p['name']) && !empty($p['email']) && !empty($p['gender']);
+            $hasGuestInfo = !empty($p['name'])
+                && !empty($p['gender'])
+                && ($isComplimentary || !empty($p['email']));
 
             if (!$hasUserId && !$hasGuestInfo) {
-                return back()->withInput()->with('error', 'Setiap peserta harus berupa user terdaftar, atau diisi nama, email, dan jenis kelamin.');
+                return back()->withInput()->with('error', 'Setiap peserta harus berupa user terdaftar, atau diisi nama, ' . ($isComplimentary ? '' : 'email, ') . 'dan jenis kelamin.');
             }
         }
         $userIds = array_values(array_filter(array_column($validated['participants'], 'user_id')));
@@ -91,7 +103,8 @@ class EventRegistrationController extends Controller
             ->where('status', '!=', 'cancelled')
             ->exists();
 
-        if (ActiveRole::name() !== 'Super-Admin'
+        if (! $isComplimentary
+            && ActiveRole::name() !== 'Super-Admin'
             && !$iAmRegistered
             && !in_array(auth()->id(), $userIds)) {
             return back()->withInput()->with('error', 'Kamu wajib ikut sebagai salah satu peserta.');
@@ -105,7 +118,7 @@ class EventRegistrationController extends Controller
             if ($incomplete->contains('id', auth()->id())) {
                 session(['url.intended' => route('events.register', $event->slug)]);
 
-                return redirect()->route('profile.edit')->with(
+                return redirect()->route('member.profile')->with(
                     'error',
                     'Lengkapi data dirimu dulu: ' . implode(', ', auth()->user()->missingProfileFields()) . '.'
                 );
@@ -124,13 +137,16 @@ class EventRegistrationController extends Controller
             }
         }
         $totalParticipants = count($validated['participants']);
-        $pricePerParticipant = $event->event_type === 'free' ? 0 : $event->price;
-        $totalAmount = $pricePerParticipant * $totalParticipants;
+       
         $transactionCode = $request->transaction_code;
 
         if (!$transactionCode || Transaction::where('transaction_code', $transactionCode)->exists()) {
             $transactionCode = $this->generateTransactionCode();
         }
+        $paidImmediately = $event->event_type === 'free' || $isComplimentary;
+
+        $pricePerParticipant = $paidImmediately ? 0 : $event->price;
+        $totalAmount = $pricePerParticipant * $totalParticipants;
         DB::beginTransaction();
 
         try {
@@ -175,10 +191,12 @@ class EventRegistrationController extends Controller
                 'event_id' => $event->id,
                 'registered_by' => auth()->id(),
                 'total_amount' => $totalAmount,
-                'expires_at' => $event->event_type === 'free' ? null : now()->addDay(),
-                'payment_method' => $request->payment_method,
-                'status' => $event->event_type === 'free' ? 'paid' : 'pending',
-                'paid_at' => $event->event_type === 'free' ? now() : null,
+                'payment_method' => $isComplimentary ? null : $request->payment_method,
+                'registration_type'  => $type,
+                'complimentary_note' => $isComplimentary ? $request->complimentary_note : null,
+                'status'     => $paidImmediately ? 'paid' : 'pending',
+                'paid_at'    => $paidImmediately ? now() : null,
+                'expires_at' => $paidImmediately ? null : now()->addDay(),
             ]);
 
             // 2. Buat registrasi per peserta, link ke transaksi
@@ -189,14 +207,14 @@ class EventRegistrationController extends Controller
                     'event_id' => $event->id,
                     'user_id' => $isGuest ? null : $p['user_id'],
                     'guest_name' => $isGuest ? $p['name'] : null,
-                    'guest_email' => $isGuest ? $p['email'] : null,
+                    'guest_email'  => $isGuest && !empty($p['email']) ? strtolower($p['email']) : null,
                     'registered_by' => auth()->id(),
                     'transaction_id' => $transaction->id,
                     'ticket_code' => $this->generateTicketCode(),
                     'price' => $pricePerParticipant,
-                    'status' => $event->event_type === 'free' ? 'paid' : 'pending',
                     'registered_at' => now(),
                     'guest_gender' => $isGuest ? (int) $p['gender'] : null,
+                    'status' => $paidImmediately ? 'paid' : 'pending',
                 ]);
             }
 
@@ -218,10 +236,12 @@ class EventRegistrationController extends Controller
             } catch (\Throwable $mailError) {
                 report($mailError);
             }
-            if ($event->event_type === 'free') {
+            if ($paidImmediately) {
                 return redirect()
                     ->route('events.register', $event->slug)
-                    ->with('success', 'Pendaftaran event berhasil!');
+                    ->with('success', $isComplimentary
+                        ? 'Peserta ' . ($type === 'sponsor' ? 'sponsor' : 'undangan') . ' berhasil didaftarkan.'
+                        : 'Pendaftaran event berhasil!');
             }
 
             // Arahkan ke menu Transaksi untuk upload bukti / lanjut bayar

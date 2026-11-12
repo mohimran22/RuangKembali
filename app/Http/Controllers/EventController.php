@@ -1085,11 +1085,14 @@ public function show(Event $event)
 
     abort_unless($canViewAll || $event->is_published, 404);
     $registrations = $event->registrations()
-        ->with('user')
+        ->with(['user', 'transaction:id,status'])
         ->when(!$canViewAll, function ($q) use ($user) {
             $q->where(function ($w) use ($user) {
-                $w->where('user_id', $user->id)           // atas nama saya
-                  ->orWhere('registered_by', $user->id);  // yang saya daftarkan
+                $w->where('user_id', $user->id)
+                    ->orWhere(function ($w2) use ($user) {
+                        $w2->where('registered_by', $user->id)
+                            ->whereHas('transaction', fn ($t) => $t->where('registration_type', 'regular'));
+                    });
             });
         })
         ->latest()
@@ -1102,7 +1105,10 @@ public function show(Event $event)
         'unknown' => $counted->filter(fn ($r) => !in_array((int) $r->participant_gender, [1, 2], true))->count(),
         'pending' => $registrations->where('status', 'pending')->count(),
     ];
-    return view('events.show', compact('event', 'registrations', 'canViewAll', 'genderSummary'));
+    $unknownGender = $counted
+        ->filter(fn ($r) => !in_array((int) $r->participant_gender, [1, 2], true))
+        ->values();
+    return view('events.show', compact('event', 'registrations', 'canViewAll', 'genderSummary', 'unknownGender'));
 }
 public function destroy(Event $event)
 {

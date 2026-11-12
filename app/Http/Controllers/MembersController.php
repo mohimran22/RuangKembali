@@ -58,28 +58,28 @@ class MembersController extends Controller
             return DataTables::of($customers)
                 ->addIndexColumn()
                 ->addColumn('customer', function ($row) {
-    $name     = Str::title($row->user->fullname ?? '-');
-    $email    = $row->user->email ?? '-';
-    $initials = collect(explode(' ', trim($name)))
-        ->filter()->take(2)
-        ->map(fn($w) => mb_substr($w, 0, 1))
-        ->implode('');
-    $url   = route('members.show', $row->id);
-    $photo = $row->user?->photo;
+                    $name     = Str::title($row->user->fullname ?? '-');
+                    $email    = $row->user->email ?? '-';
+                    $initials = collect(explode(' ', trim($name)))
+                        ->filter()->take(2)
+                        ->map(fn($w) => mb_substr($w, 0, 1))
+                        ->implode('');
+                    $url   = route('members.show', $row->id);
+                    $photo = $row->user?->photo;
 
-    // Ada foto => tampilkan foto, kalau tidak => avatar inisial
-    $avatar = $photo
-        ? '<img src="' . e(asset('storage/' . ltrim($photo, '/'))) . '" alt="" class="cust-avatar cust-avatar-img" loading="lazy">'
-        : '<span class="cust-avatar av-' . (crc32($name) % 5) . '">' . e(strtoupper($initials)) . '</span>';
+                    // Ada foto => tampilkan foto, kalau tidak => avatar inisial
+                    $avatar = $photo
+                        ? '<img src="' . e(asset('storage/' . ltrim($photo, '/'))) . '" alt="" class="cust-avatar cust-avatar-img" loading="lazy">'
+                        : '<span class="cust-avatar av-' . (crc32($name) % 5) . '">' . e(strtoupper($initials)) . '</span>';
 
-    return '<div class="d-flex align-items-center">
-                ' . $avatar . '
-                <div class="ms-3">
-                    <a href="' . $url . '" class="cust-name">' . e($name) . '</a>
-                    <div class="cust-email">' . e($email) . '</div>
-                </div>
-            </div>';
-})
+                    return '<div class="d-flex align-items-center">
+                                ' . $avatar . '
+                                <div class="ms-3">
+                                    <a href="' . $url . '" class="cust-name">' . e($name) . '</a>
+                                    <div class="cust-email">' . e($email) . '</div>
+                                </div>
+                            </div>';
+                })
                 ->editColumn('channel', fn($row) => $row->readable_channel)
                 ->addColumn('category', fn($row) => $this->readableCategory($row->category))
                 ->addColumn('orders', fn($row) => (int) $row->registrations_count)

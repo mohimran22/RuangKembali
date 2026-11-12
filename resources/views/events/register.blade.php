@@ -233,20 +233,20 @@
 
                             @csrf
                             @if($canGiveComplimentary && $event->event_type !== 'free')
-    <div class="mb-4">
-        <label class="form-label">Jenis Pendaftaran</label>
-        <select name="registration_type" class="form-select" id="registrationType">
-            <option value="regular">Reguler (bayar)</option>
-            <option value="sponsor">Sponsor (gratis)</option>
-            <option value="invitation">Undangan (gratis)</option>
-        </select>
+                                <div class="mb-4">
+                                    <label class="form-label">Jenis Pendaftaran</label>
+                                    <select name="registration_type" class="form-select" id="registrationType">
+                                        <option value="regular">Reguler (bayar)</option>
+                                        <option value="sponsor">Sponsor (gratis)</option>
+                                        <option value="invitation">Undangan (gratis)</option>
+                                    </select>
 
-        <div class="mt-2 d-none" id="complimentaryNoteWrap">
-            <input type="text" name="complimentary_note" class="form-control"
-                   placeholder="Contoh: Sponsor PT ABC / Undangan Ustadz X">
-        </div>
-    </div>
-@endif
+                                    <div class="mt-2 d-none" id="complimentaryNoteWrap">
+                                        <input type="text" name="complimentary_note" class="form-control"
+                                            placeholder="Contoh: Sponsor PT ABC / Undangan Ustadz X">
+                                    </div>
+                                </div>
+                            @endif
                             <div class="mb-4">
 
                                 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -259,13 +259,13 @@
 
                                 <div class="alert alert-info">
                                     <i class="ti ti-info-circle me-2"></i>
-                                    Peserta yang ditambahkan harus sudah memiliki akun terdaftar di sistem.
+                                    Peserta bisa dipilih dari akun terdaftar, atau ditambahkan manual jika belum punya akun.
                                 </div>
 
                                 <div id="participantsWrapper">
                                     @if(!$registration && \App\Helpers\ActiveRole::name() !== 'Super-Admin')
                                         {{-- Peserta pertama = akun yang login, tidak bisa dihapus --}}
-    <div class="card card-sm border mb-3 participant-row" data-user-id="{{ auth()->id() }}">
+                                        <div class="card card-sm border mb-3 participant-row participant-self" data-user-id="{{ auth()->id() }}">
                                             <div class="card-body d-flex justify-content-between align-items-center">
                                                 <div>
                                                     <div class="text-secondary small fw-semibold">Kamu (Pendaftar)</div>
@@ -273,7 +273,7 @@
                                                     <div class="text-secondary small">{{ auth()->user()->email }}</div>
                                                 </div>
                                             </div>
-        <input type="hidden" name="participants[0][user_id]" value="{{ auth()->id() }}">
+                                                <input type="hidden" name="participants[0][user_id]" value="{{ auth()->id() }}">
                                         </div>
                                     @endif
 
@@ -311,7 +311,7 @@
                                             </div>
                                             <div class="col-md-2">
                                                 <select class="form-select form-select-sm" id="guestGenderSelect">
-                                                    <option value="">Gender</option>
+                                                    <option value="">Pilih</option>
                                                     <option value="1">Laki-laki</option>
                                                     <option value="2">Perempuan</option>
                                                 </select>
@@ -471,20 +471,23 @@
 
     let debounceTimer = null;
 
-    function getSelectedUserIds() {
-        return Array.from(wrapper.querySelectorAll('.participant-row'))
-            .map(row => row.dataset.userId);
-    }
     function isValidEmail(email) {
         return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
     }
     // 1) helper kecil (taruh di dekat isValidEmail)
     const GENDER_LABEL = { '1': 'Laki-laki', '2': 'Perempuan' };
-
+    const typeSelect = document.getElementById('registrationType');
+    const isComplimentary = () => typeSelect && typeSelect.value !== 'regular';
+    const activeRows = () => Array.from(wrapper.querySelectorAll('.participant-row'))
+        .filter(r => !r.hasAttribute('data-off'));
+    
+    function getSelectedUserIds() {
+        return activeRows().map(row => row.dataset.userId).filter(Boolean);
+    }
     function esc(text) {
-        const d = document.createElement('div');
-        d.textContent = text ?? '';
-        return d.innerHTML;
+        return String(text ?? '')
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
 
     const participantError = document.getElementById('participantError');
@@ -504,20 +507,19 @@
         const errorBox = document.getElementById('guestFormError');
         errorBox.style.display = 'none';
 
-        if (!name || !email || !gender) {
-            errorBox.textContent = 'Nama, email, dan jenis kelamin wajib diisi.';
+        if (!name || !gender || (!isComplimentary() && !email)) {
+            errorBox.textContent = isComplimentary()
+                ? 'Nama dan jenis kelamin wajib diisi.'
+                : 'Nama, email, dan jenis kelamin wajib diisi.';
             errorBox.style.display = 'block';
             return;
         }
-        if (!isValidEmail(email)) {
+        if (email && !isValidEmail(email)) {
             errorBox.textContent = 'Format email tidak valid.';
             errorBox.style.display = 'block';
             return;
         }
-        if (getSelectedUserIds().length && getSelectedUserIds().includes(email)) {
-            return;
-        }
-        if (getSelectedGuestEmails().includes(email.toLowerCase())) {
+        if (email && getSelectedGuestEmails().includes(email.toLowerCase())) {
             errorBox.textContent = 'Peserta dengan email ini sudah ditambahkan.';
             errorBox.style.display = 'block';
             return;
@@ -532,7 +534,7 @@
             <div class="card-body d-flex justify-content-between align-items-center">
                 <div>
                     <div class="fw-semibold">${esc(name)}</div>
-                    <div class="text-secondary small">${esc(email)}</div>
+                    ${email ? `<div class="text-secondary small">${esc(email)}</div>` : ''}
                     <span class="badge bg-orange-lt small">Belum punya akun</span>
                     <span class="badge bg-secondary-lt small">${GENDER_LABEL[gender]}</span>
                 </div>
@@ -548,26 +550,72 @@
         wrapper.appendChild(row);
         renumberParticipants();
     }
+    if (typeSelect) {
+    const paymentSection = document.getElementById('paymentSection');
+    const noteWrap = document.getElementById('complimentaryNoteWrap');
+    const selfRow = wrapper.querySelector('.participant-self');
+    const submitBtn = document.getElementById('submitBtn');
+    const submitInitiallyDisabled = submitBtn.disabled;
 
+    typeSelect.addEventListener('change', function () {
+        const free = isComplimentary();
+
+        noteWrap.classList.toggle('d-none', !free);
+
+        if (paymentSection) {
+            paymentSection.classList.toggle('d-none', free);
+            paymentSection.querySelectorAll('input[name="payment_method"]').forEach(function (r) {
+                r.required = !free && r.value === 'transfer';
+                if (free) r.checked = false;
+            });
+        }
+
+        if (selfRow) {
+            selfRow.classList.toggle('d-none', free);
+            free ? selfRow.setAttribute('data-off', '') : selfRow.removeAttribute('data-off');
+        }
+
+        // data diri staf tidak relevan saat mendaftarkan tamu
+        submitBtn.disabled = free ? false : submitInitiallyDisabled;
+
+        renumberParticipants();
+    });
+}
     function renumberParticipants() {
         const rows = wrapper.querySelectorAll('.participant-row');
+        let index = 0;
 
-        rows.forEach(function (row, index) {
+        rows.forEach(function (row) {
+            const off = row.hasAttribute('data-off');
             row.querySelectorAll('input[type="hidden"]').forEach(function (input) {
-                if (input.name.includes('[user_id]')) {
-                    input.name = `participants[${index}][user_id]`;
-                } else if (input.name.includes('[name]')) {
-                    input.name = `participants[${index}][name]`;
-                } else if (input.name.includes('[email]')) {
-                    input.name = `participants[${index}][email]`;
-                } else if (input.name.includes('[gender]')) {
-                    input.name = `participants[${index}][gender]`;
-                }
+                input.disabled = off;                 // baris off tidak ikut ter-submit
+                if (off) return;
+                input.name = input.name.replace(/participants\[[^\]]*\]/, `participants[${index}]`);
             });
+            if (!off) index++;
         });
 
-        updateTotalPrice(rows.length);
+        updateTotalPrice(index);
     }
+    // function renumberParticipants() {
+    //     const rows = wrapper.querySelectorAll('.participant-row');
+
+    //     rows.forEach(function (row, index) {
+    //         row.querySelectorAll('input[type="hidden"]').forEach(function (input) {
+    //             if (input.name.includes('[user_id]')) {
+    //                 input.name = `participants[${index}][user_id]`;
+    //             } else if (input.name.includes('[name]')) {
+    //                 input.name = `participants[${index}][name]`;
+    //             } else if (input.name.includes('[email]')) {
+    //                 input.name = `participants[${index}][email]`;
+    //             } else if (input.name.includes('[gender]')) {
+    //                 input.name = `participants[${index}][gender]`;
+    //             }
+    //         });
+    //     });
+
+    //     updateTotalPrice(rows.length);
+    // }
     const toggleGuestFormBtn = document.getElementById('toggleGuestFormBtn');
     const guestFormBox = document.getElementById('guestFormBox');
     if (toggleGuestFormBtn) {
@@ -591,7 +639,7 @@
         });
     }
     function updateTotalPrice(count) {
-        const total = pricePerParticipant * count;
+        const total = isComplimentary() ? 0 : pricePerParticipant * count;
 
         const countLabel = document.getElementById('participantCountLabel');
         const totalLabel = document.getElementById('totalPriceLabel');
@@ -709,16 +757,22 @@
         }
     });
     const form = document.getElementById('registrationForm');
-
     form.addEventListener('submit', function (e) {
-        const rows = wrapper.querySelectorAll('.participant-row');
-
-        if (rows.length === 0) {
+        if (activeRows().length === 0) {
             e.preventDefault();
             alert('Tambahkan minimal 1 peserta sebelum mendaftar.');
             searchInput.focus();
         }
     });
+    // form.addEventListener('submit', function (e) {
+    //     const rows = wrapper.querySelectorAll('.participant-row');
+
+    //     if (rows.length === 0) {
+    //         e.preventDefault();
+    //         alert('Tambahkan minimal 1 peserta sebelum mendaftar.');
+    //         searchInput.focus();
+    //     }
+    // });
     renumberParticipants();
 })();
 </script> 

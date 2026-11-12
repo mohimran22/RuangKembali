@@ -24,7 +24,7 @@ use App\Http\Controllers\TeamController;
 use App\Http\Controllers\InvestorController;
 use App\Http\Controllers\PartnerController;
 use App\Http\Controllers\ProductController;
-use App\Http\Controllers\WarehouseController;
+use App\Http\Controllers\TicketController;
 use App\Http\Controllers\ProductColorController;
 use App\Http\Controllers\EventSpeakerController;
 use App\Http\Controllers\ProductTypeController;
@@ -288,11 +288,14 @@ Route::middleware(['auth', 'active.permission:lihat daftar event|lihat data even
 Route::get('/events/{event:event_code}', [EventController::class, 'showPublic'])
     ->name('events.show')
     ->where('event', '^EVT\d{7}$');
+Route::get('/tiket/{registration}', [TicketController::class, 'show'])
+    ->middleware(['signed', 'throttle:60,1'])
+    ->name('tickets.public');
     Route::middleware('auth', 'verified')->group(function () {
-Route::get('/transactions', [TransactionController::class, 'index'])->name('transactions.index');
-Route::get('/transactions/{transaction}', [TransactionController::class, 'show'])->name('transactions.show');
-Route::post('/transactions/{transaction}/upload-proof', [TransactionController::class, 'uploadProof'])
-    ->name('transactions.upload-proof');
+        Route::get('/transactions', [TransactionController::class, 'index'])->name('transactions.index');
+        Route::get('/transactions/{transaction}', [TransactionController::class, 'show'])->name('transactions.show');
+        Route::post('/transactions/{transaction}/upload-proof', [TransactionController::class, 'uploadProof'])
+            ->name('transactions.upload-proof');
     });
 Route::middleware('active.role:Super-Admin|Tim')->group(function () {
     Route::get('/transactions/{transaction}/edit', [TransactionController::class, 'edit'])

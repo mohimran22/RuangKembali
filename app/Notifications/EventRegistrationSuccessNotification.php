@@ -68,9 +68,13 @@ class EventRegistrationSuccessNotification extends Notification
 
         // ===== Pembayaran =====
         if ($isPaid) {
-            return $mail
-                ->line('Event ini gratis, jadi pendaftaran kamu sudah langsung terkonfirmasi. Sampai jumpa di acaranya!')
-                ->action('Lihat Detail Transaksi', $url);
+            $text = match ($t->registration_type) {
+                'sponsor'    => 'Peserta didaftarkan sebagai tamu sponsor' . ($t->complimentary_note ? ' (' . $t->complimentary_note . ')' : '') . '. Tiket sudah aktif.',
+                'invitation' => 'Peserta didaftarkan sebagai tamu undangan' . ($t->complimentary_note ? ' (' . $t->complimentary_note . ')' : '') . '. Tiket sudah aktif.',
+                default      => 'Event ini gratis, jadi pendaftaran kamu sudah langsung terkonfirmasi. Sampai jumpa di acaranya!',
+            };
+
+            return $mail->line($text)->action('Lihat Detail Transaksi', $url);
         }
 
         $mail->line('## Pembayaran');

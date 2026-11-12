@@ -1077,57 +1077,171 @@
             tabindex="0">
 
             <div class="card">
-                <div class="card-header event-participants-header">
+                <div class="card-header event-participants-header d-block">
 
-                    <div>
-                        <h3 class="card-title mb-1">
-                            <i class="ti ti-users me-2"></i>
-                            Daftar Peserta Event {{ $event->name }}
-                        </h3>
+                    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
 
-                        <div class="text-secondary small">
-                            Peserta yang telah melakukan pendaftaran pada event ini.
-                        </div>
-                    </div>
+                        <div>
+                            <h3 class="card-title mb-1">
+                                <i class="ti ti-users me-2"></i>
+                                Daftar Peserta Event {{ $event->name }}
+                            </h3>
 
-                    <div class="header-actions">
-
-                        @if($canViewAll)
-
-                            <button type="button"
-                                    class="btn btn-success btn-sm"
-                                    data-bs-toggle="modal"
-                                    data-bs-target="#checkinModal">
-                                <i class="ti ti-scan me-1"></i>
-                                Check-in Peserta
-                            </button>
-
-                        @endif
-                        @if($canViewAll)
-                            <div class="d-flex flex-wrap gap-2 mb-3">
-                                <span class="badge bg-blue-lt">Laki-laki: {{ $genderSummary['male'] }}</span>
-                                <span class="badge bg-pink-lt">Perempuan: {{ $genderSummary['female'] }}</span>
-                                @if($genderSummary['unknown'] > 0)
-                                    <span class="badge bg-secondary-lt">Gender belum diisi: {{ $genderSummary['unknown'] }}</span>
-                                @endif
-                                <span class="badge bg-warning-lt">Belum lunas: {{ $genderSummary['pending'] }} (belum dihitung)</span>
+                            <div class="text-secondary small">
+                                Peserta yang telah melakukan pendaftaran pada event ini.
                             </div>
-                        @endif
-                        <span class="badge bg-primary-lt">
-                            {{ $registrations->count() }} Peserta
-                        </span>
+                        </div>
+
+                        <div class="header-actions">
+                            @if($canViewAll)
+                                <button type="button"
+                                        class="btn btn-success btn-sm"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#checkinModal">
+                                    <i class="ti ti-scan me-1"></i>
+                                    Check-in Peserta
+                                </button>
+                            @endif
+                        </div>
 
                     </div>
 
                 </div>
 
                 <div class="card-body">
+                    <style>
+    .part-stat {
+        height: 100%;
+        padding: .875rem 1rem;
+        border: 1px solid var(--tblr-border-color);
+        border-radius: .75rem;
+        background: var(--tblr-bg-surface);
+    }
+    .part-stat-label { font-size: .8125rem; color: var(--tblr-secondary); }
+    .part-stat-value { margin-top: .125rem; font-size: 1.5rem; font-weight: 700; line-height: 1.2; }
 
+    @media (max-width: 767.98px) {
+        .participants-table thead { display: none; }
+
+        .participants-table,
+        .participants-table tbody,
+        .participants-table tr,
+        .participants-table td { display: block; width: 100%; }
+
+        .participants-table tr {
+            margin-bottom: .75rem;
+            padding: .5rem .875rem;
+            border: 1px solid var(--tblr-border-color);
+            border-radius: .75rem;
+            background: var(--tblr-bg-surface);
+        }
+
+        .participants-table td {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            padding: .375rem 0;
+            border: 0;
+            text-align: right;
+        }
+
+        .participants-table td::before {
+            content: attr(data-label);
+            flex: none;
+            font-size: .75rem;
+            color: var(--tblr-secondary);
+            text-align: left;
+        }
+    }
+</style>
+
+@if($canViewAll)
+
+    <div class="row g-3 mb-3">
+        <div class="col-6 col-lg-3">
+            <div class="part-stat">
+                <div class="part-stat-label"><i class="ti ti-users me-1"></i>Total Pendaftar</div>
+                <div class="part-stat-value">{{ $registrations->count() }}</div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="part-stat">
+                <div class="part-stat-label"><i class="ti ti-gender-male me-1"></i>Laki-laki</div>
+                <div class="part-stat-value text-blue">{{ $genderSummary['male'] }}</div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="part-stat">
+                <div class="part-stat-label"><i class="ti ti-gender-female me-1"></i>Perempuan</div>
+                <div class="part-stat-value text-pink">{{ $genderSummary['female'] }}</div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="part-stat">
+                <div class="part-stat-label"><i class="ti ti-clock me-1"></i>Belum Lunas</div>
+                <div class="part-stat-value text-warning">{{ $genderSummary['pending'] }}</div>
+            </div>
+        </div>
+    </div>
+
+    @if($genderSummary['unknown'] > 0)
+        <div class="alert alert-warning mb-3">
+            <div class="d-flex">
+                <i class="ti ti-alert-triangle fs-2 me-3"></i>
+                <div class="flex-fill">
+                    <h4 class="alert-title">
+                        {{ $genderSummary['unknown'] }} peserta belum memiliki data gender
+                    </h4>
+                    <div class="text-secondary">
+                        Jumlah laki-laki dan perempuan di atas belum lengkap, sehingga pembagian kursi belum akurat.
+                        Minta peserta berikut melengkapi data diri di profilnya.
+                    </div>
+
+                    <a class="btn btn-sm btn-warning mt-2" data-bs-toggle="collapse" href="#unknownGenderList">
+                        Lihat daftar peserta
+                    </a>
+
+                    <div class="collapse mt-3" id="unknownGenderList">
+                        @foreach($unknownGender as $reg)
+                            @php
+                                $phone = preg_replace('/\D/', '', $reg->user?->phone ?? '');
+                                if ($phone !== '' && str_starts_with($phone, '0')) {
+                                    $phone = '62' . substr($phone, 1);
+                                }
+                                $waText = "Halo {$reg->participant_name}, mohon lengkapi data diri "
+                                    . "(jenis kelamin, tanggal lahir, dan alamat) di profil Ruang Kembali "
+                                    . "untuk pembagian kursi event {$event->name}. Terima kasih.";
+                            @endphp
+
+                            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 py-2 border-top">
+                                <span class="fw-semibold">{{ $reg->participant_name }}</span>
+
+                                @if($phone !== '')
+                                    <a href="https://wa.me/{{ $phone }}?text={{ rawurlencode($waText) }}"
+                                       target="_blank" rel="noopener"
+                                       class="btn btn-sm btn-outline-success">
+                                        <i class="ti ti-brand-whatsapp me-1"></i> Ingatkan
+                                    </a>
+                                @elseif(!$reg->user_id)
+                                    <span class="badge bg-orange-lt">Peserta tamu</span>
+                                @else
+                                    <span class="text-secondary small">Nomor HP belum diisi</span>
+                                @endif
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
+@endif
                     @if($registrations->count())
 
                         <div class="table-responsive">
 
-                            <table class="table table-vcenter">
+                            <table class="table table-vcenter participants-table">
 
                                 <thead>
                                     <tr>
@@ -1148,11 +1262,11 @@
                                         <tr data-registration-id="{{ $registration->id }}"
                                             data-ticket-code="{{ $registration->ticket_code }}">
 
-                                            <td>
+                                            <td data-label="No">  
                                                 {{ $index + 1 }}
                                             </td>
 
-                                            <td>
+                                            <td data-label="Peserta">
                                                 <div class="d-flex align-items-center">
 
                                                     <span class="avatar me-2">
@@ -1167,8 +1281,16 @@
 
                                                 </div>
                                             </td>
-                                            <td>{{ $registration->participant_gender_label }}</td>
-                                            <td>
+                                            <td data-label="Gender">
+                                                @if(in_array((int) $registration->participant_gender, [1, 2], true))
+                                                    {{ $registration->participant_gender_label }}
+                                                @else
+                                                    <span class="badge bg-warning-lt">
+                                                        <i class="ti ti-alert-triangle me-1"></i>Belum diisi
+                                                    </span>
+                                                @endif
+                                            </td>
+                                            <td data-label="Pembayaran">  
 
                                                 @if(in_array($registration->status, ['paid', 'confirmed', 'attended']))
 
@@ -1198,11 +1320,36 @@
                                                 @endif
 
                                             </td>
-                                            <td>
+                                            <td data-label="Kode Tiket">  
                                                 <div class="d-flex align-items-center gap-2">
                                                     <span>{{ $registration->ticket_code }}</span>
 
                                                     @if(in_array($registration->status, ['paid', 'confirmed', 'attended']))
+                                                    @if($canViewAll)
+                                                        @php
+                                                            $ticketUrl = \Illuminate\Support\Facades\URL::temporarySignedRoute(
+                                                                'tickets.public',
+                                                                $event->end_at->copy()->addDay(),
+                                                                ['registration' => $registration->id]
+                                                            );
+                                                        @endphp
+
+                                                        <button type="button"
+                                                                class="btn btn-icon btn-sm btn-outline-secondary btn-copy-ticket"
+                                                                data-url="{{ $ticketUrl }}"
+                                                                title="Salin link tiket">
+                                                            <i class="ti ti-link"></i>
+                                                        </button>
+
+                                                        <button type="button"
+                                                                class="btn btn-icon btn-sm btn-outline-success btn-wa-ticket"
+                                                                data-url="{{ $ticketUrl }}"
+                                                                data-name="{{ $registration->participant_name }}"
+                                                                data-event="{{ $event->name }}"
+                                                                title="Kirim via WhatsApp">
+                                                            <i class="ti ti-brand-whatsapp"></i>
+                                                        </button>
+                                                    @else
                                                         <button type="button"
                                                                 class="btn btn-icon btn-sm btn-outline-secondary"
                                                                 data-bs-toggle="modal"
@@ -1213,18 +1360,17 @@
                                                             <i class="ti ti-qrcode"></i>
                                                         </button>
                                                     @endif
+                                                    @endif
                                                 </div>
                                             </td>
-                                            <td>
+                                            <td data-label="Terdaftar">  
                                                 {{ ($registration->registered_at ?? $registration->created_at)?->translatedFormat('d F Y') }}
 
                                                 <div class="text-secondary small">
                                                     {{ ($registration->registered_at ?? $registration->created_at)?->format('H:i') }} WIB
                                                 </div>
-                                            </td>
-                                            
-                                            <td class="checkin-status-cell">
-
+                                            </td>     
+                                            <td class="checkin-status-cell" data-label="Check-In"> 
                                                 @if($registration->status === 'attended')
 
                                                     <span class="badge bg-success-lt">
@@ -1241,13 +1387,9 @@
                                                 @endif
 
                                             </td>
-
                                         </tr>
-
                                     @endforeach
-
                                 </tbody>
-
                             </table>
 
                         </div>
@@ -1332,19 +1474,19 @@
                         </h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-                    @unless($event->isCheckinOpen())
-                        <div class="alert alert-warning">
-                            <div class="d-flex">
-                                <i class="ti ti-clock-pause fs-2 me-3"></i>
-                                <div>
-                                    Check-in belum dibuka. Check-in hanya bisa dilakukan pada hari acara,
-                                    <strong>{{ $event->start_at->translatedFormat('d F Y') }}</strong>.
+
+                    <div class="modal-body">
+                        @unless($event->isCheckinOpen())
+                            <div class="alert alert-warning">
+                                <div class="d-flex">
+                                    <i class="ti ti-clock-pause fs-2 me-3"></i>
+                                    <div>
+                                        Check-in belum dibuka. Check-in hanya bisa dilakukan pada hari acara,
+                                        <strong>{{ $event->start_at->translatedFormat('d F Y') }}</strong>.
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    @endunless
-                    <div class="modal-body">
-
+                        @endunless
                         <div class="mb-3">
                             <label class="form-label">Kode Tiket</label>
                             <div class="input-group">
@@ -1417,7 +1559,6 @@
 
         @push('js')
         <script src="https://unpkg.com/html5-qrcode"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
         <script>
             document.addEventListener('DOMContentLoaded', function () {
 
@@ -1630,6 +1771,25 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            document.addEventListener('click', function (e) {
+    const copyBtn = e.target.closest('.btn-copy-ticket');
+    if (copyBtn) {
+        navigator.clipboard.writeText(copyBtn.dataset.url).then(() => {
+            const icon = copyBtn.querySelector('i');
+            icon.className = 'ti ti-check';
+            setTimeout(() => icon.className = 'ti ti-link', 1500);
+        });
+        return;
+    }
+
+    const waBtn = e.target.closest('.btn-wa-ticket');
+    if (waBtn) {
+        const text = `Assalamualaikum ${waBtn.dataset.name},\n\n`
+            + `Berikut tiket Anda untuk acara "${waBtn.dataset.event}". `
+            + `Tunjukkan QR pada halaman ini ke panitia saat check-in:\n${waBtn.dataset.url}`;
+        window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank', 'noopener');
+    }
+});
             const modalEl = document.getElementById('ticketQrModal');
             if (!modalEl) return;
 
