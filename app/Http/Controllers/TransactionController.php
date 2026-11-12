@@ -58,7 +58,9 @@ public function index(Request $request)
               });
         });
     }
-
+    if ($request->boolean('guest')) {
+        $query->whereHas('registrations', fn ($r) => $r->whereNull('user_id'));
+    }
     if ($request->ajax()) {
 
         return DataTables::eloquent($query)
@@ -77,25 +79,45 @@ public function index(Request $request)
                 );
             })
 
+            // ->addColumn('participants', function ($transaction) {
+
+            //     if ($transaction->registrations_count == 0) {
+            //         return '0';
+            //     }
+
+            //     $names = $transaction->registrations
+            //         ->map(function ($registration) {
+            //             return $registration->participant_name ?? '-';
+            //         })
+            //         ->filter()
+            //         ->implode(', ');
+
+            //     return $transaction->registrations_count
+            //         . ' <i class="ti ti-info-circle text-secondary ms-1"
+            //                 data-bs-toggle="tooltip"
+            //                 title="' . e($names) . '"></i>';
+            // })
             ->addColumn('participants', function ($transaction) {
 
-                if ($transaction->registrations_count == 0) {
-                    return '0';
-                }
+            if ($transaction->registrations_count == 0) {
+                return '0';
+            }
 
-                $names = $transaction->registrations
-                    ->map(function ($registration) {
-                        return $registration->participant_name ?? '-';
-                    })
-                    ->filter()
-                    ->implode(', ');
+    $names = $transaction->registrations
+        ->map(fn ($registration) => $registration->participant_name ?? '-')
+        ->filter()
+        ->implode(', ');
 
-                return $transaction->registrations_count
-                    . ' <i class="ti ti-info-circle text-secondary ms-1"
-                            data-bs-toggle="tooltip"
-                            title="' . e($names) . '"></i>';
-            })
+    $guestCount = $transaction->registrations->whereNull('user_id')->count();
 
+    return $transaction->registrations_count
+        . ' <i class="ti ti-info-circle text-secondary ms-1"
+                data-bs-toggle="tooltip"
+                title="' . e($names) . '"></i>'
+        . ($guestCount > 0
+            ? ' <span class="badge bg-orange ms-1">' . $guestCount . ' tamu</span>'
+            : '');
+})
             ->editColumn('total_amount', function ($transaction) {
                 return 'Rp ' . number_format(
                     $transaction->total_amount,
@@ -207,7 +229,18 @@ public function index(Request $request)
 
                 return $html;
             })
+            ->filterColumn('participants', function ($query, $keyword) {
+                $term = '%' . addcslashes($keyword, '%_\\') . '%';
 
+                $query->whereHas('registrations', function ($r) use ($term) {
+                    $r->where('guest_name', 'ilike', $term)
+                    ->orWhere('guest_email', 'ilike', $term)
+                    ->orWhere('ticket_code', 'ilike', $term)
+                    ->orWhereHas('user', fn ($u) => $u
+                        ->where('fullname', 'ilike', $term)
+                        ->orWhere('email', 'ilike', $term));
+                });
+            })
             ->rawColumns([
                 'participants',
                 'status_badge',

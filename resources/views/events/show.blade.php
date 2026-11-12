@@ -1110,51 +1110,19 @@
 
                 <div class="card-body">
                     <style>
-    .part-stat {
-        height: 100%;
-        padding: .875rem 1rem;
-        border: 1px solid var(--tblr-border-color);
-        border-radius: .75rem;
-        background: var(--tblr-bg-surface);
-    }
-    .part-stat-label { font-size: .8125rem; color: var(--tblr-secondary); }
-    .part-stat-value { margin-top: .125rem; font-size: 1.5rem; font-weight: 700; line-height: 1.2; }
+                        .part-stat {
+                            height: 100%;
+                            padding: .875rem 1rem;
+                            border: 1px solid var(--tblr-border-color);
+                            border-radius: .75rem;
+                            background: var(--tblr-bg-surface);
+                        }
+                        .part-stat-label { font-size: .8125rem; color: var(--tblr-secondary); }
+                        .part-stat-value { margin-top: .125rem; font-size: 1.5rem; font-weight: 700; line-height: 1.2; }
 
-    @media (max-width: 767.98px) {
-        .participants-table thead { display: none; }
-
-        .participants-table,
-        .participants-table tbody,
-        .participants-table tr,
-        .participants-table td { display: block; width: 100%; }
-
-        .participants-table tr {
-            margin-bottom: .75rem;
-            padding: .5rem .875rem;
-            border: 1px solid var(--tblr-border-color);
-            border-radius: .75rem;
-            background: var(--tblr-bg-surface);
-        }
-
-        .participants-table td {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 1rem;
-            padding: .375rem 0;
-            border: 0;
-            text-align: right;
-        }
-
-        .participants-table td::before {
-            content: attr(data-label);
-            flex: none;
-            font-size: .75rem;
-            color: var(--tblr-secondary);
-            text-align: left;
-        }
-    }
-</style>
+                        .participants-table th,
+                        .participants-table td { white-space: nowrap; }
+                    </style>
 
 @if($canViewAll)
 

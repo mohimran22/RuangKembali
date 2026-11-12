@@ -15,10 +15,17 @@
 
 <div class="container py-4" style="max-width: 420px;">
     <div class="card shadow-sm">
+
+        @if($event->poster)
+            <img src="{{ Storage::url($event->poster) }}" alt="{{ $event->name }}" class="card-img-top">
+        @endif
+
         <div class="card-body text-center">
 
-            <div class="text-secondary small mb-1">{{ $event->category?->name ?? 'Tiket Event' }}</div>
-            <h2 class="mb-3">{{ $event->name }}</h2>
+            {{-- Nama event hanya tampil kalau tidak ada poster --}}
+            @unless($event->poster)
+                <h2 class="mb-3">{{ $event->name }}</h2>
+            @endunless
 
             <div class="fw-semibold">{{ $registration->participant_name }}</div>
 

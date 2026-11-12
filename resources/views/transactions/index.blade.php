@@ -13,6 +13,14 @@
     </div>
     <div class="page-body">
         <div class="container-xl">
+            @if($isStaff)
+                <div class="mb-3">
+                    <label class="form-check form-switch mb-0">
+                        <input class="form-check-input" type="checkbox" id="filterGuest">
+                        <span class="form-check-label">Hanya transaksi yang berisi peserta tamu</span>
+                    </label>
+                </div>
+            @endif
             <div class="row row-deck row-cards">
                 <div class="col-12">
                     <div class="card">
@@ -85,9 +93,9 @@ $(function () {
     columns.push(
         {
             data: 'participants',
-            name: 'registrations_count',
+            name: 'participants',
             orderable: false,
-            searchable: false
+            searchable: true
         },
         {
             data: 'total_amount',
@@ -114,7 +122,10 @@ $(function () {
 
         ajax: {
             url: "{{ route('transactions.index') }}",
-            type: "GET"
+            type: "GET",
+            data: function (d) {
+                d.guest = $('#filterGuest').is(':checked') ? 1 : 0;
+            }
         },
 
         columns: columns,
@@ -160,7 +171,9 @@ $(function () {
         }
 
     });
-
+    $('#filterGuest').on('change', function () {
+        table.ajax.reload();
+    });
 });
 </script>
 <script>
