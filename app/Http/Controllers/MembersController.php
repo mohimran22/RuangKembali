@@ -36,6 +36,7 @@ class MembersController extends Controller
 
     public function index(Request $request)
     {
+        $auth = auth()->user();
         // Query dasar (sudah dibatasi hak akses). Dipakai untuk tabel DAN kartu statistik.
         $baseQuery = Customer::with(['user.roles']);
     
@@ -45,8 +46,8 @@ class MembersController extends Controller
 
         if ($request->ajax()) {
             // withCount hanya di query tabel (bukan di $baseQuery) supaya perhitungan kartu tidak terganggu
-            $query = (clone $baseQuery)->withCount('registrations');
-    
+            // $query = (clone $baseQuery)->withCount('registrations');
+              $query = (clone $baseQuery)->withCount(['registrations' => fn($q) => $q->where('status', 'paid')]);
             // Filter tab (Lead, Prospek, New Customer, Silver, Gold, Platinum)
             if ($request->filled('loyalty')) {
                 $query->where('loyalty_level', $request->loyalty);
@@ -57,22 +58,28 @@ class MembersController extends Controller
             return DataTables::of($customers)
                 ->addIndexColumn()
                 ->addColumn('customer', function ($row) {
-                    $name     = Str::title($row->user->fullname ?? '-');
-                    $email    = $row->user->email ?? '-';
-                    $initials = collect(explode(' ', trim($name)))
-                        ->filter()->take(2)
-                        ->map(fn($w) => mb_substr($w, 0, 1))
-                        ->implode('');
-                    $url = route('members.show', $row->id);
-    
-                    return '<div class="d-flex align-items-center">
-                                <span class="cust-avatar av-' . (crc32($name) % 5) . '">' . e(strtoupper($initials)) . '</span>
-                                <div class="ms-3">
-                                    <a href="' . $url . '" class="cust-name">' . e($name) . '</a>
-                                    <div class="cust-email">' . e($email) . '</div>
-                                </div>
-                            </div>';
-                })
+    $name     = Str::title($row->user->fullname ?? '-');
+    $email    = $row->user->email ?? '-';
+    $initials = collect(explode(' ', trim($name)))
+        ->filter()->take(2)
+        ->map(fn($w) => mb_substr($w, 0, 1))
+        ->implode('');
+    $url   = route('members.show', $row->id);
+    $photo = $row->user?->photo;
+
+    // Ada foto => tampilkan foto, kalau tidak => avatar inisial
+    $avatar = $photo
+        ? '<img src="' . e(asset('storage/' . ltrim($photo, '/'))) . '" alt="" class="cust-avatar cust-avatar-img" loading="lazy">'
+        : '<span class="cust-avatar av-' . (crc32($name) % 5) . '">' . e(strtoupper($initials)) . '</span>';
+
+    return '<div class="d-flex align-items-center">
+                ' . $avatar . '
+                <div class="ms-3">
+                    <a href="' . $url . '" class="cust-name">' . e($name) . '</a>
+                    <div class="cust-email">' . e($email) . '</div>
+                </div>
+            </div>';
+})
                 ->editColumn('channel', fn($row) => $row->readable_channel)
                 ->addColumn('category', fn($row) => $this->readableCategory($row->category))
                 ->addColumn('orders', fn($row) => (int) $row->registrations_count)

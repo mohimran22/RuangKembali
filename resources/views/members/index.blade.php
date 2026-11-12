@@ -3,7 +3,7 @@
 @section('content')
     @php
         $cards = [
-            1 => ['label' => 'Total Leads',  'icon' => 'ti-user-search'],
+            1 => ['label' => 'Leads',  'icon' => 'ti-user-search'],
             2 => ['label' => 'Prospek',      'icon' => 'ti-target-arrow'],
             3 => ['label' => 'New Customer', 'icon' => 'ti-user-plus'],
             4 => ['label' => 'Silver',       'icon' => 'ti-medal'],
@@ -63,6 +63,7 @@
         .cust-avatar.av-2 { background: #fef0c7; color: #b54708; }
         .cust-avatar.av-3 { background: #ffe4e8; color: #c01048; }
         .cust-avatar.av-4 { background: #f4ebff; color: #6941c6; }
+        .cust-avatar-img { object-fit: cover; background: #f2f4f7; }
         .cust-name  { font-weight: 600; color: #101828; text-decoration: none; }
         .cust-name:hover { color: #4f46e5; }
         .cust-email { font-size: .75rem; color: #98a2b3; }
@@ -77,13 +78,13 @@
         <div class="container-xl">
             <div class="row g-2 align-items-center">
                 <div class="col">
-                    <h2 class="page-title">Customers</h2>
+                    <h2 class="page-title">Daftar Member</h2>
                     <div class="text-secondary small">Semua data pelanggan dalam satu tempat.</div>
                 </div>
                 <div class="col-12 col-md-auto ms-auto d-print-none">
                     @can('tambah data member')
-                        <a href="{{ route('members.create') }}" class="btn btn-primary">
-                            <i class="ti ti-plus me-1"></i> Tambah Data Member
+                        <a href="{{ route('members.create') }}" class="btn btn-dark">
+                            <i class="ti ti-plus me-1"></i> Tambah Data Customer
                         </a>
                     @endcan
                 </div>
@@ -148,12 +149,12 @@
                                 <tr>
                                     <th width="5%">No</th>
                                     <th>Customer</th>
+                                    {{-- <th>ID Customer</th> --}}
                                     <th>Channel</th>
                                     <th>Kategori</th>
-                                    <th>Event</th>
-                                    <th>Loyalty</th>
-                                    <th>Tanggal Dibuat</th>
+                                    <th>Order</th>
                                     <th>Last Contact</th>
+                                    <th>Loyalty</th>
                                     <th width="15%" class="text-end">Aksi</th>
                                 </tr>
                             </thead>
@@ -188,12 +189,12 @@
                 columns: [
                     { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
                     { data: 'customer', name: 'customer', orderable: false },
+                    // { data: 'nic', name: 'nic' },
                     { data: 'channel', name: 'channel' },
                     { data: 'category', name: 'category' },
                     { data: 'orders', name: 'orders', searchable: false },
-                    { data: 'loyalty', name: 'loyalty', orderable: false, searchable: false },
-                    { data: 'created_at', name: 'created_at', orderable: false, searchable: false },
                     { data: 'last_contact', name: 'last_contact', orderable: false, searchable: false },
+                    { data: 'loyalty', name: 'loyalty', orderable: false, searchable: false },
                     { data: 'action', name: 'action', orderable: false, searchable: false, className: 'text-end' },
                 ],
                 language: {
@@ -248,7 +249,7 @@
                     if (!result.isConfirmed) return;
 
                     $.ajax({
-                        url: `/members/${customerId}`,
+                        url: `/customers/${customerId}`,
                         method: 'DELETE',
                         data: { _token: '{{ csrf_token() }}' },
                         success: function (response) {
