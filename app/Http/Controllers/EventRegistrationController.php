@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use App\Models\Event;
 use App\Models\EventRegistration;
 use App\Models\Transaction;
@@ -22,10 +23,19 @@ class EventRegistrationController extends Controller
             ->latest()
             ->first();
         $transactionCode = $this->generateTransactionCode();
+        $needsProfile = !$registration && ActiveRole::name() !== 'Super-Admin';
+        $missingProfile = $needsProfile ? auth()->user()->missingProfileFields() : [];
+
+        if ($missingProfile) {
+            session(['url.intended' => url()->current()]);
+        }
+        $canGiveComplimentary = auth()->user()->hasAnyRole(['Super-Admin', 'NAMA-ROLE-PANITIA']);
         return view('events.register', compact(
             'event',
             'registration',
-            'transactionCode'
+            'transactionCode',
+            'missingProfile',
+            'canGiveComplimentary'
         ));
     }
 
@@ -46,18 +56,20 @@ class EventRegistrationController extends Controller
             'participants.*.user_id' => ['nullable', 'uuid', 'exists:users,id'],
             'participants.*.name' => ['nullable', 'string', 'max:255'],
             'participants.*.email' => ['nullable', 'email', 'max:255'],
+            'participants.*.gender' => ['nullable', 'in:1,2'],
             'payment_method' => [
                 $event->event_type !== 'free' ? 'required' : 'nullable',
                 'in:transfer,gateway',
             ],
             'transaction_code' => ['nullable', 'string'],
         ]);
+
         foreach ($validated['participants'] as $p) {
             $hasUserId = !empty($p['user_id']);
-            $hasGuestInfo = !empty($p['name']) && !empty($p['email']);
+            $hasGuestInfo = !empty($p['name']) && !empty($p['email']) && !empty($p['gender']);
 
             if (!$hasUserId && !$hasGuestInfo) {
-                return back()->withInput()->with('error', 'Setiap peserta harus berupa user terdaftar atau diisi nama & email.');
+                return back()->withInput()->with('error', 'Setiap peserta harus berupa user terdaftar, atau diisi nama, email, dan jenis kelamin.');
             }
         }
         $userIds = array_values(array_filter(array_column($validated['participants'], 'user_id')));
@@ -83,6 +95,33 @@ class EventRegistrationController extends Controller
             && !$iAmRegistered
             && !in_array(auth()->id(), $userIds)) {
             return back()->withInput()->with('error', 'Kamu wajib ikut sebagai salah satu peserta.');
+        }
+        // (c) tepat setelah pengecekan "Kamu wajib ikut", sebelum DB::beginTransaction()
+        if (!empty($userIds)) {
+            $incomplete = User::whereIn('id', $userIds)->get()
+                ->reject(fn ($u) => $u->hasCompleteProfile());
+
+            // Data pendaftar sendiri kurang: arahkan ke profil, lalu kembali ke sini
+            if ($incomplete->contains('id', auth()->id())) {
+                session(['url.intended' => route('events.register', $event->slug)]);
+
+                return redirect()->route('profile.edit')->with(
+                    'error',
+                    'Lengkapi data dirimu dulu: ' . implode(', ', auth()->user()->missingProfileFields()) . '.'
+                );
+            }
+
+            // Data peserta lain kurang: tolak dan sebutkan siapa dan apa yang kurang
+            if ($incomplete->isNotEmpty()) {
+                $detail = $incomplete
+                    ->map(fn ($u) => $u->fullname . ' (belum mengisi: ' . implode(', ', $u->missingProfileFields()) . ')')
+                    ->implode('; ');
+
+                return back()->withInput()->with(
+                    'error',
+                    "Data diri peserta berikut belum lengkap: {$detail}. Minta yang bersangkutan melengkapi profilnya terlebih dahulu."
+                );
+            }
         }
         $totalParticipants = count($validated['participants']);
         $pricePerParticipant = $event->event_type === 'free' ? 0 : $event->price;
@@ -157,6 +196,7 @@ class EventRegistrationController extends Controller
                     'price' => $pricePerParticipant,
                     'status' => $event->event_type === 'free' ? 'paid' : 'pending',
                     'registered_at' => now(),
+                    'guest_gender' => $isGuest ? (int) $p['gender'] : null,
                 ]);
             }
 

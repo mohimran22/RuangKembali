@@ -306,38 +306,44 @@ public function show(User $user)
         return response()->json(['status' => 'failed', 'message' => 'Unable to delete']);
     }
 
-    public function search(Request $request)
-    {
-        $query = $request->get('q', '');
+public function search(Request $request)
+{
+    $query = trim($request->get('q', ''));
 
-        if (strlen($query) < 2) {
-            return response()->json([]);
-        }
-
-        $eventId = $request->get('event_id');
-
-        $users = User::where(function ($q) use ($query) {
-                $q->where('fullname', 'like', "%{$query}%")
-                  ->orWhere('email', 'like', "%{$query}%");
-            })
-            ->when($eventId, function ($q) use ($eventId) {
-                $q->whereDoesntHave('registrations', function ($sub) use ($eventId) {
-                    $sub->where('event_id', $eventId)
-                        ->where('status', '!=', 'cancelled');
-                });
-            })
-            ->limit(10)
-            ->get(['id', 'fullname', 'email']);
-
-        return response()->json(
-            $users->map(function ($user) {
-                return [
-                    'id' => $user->id,
-                    'name' => $user->fullname,
-                    'email' => $user->email,
-                ];
-            })
-        );
+    if (mb_strlen($query) < 2) {
+        return response()->json([]);
     }
+
+    $eventId = $request->get('event_id');
+    $term = addcslashes($query, '%_\\');
+
+    $users = User::where(function ($q) use ($term) {
+            $q->where('fullname', 'ilike', "%{$term}%")
+              ->orWhere('email', 'ilike', "%{$term}%");
+        })
+        ->when($eventId, function ($q) use ($eventId) {
+            $q->whereDoesntHave('registrations', function ($sub) use ($eventId) {
+                $sub->where('event_id', $eventId)
+                    ->where('status', '!=', 'cancelled');
+            });
+        })
+        ->orderBy('fullname')
+        ->limit(10)
+        ->get([
+            'id', 'fullname', 'email',
+            'gender', 'birth_date', 'address',
+            'province_id', 'city_id', 'district_id', 'sub_district_id', 'postal_code_id',
+        ]);
+
+    return response()->json(
+        $users->map(fn ($user) => [
+            'id'               => $user->id,
+            'name'             => $user->fullname,
+            'email'            => $user->email,
+            'profile_complete' => $user->hasCompleteProfile(),
+            'missing'          => $user->missingProfileFields(),
+        ])
+    );
+}
 
 }

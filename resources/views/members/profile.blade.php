@@ -7,7 +7,7 @@
             <div class="col-lg-8 col-md-10">
                 <div class="card border-0 shadow rounded-4 overflow-hidden">
                     <div class="card-body px-4 pb-4">
-                        <form action="{{ route('members.update', $user->id) }}" method="POST" enctype="multipart/form-data">
+                        <form action="{{ route('member.update', $user->id) }}" method="POST" enctype="multipart/form-data">
                             @csrf
                             @method('PUT')
 
@@ -61,9 +61,9 @@
                                             </select>
                                     </div>
                                     <div class="col-md-6 mb-3">
-                                        <label for="birth_place" class="form-label required">Tempat Lahir</label>
+                                        <label for="birth_place" class="form-label">Tempat Lahir</label>
                                         <input type="text" name="birth_place" id="birth_place" class="form-control"
-                                               value="{{ old('birth_place', auth()->user()->birth_place) }}" required>
+                                               value="{{ old('birth_place', auth()->user()->birth_place) }}">
                                     </div>
                                     <div class="col-md-6 mb-3">
                                         <label class="form-label required">Tanggal Lahir</label>
@@ -72,8 +72,8 @@
                                                 pattern="\d{4}-\d{2}-\d{2}" placeholder="DD-MM-YYYY">
                                     </div>
                                     <div class="col-md-6 mb-3">
-                                            <label class="form-label required" for="religion_id">Agama</label>
-                                            <select name="religion_id" class="form-select select2" required>
+                                            <label class="form-label" for="religion_id">Agama</label>
+                                            <select name="religion_id" class="form-select select2">
                                                 <option value="">-- Pilih Agama --</option>
                                                 @foreach($religions as $religion)
                                                     <option value="{{ $religion->id }}" {{ old('religion_id', auth()->user()->religion_id) == $religion->id ? 'selected' : '' }}>
@@ -83,9 +83,9 @@
                                             </select>
                                     </div>
                                     <div class="col-md-6 mb-3">
-                                        <label for="identity_number" class="form-label required">Nomor KTP</label>
+                                        <label for="identity_number" class="form-label">Nomor KTP</label>
                                         <input type="text" name="identity_number" id="identity_number" class="form-control" maxlength="16" inputmode="numeric" pattern="\d{16}"
-                                               value="{{ old('identity_number', auth()->user()->identity_number) }}" required>
+                                               value="{{ old('identity_number', auth()->user()->identity_number) }}">
                                     </div>
                                     <div class="col-md-6 mb-3">
                                         <label for="npwp" class="form-label">NPWP</label>

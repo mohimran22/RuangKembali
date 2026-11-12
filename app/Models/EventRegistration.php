@@ -25,7 +25,8 @@ class EventRegistration extends Model
         'checked_in_at',
         'checked_in_by',
         'guest_name',
-        'guest_email'
+        'guest_email',
+        'guest_gender'
     ];
 
     protected $casts = [
@@ -61,5 +62,14 @@ public function getParticipantNameAttribute()
 public function getParticipantEmailAttribute()
 {
     return $this->user?->email ?? $this->guest_email;
+}
+public function getParticipantGenderAttribute()
+{
+    return $this->user_id ? $this->user?->gender : $this->guest_gender;
+}
+
+public function getParticipantGenderLabelAttribute(): string
+{
+    return [1 => 'Laki-laki', 2 => 'Perempuan'][(int) $this->participant_gender] ?? '-';
 }
 }

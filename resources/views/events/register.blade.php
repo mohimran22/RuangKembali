@@ -215,13 +215,38 @@
                         </div>
 
                         @endif
-
+                        @if(count($missingProfile))
+                            <div class="alert alert-warning mb-3">
+                                <h3 class="alert-title">Lengkapi data dirimu dulu</h3>
+                                <div class="text-secondary">
+                                    Pembagian kursi event ini dipisah berdasarkan jenis kelamin, jadi data diri peserta wajib lengkap.
+                                    Yang belum diisi: {{ implode(', ', $missingProfile) }}.
+                                </div>
+                                <a href="{{ route('member.profile') }}" class="btn btn-sm btn-warning mt-2">
+                                    Lengkapi Data Diri
+                                </a>
+                            </div>
+                        @endif
                         <form action="{{ route('events.register.store', $event->slug) }}"
                             method="POST"
                             id="registrationForm">
 
                             @csrf
+                            @if($canGiveComplimentary && $event->event_type !== 'free')
+    <div class="mb-4">
+        <label class="form-label">Jenis Pendaftaran</label>
+        <select name="registration_type" class="form-select" id="registrationType">
+            <option value="regular">Reguler (bayar)</option>
+            <option value="sponsor">Sponsor (gratis)</option>
+            <option value="invitation">Undangan (gratis)</option>
+        </select>
 
+        <div class="mt-2 d-none" id="complimentaryNoteWrap">
+            <input type="text" name="complimentary_note" class="form-control"
+                   placeholder="Contoh: Sponsor PT ABC / Undangan Ustadz X">
+        </div>
+    </div>
+@endif
                             <div class="mb-4">
 
                                 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -256,7 +281,7 @@
 
                                 {{-- Search box untuk tambah peserta --}}
                                 <div class="position-relative mb-2">
-
+                                    <div class="text-danger small mb-2" id="participantError" style="display:none;"></div>
                                     <input type="text"
                                         class="form-control"
                                         id="participantSearchInput"
@@ -278,11 +303,18 @@
                                 <div id="guestFormBox" class="card card-sm border mb-3" style="display: none;">
                                     <div class="card-body">
                                         <div class="row g-2">
-                                            <div class="col-md-5">
+                                            <div class="col-md-4">
                                                 <input type="text" class="form-control form-control-sm" id="guestNameInput" placeholder="Nama lengkap">
                                             </div>
-                                            <div class="col-md-5">
+                                            <div class="col-md-4">
                                                 <input type="email" class="form-control form-control-sm" id="guestEmailInput" placeholder="Email">
+                                            </div>
+                                            <div class="col-md-2">
+                                                <select class="form-select form-select-sm" id="guestGenderSelect">
+                                                    <option value="">Gender</option>
+                                                    <option value="1">Laki-laki</option>
+                                                    <option value="2">Perempuan</option>
+                                                </select>
                                             </div>
                                             <div class="col-md-2">
                                                 <button type="button" class="btn btn-sm btn-primary w-100" id="addGuestBtn">Tambah</button>
@@ -297,7 +329,7 @@
                             <input type="hidden" name="transaction_code" value="{{ $transactionCode }}">
                             @if($event->event_type !== 'free')
 
-                                <div class="mb-4">
+                                <div class="mb-4" id="paymentSection">
 
                                     <h3 class="mb-3">
                                         Ringkasan Pembayaran
@@ -409,7 +441,7 @@
                             </div>
 
                             <div class="d-flex justify-content-end">
-                                <button type="submit" class="btn btn-primary">
+                                <button type="submit" class="btn btn-primary" id="submitBtn" @disabled(count($missingProfile))>
                                     <i class="ti ti-check me-1"></i>
                                     Daftar Event
                                 </button>
@@ -446,18 +478,34 @@
     function isValidEmail(email) {
         return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
     }
+    // 1) helper kecil (taruh di dekat isValidEmail)
+    const GENDER_LABEL = { '1': 'Laki-laki', '2': 'Perempuan' };
 
+    function esc(text) {
+        const d = document.createElement('div');
+        d.textContent = text ?? '';
+        return d.innerHTML;
+    }
+
+    const participantError = document.getElementById('participantError');
+    function showParticipantError(msg) {
+        participantError.textContent = msg;
+        participantError.style.display = 'block';
+    }
+    function hideParticipantError() {
+        participantError.style.display = 'none';
+    }
     function getSelectedGuestEmails() {
         return Array.from(wrapper.querySelectorAll('.participant-row[data-guest="true"]'))
             .map(row => row.dataset.guestEmail?.toLowerCase());
     }
 
-    function addGuestParticipant(name, email) {
+    function addGuestParticipant(name, email, gender) {
         const errorBox = document.getElementById('guestFormError');
         errorBox.style.display = 'none';
 
-        if (!name || !email) {
-            errorBox.textContent = 'Nama dan email wajib diisi.';
+        if (!name || !email || !gender) {
+            errorBox.textContent = 'Nama, email, dan jenis kelamin wajib diisi.';
             errorBox.style.display = 'block';
             return;
         }
@@ -483,16 +531,18 @@
         row.innerHTML = `
             <div class="card-body d-flex justify-content-between align-items-center">
                 <div>
-                    <div class="fw-semibold">${name}</div>
-                    <div class="text-secondary small">${email}</div>
+                    <div class="fw-semibold">${esc(name)}</div>
+                    <div class="text-secondary small">${esc(email)}</div>
                     <span class="badge bg-orange-lt small">Belum punya akun</span>
+                    <span class="badge bg-secondary-lt small">${GENDER_LABEL[gender]}</span>
                 </div>
                 <button type="button" class="btn btn-sm btn-link text-danger removeParticipantBtn">
                     <i class="ti ti-trash"></i>
                 </button>
             </div>
-            <input type="hidden" class="guest-name-input" name="participants[__index__][name]" value="${name}">
-            <input type="hidden" class="guest-email-input" name="participants[__index__][email]" value="${email}">
+            <input type="hidden" class="guest-name-input" name="participants[__index__][name]" value="${esc(name)}">
+            <input type="hidden" class="guest-email-input" name="participants[__index__][email]" value="${esc(email)}">
+            <input type="hidden" name="participants[__index__][gender]" value="${gender}">
         `;
 
         wrapper.appendChild(row);
@@ -510,6 +560,8 @@
                     input.name = `participants[${index}][name]`;
                 } else if (input.name.includes('[email]')) {
                     input.name = `participants[${index}][email]`;
+                } else if (input.name.includes('[gender]')) {
+                    input.name = `participants[${index}][gender]`;
                 }
             });
         });
@@ -529,9 +581,13 @@
         addGuestBtn.addEventListener('click', function () {
             const nameInput = document.getElementById('guestNameInput');
             const emailInput = document.getElementById('guestEmailInput');
-            addGuestParticipant(nameInput.value.trim(), emailInput.value.trim());
+            const genderSelect = document.getElementById('guestGenderSelect');
+
+            addGuestParticipant(nameInput.value.trim(), emailInput.value.trim(), genderSelect.value);
+
             nameInput.value = '';
             emailInput.value = '';
+            genderSelect.value = '';
         });
     }
     function updateTotalPrice(count) {
@@ -558,8 +614,8 @@
         row.innerHTML = `
             <div class="card-body d-flex justify-content-between align-items-center">
                 <div>
-                    <div class="fw-semibold">${user.name}</div>
-                    <div class="text-secondary small">${user.email}</div>
+                    <div class="fw-semibold">${esc(user.name)}</div>
+                    <div class="text-secondary small">${esc(user.email)}</div>
                 </div>
                 <button type="button" class="btn btn-sm btn-link text-danger removeParticipantBtn">
                     <i class="ti ti-trash"></i>
@@ -607,16 +663,31 @@
                         return;
                     }
 
+                    // 4) hasil pencarian: tandai dan blokir akun yang datanya belum lengkap
                     users.forEach(function (user) {
+                        const incomplete = user.profile_complete === false;
+
                         const item = document.createElement('button');
                         item.type = 'button';
                         item.className = 'list-group-item list-group-item-action';
                         item.innerHTML = `
-                            <div class="fw-semibold">${user.name}</div>
-                            <div class="text-secondary small">${user.email}</div>
+                            <div class="fw-semibold">${esc(user.name)}</div>
+                            <div class="text-secondary small">${esc(user.email)}</div>
+                            ${incomplete
+                                ? `<div class="small text-danger">Data diri belum lengkap: ${esc((user.missing || []).join(', '))}</div>`
+                                : ''}
                         `;
 
                         item.addEventListener('click', function () {
+                            if (incomplete) {
+                                showParticipantError(
+                                    `${user.name} belum melengkapi data diri (${(user.missing || []).join(', ')}). ` +
+                                    `Minta yang bersangkutan melengkapi profilnya dulu.`
+                                );
+                                return;
+                            }
+
+                            hideParticipantError();
                             addParticipant(user);
                             searchInput.value = '';
                             searchResults.style.display = 'none';

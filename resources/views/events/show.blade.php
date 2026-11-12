@@ -1103,7 +1103,16 @@
                             </button>
 
                         @endif
-
+                        @if($canViewAll)
+                            <div class="d-flex flex-wrap gap-2 mb-3">
+                                <span class="badge bg-blue-lt">Laki-laki: {{ $genderSummary['male'] }}</span>
+                                <span class="badge bg-pink-lt">Perempuan: {{ $genderSummary['female'] }}</span>
+                                @if($genderSummary['unknown'] > 0)
+                                    <span class="badge bg-secondary-lt">Gender belum diisi: {{ $genderSummary['unknown'] }}</span>
+                                @endif
+                                <span class="badge bg-warning-lt">Belum lunas: {{ $genderSummary['pending'] }} (belum dihitung)</span>
+                            </div>
+                        @endif
                         <span class="badge bg-primary-lt">
                             {{ $registrations->count() }} Peserta
                         </span>
@@ -1124,6 +1133,7 @@
                                     <tr>
                                         <th width="60">No</th>
                                         <th>Peserta</th>
+                                        <th>Gender</th>
                                         <th>Pembayaran</th>
                                         <th>Kode Tiket</th>
                                         <th>Waktu terdaftar</th>
@@ -1157,12 +1167,10 @@
 
                                                 </div>
                                             </td>
+                                            <td>{{ $registration->participant_gender_label }}</td>
                                             <td>
 
                                                 @if(in_array($registration->status, ['paid', 'confirmed', 'attended']))
-                                                    {{-- <div class="mt-2">
-                                                        {!! QrCode::size(110)->generate($registration->ticket_code) !!}
-                                                    </div> --}}
 
                                                 <span class="badge bg-success-lt">
                                                     <i class="ti ti-circle-check me-1"></i>
@@ -1616,7 +1624,7 @@
         </script>
         @endpush
 
-    @endif   {{-- penutup @if($canViewAll) --}}
+    @endif  
 
 @push('js')
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>

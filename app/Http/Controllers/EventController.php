@@ -1094,8 +1094,15 @@ public function show(Event $event)
         })
         ->latest()
         ->get();
+    $counted = $registrations->whereIn('status', ['pending', 'paid', 'attended']);
 
-    return view('events.show', compact('event', 'registrations', 'canViewAll'));
+    $genderSummary = [
+        'male'    => $counted->filter(fn ($r) => (int) $r->participant_gender === 1)->count(),
+        'female'  => $counted->filter(fn ($r) => (int) $r->participant_gender === 2)->count(),
+        'unknown' => $counted->filter(fn ($r) => !in_array((int) $r->participant_gender, [1, 2], true))->count(),
+        'pending' => $registrations->where('status', 'pending')->count(),
+    ];
+    return view('events.show', compact('event', 'registrations', 'canViewAll', 'genderSummary'));
 }
 public function destroy(Event $event)
 {
