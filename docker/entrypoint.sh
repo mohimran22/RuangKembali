@@ -28,5 +28,8 @@ php artisan optimize
 echo "=== Laravel storage link ==="
 php artisan storage:link || true
 
+echo "=== Starting scheduler (background) ==="
+php artisan schedule:work >> /proc/1/fd/1 2>&1 &
+
 echo "=== Starting server ==="
 exec "$@"

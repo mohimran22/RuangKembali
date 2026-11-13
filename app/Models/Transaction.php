@@ -48,4 +48,18 @@ public function proofUploader()
 {
     return $this->belongsTo(User::class, 'proof_uploaded_by');
 }
+
+public function getIsExpiredAttribute(): bool
+{
+    return $this->status === 'expired'
+        || ($this->status === 'pending'
+            && $this->expires_at
+            && $this->expires_at->isPast());
+}
+
+// Status untuk ditampilkan: pending yang sudah lewat batas dianggap expired
+public function getDisplayStatusAttribute(): string
+{
+    return $this->is_expired ? 'expired' : $this->status;
+}
 }

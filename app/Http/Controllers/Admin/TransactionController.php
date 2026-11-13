@@ -227,7 +227,11 @@ public function index(Request $request)
                 400,
                 'Transaksi ini tidak dalam status menunggu konfirmasi.'
             );
-
+            abort_if(
+                $locked->registration_type !== 'regular',
+                422,
+                'Transaksi sponsor/undangan tidak memerlukan persetujuan.'
+            );
             $locked->load(['event', 'registrations.user']);
 
             $event = $locked->event;
@@ -291,7 +295,7 @@ public function index(Request $request)
 
             foreach ($locked->registrations as $registration) {
 
-                $person = $registration->user->fullname
+                $person = $registration->user?->fullname
                     ?? $registration->guest_name
                     ?? $registration->ticket_code;
 

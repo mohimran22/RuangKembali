@@ -15,7 +15,12 @@
             {{ session('success') }}
         </div>
     @endif
-
+          @if(session('error'))
+      <div class="alert alert-danger">
+          <i class="ti ti-alert-circle me-2"></i>
+          {{ session('error') }}
+      </div>
+  @endif
 
     <div class="row g-4">
 
@@ -42,9 +47,11 @@
                         <div class="text-secondary small">{{ $transaction->registeredBy?->email }}</div>
                     </div>
 
-                    <div class="mb-3">
-                        <div class="text-secondary small">Metode Pembayaran</div>
-                        <div class="fw-semibold text-capitalize">{{ $transaction->payment_method }}</div>
+                    <div class="fw-semibold text-capitalize">
+                        @if($transaction->registration_type === 'sponsor') Sponsor (gratis)
+                        @elseif($transaction->registration_type === 'invitation') Undangan (gratis)
+                        @else {{ $transaction->payment_method ?? '-' }}
+                        @endif
                     </div>
 
                     <hr>
@@ -99,21 +106,39 @@
 
                 <div class="card-body">
 
-                    @if($transaction->status === 'paid')
+                            @if($transaction->display_status === 'paid')
 
-                        <div class="alert alert-success">
-                            <div class="d-flex">
-                                <i class="ti ti-circle-check fs-2 me-3"></i>
-                                <div>
-                                    <h3 class="alert-title">Sudah Disetujui</h3>
-                                    <div class="text-secondary">
-                                        Dikonfirmasi pada {{ $transaction->paid_at?->translatedFormat('d F Y, H:i') ?? '-' }} WIB.
+                                <div class="alert alert-success">
+                                    <div class="d-flex">
+                                        <i class="ti ti-circle-check fs-2 me-3"></i>
+                                        <div>
+                                            <h3 class="alert-title">Sudah Disetujui</h3>
+                                            <div class="text-secondary">
+                                                Dikonfirmasi pada {{ $transaction->paid_at?->translatedFormat('d F Y, H:i') ?? '-' }} WIB.
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
 
-                            @elseif($transaction->status === 'rejected')
+                            @elseif($transaction->display_status === 'expired')
+
+                                <div class="alert alert-secondary">
+                                    <div class="d-flex">
+                                        <i class="ti ti-clock-off fs-2 me-3"></i>
+                                        <div>
+                                            <h3 class="alert-title">Transaksi Kadaluarsa</h3>
+                                            <div class="text-secondary">
+                                                Batas waktu pembayaran
+                                                @if($transaction->expires_at)
+                                                    ({{ $transaction->expires_at->translatedFormat('d F Y, H:i') }} WIB)
+                                                @endif
+                                                sudah lewat. Upload bukti dan verifikasi tidak lagi tersedia.
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            @elseif($transaction->display_status === 'rejected')
 
                                 <div class="alert alert-danger">
                                     <div class="d-flex">
@@ -129,7 +154,7 @@
 
                                 @include('transactions.upload-form')
 
-                            @elseif($transaction->status === 'pending')
+                            @elseif($transaction->display_status === 'pending')
 
                                 <div class="alert alert-warning">
                                     <i class="ti ti-clock me-2"></i>
@@ -141,95 +166,95 @@
                             @endif
 
                             @if($transaction->proof_of_payment)
-    <div class="mb-4">
-        <div class="text-secondary small mb-2">Bukti Transfer</div>
+                                <div class="mb-4">
+                                    <div class="text-secondary small mb-2">Bukti Transfer</div>
 
-        <a href="{{ asset('storage/' . $transaction->proof_of_payment) }}" target="_blank">
-            <img src="{{ asset('storage/' . $transaction->proof_of_payment) }}"
-                 alt="Bukti pembayaran"
-                 class="img-fluid rounded border"
-                 style="max-height: 400px;"
-                 onerror="this.replaceWith(Object.assign(document.createElement('div'), {className: 'alert alert-warning', textContent: 'Gambar bukti tidak dapat dimuat. File mungkin hilang dari server.'}))">
-        </a>
+                                    <a href="{{ asset('storage/' . $transaction->proof_of_payment) }}" target="_blank">
+                                        <img src="{{ asset('storage/' . $transaction->proof_of_payment) }}"
+                                            alt="Bukti pembayaran"
+                                            class="img-fluid rounded border"
+                                            style="max-height: 400px;"
+                                            onerror="this.replaceWith(Object.assign(document.createElement('div'), {className: 'alert alert-warning', textContent: 'Gambar bukti tidak dapat dimuat. File mungkin hilang dari server.'}))">
+                                    </a>
 
-        @if($transaction->proofUploader)
-            <div class="text-secondary small mt-2">
-                Diunggah oleh {{ $transaction->proofUploader->fullname }}
-                @if($transaction->proof_uploaded_by !== $transaction->registered_by)
-                    <span class="badge bg-orange-lt ms-1">Atas nama peserta</span>
-                @endif
-            </div>
-        @endif
-    </div>
-@endif
-
-
-                    @if($transaction->status === 'waiting_confirmation')
-
-                        <div class="row g-2">
-
-                            <div class="col-6">
-                                <form action="{{ route('admin.transactions.approve', $transaction->id) }}"
-                                      method="POST">
-                                    @csrf
-                                    <button type="submit" class="btn btn-success w-100">
-                                        <i class="ti ti-check me-1"></i>
-                                        Setujui (Lunas)
-                                    </button>
-                                </form>
-                            </div>
-
-                            <div class="col-6">
-                                <button type="button"
-                                        class="btn btn-danger w-100"
-                                        data-bs-toggle="modal"
-                                        data-bs-target="#rejectModal">
-                                    <i class="ti ti-x me-1"></i>
-                                    Tolak
-                                </button>
-                            </div>
-
-                        </div>
-
-
-                        {{-- Modal alasan penolakan --}}
-                        <div class="modal fade" id="rejectModal" tabindex="-1">
-                            <div class="modal-dialog modal-dialog-centered">
-                                <div class="modal-content">
-
-                                    <form action="{{ route('admin.transactions.reject', $transaction->id) }}"
-                                          method="POST">
-                                        @csrf
-
-                                        <div class="modal-header">
-                                            <h5 class="modal-title">Tolak Bukti Transfer</h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    @if($transaction->proofUploader)
+                                        <div class="text-secondary small mt-2">
+                                            Diunggah oleh {{ $transaction->proofUploader->fullname }}
+                                            @if($transaction->proof_uploaded_by !== $transaction->registered_by)
+                                                <span class="badge bg-orange-lt ms-1">Atas nama peserta</span>
+                                            @endif
                                         </div>
+                                    @endif
+                                </div>
+                            @endif
 
-                                        <div class="modal-body">
-                                            <label class="form-label">Alasan Penolakan (opsional)</label>
-                                            <textarea name="rejection_reason"
-                                                      class="form-control"
-                                                      rows="3"
-                                                      placeholder="Contoh: Nominal transfer tidak sesuai"></textarea>
-                                        </div>
 
-                                        <div class="modal-footer">
-                                            <button type="button" class="btn btn-link" data-bs-dismiss="modal">
-                                                Batal
+                            @if($transaction->status === 'waiting_confirmation')
+
+                                <div class="row g-2">
+
+                                    <div class="col-6">
+                                        <form action="{{ route('admin.transactions.approve', $transaction->id) }}"
+                                            method="POST">
+                                            @csrf
+                                            <button type="submit" class="btn btn-success w-100">
+                                                <i class="ti ti-check me-1"></i>
+                                                Setujui (Lunas)
                                             </button>
-                                            <button type="submit" class="btn btn-danger">
-                                                Tolak Transaksi
-                                            </button>
-                                        </div>
+                                        </form>
+                                    </div>
 
-                                    </form>
+                                    <div class="col-6">
+                                        <button type="button"
+                                                class="btn btn-danger w-100"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#rejectModal">
+                                            <i class="ti ti-x me-1"></i>
+                                            Tolak
+                                        </button>
+                                    </div>
 
                                 </div>
-                            </div>
-                        </div>
 
-                    @endif
+
+                                {{-- Modal alasan penolakan --}}
+                                <div class="modal fade" id="rejectModal" tabindex="-1">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content">
+
+                                            <form action="{{ route('admin.transactions.reject', $transaction->id) }}"
+                                                method="POST">
+                                                @csrf
+
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title">Tolak Bukti Transfer</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                </div>
+
+                                                <div class="modal-body">
+                                                    <label class="form-label">Alasan Penolakan (opsional)</label>
+                                                    <textarea name="rejection_reason"
+                                                            class="form-control"
+                                                            rows="3"
+                                                            placeholder="Contoh: Nominal transfer tidak sesuai"></textarea>
+                                                </div>
+
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-link" data-bs-dismiss="modal">
+                                                        Batal
+                                                    </button>
+                                                    <button type="submit" class="btn btn-danger">
+                                                        Tolak Transaksi
+                                                    </button>
+                                                </div>
+
+                                            </form>
+
+                                        </div>
+                                    </div>
+                                </div>
+
+                            @endif
 
                 </div>
 

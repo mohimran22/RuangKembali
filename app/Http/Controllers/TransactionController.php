@@ -156,9 +156,9 @@ public function index(Request $request)
                     ],
                 ];
 
-                $currentStatus = $statusMap[$transaction->status]
+                $currentStatus = $statusMap[$transaction->display_status]
                     ?? [
-                        'label' => $transaction->status,
+                        'label' => $transaction->display_status,
                         'class' => 'bg-secondary',
                     ];
 
@@ -201,7 +201,7 @@ public function index(Request $request)
                     $isPaid     = $transaction->status === 'paid';
                     $canDelete  = !$isPaid || ActiveRole::name() === 'Super-Admin';
 
-                    if (!$isPaid) {
+                    if (!$isPaid && !$transaction->is_expired) {
                         $editRoute = route('transactions.edit', $transaction->id);
 
                         $html .= '
@@ -280,13 +280,11 @@ public function uploadProof(Request $request, Transaction $transaction)
         'Transaksi ini sudah tidak bisa diupload buktinya.'
     );
 
-    abort_if(
-        $transaction->status === 'pending'
-            && $transaction->expires_at
-            && now()->gte($transaction->expires_at),
-        400,
-        'Batas waktu pembayaran sudah lewat. Silakan daftar ulang ke event ini.'
-    );
+        abort_if(
+            $transaction->is_expired,
+            400,
+            'Batas waktu pembayaran sudah lewat. Silakan daftar ulang ke event ini.'
+        );
 
     $request->validate([
         'proof_of_payment' => ['required', 'image', 'max:5120'],
@@ -330,6 +328,7 @@ public function edit(Transaction $transaction)
 {
     $this->authorizeAdminOrTim();
     abort_if($transaction->status === 'paid', 422, 'Transaksi yang sudah lunas tidak bisa diubah.');
+      abort_if($transaction->is_expired, 422, 'Transaksi yang sudah kadaluarsa tidak bisa diubah.');
     $transaction->load(['event', 'registeredBy', 'registrations.user']);
 
     return view('transactions.edit', compact('transaction'));
@@ -339,6 +338,7 @@ public function update(Request $request, Transaction $transaction)
 {
     $this->authorizeAdminOrTim();
     abort_if($transaction->status === 'paid', 422, 'Transaksi yang sudah lunas tidak bisa diubah.');
+      abort_if($transaction->is_expired, 422, 'Transaksi yang sudah kadaluarsa tidak bisa diubah.');
     $validated = $request->validate([
         'participants' => 'array',
         'participants.*.id' => 'required|uuid|exists:event_registrations,id',

@@ -69,7 +69,7 @@
                                     'rejected' => ['label' => 'Ditolak', 'class' => 'bg-danger-lt'],
                                     'expired' => ['label' => 'Kadaluarsa', 'class' => 'bg-secondary-lt'],
                                 ];
-                                $currentStatus = $statusMap[$transaction->status] ?? ['label' => $transaction->status, 'class' => 'bg-secondary-lt'];
+                                $currentStatus = $statusMap[$transaction->display_status] ?? ['label' => $transaction->display_status, 'class' => 'bg-secondary-lt'];
                             @endphp
 
                             <span class="badge {{ $currentStatus['class'] }}">
@@ -133,7 +133,7 @@
 
                 <div class="card-body">
 
-                    @if($transaction->status === 'paid')
+                    @if($transaction->display_status === 'paid')
 
                         <div class="alert alert-success">
                             <div class="d-flex">
@@ -145,7 +145,7 @@
                             </div>
                         </div>
 
-                    @elseif($transaction->status === 'waiting_confirmation')
+                    @elseif($transaction->display_status === 'waiting_confirmation')
 
                         <div class="alert alert-info">
                             <div class="d-flex">
@@ -166,7 +166,7 @@
                             </div>
                         @endif
 
-                        @elseif($transaction->status === 'expired')
+                        @elseif($transaction->display_status === 'expired')
 
                             <div class="alert alert-secondary">
                                 <div class="d-flex">
@@ -178,7 +178,7 @@
                                 </div>
                             </div>
 
-                        @elseif($transaction->status === 'rejected')
+                        @elseif($transaction->display_status === 'rejected')
 
                         <div class="alert alert-danger mb-3">
                             <div class="d-flex">
