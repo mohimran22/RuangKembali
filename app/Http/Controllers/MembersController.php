@@ -124,30 +124,30 @@ class MembersController extends Controller
                 ->make(true);
         }
     
-return view('members.index', [
-    'stats' => $this->loyaltyStats($baseQuery),
-    'total' => (clone $baseQuery)->count(),
-]);
+        return view('members.index', [
+            'stats' => $this->loyaltyStats($baseQuery),
+            'total' => (clone $baseQuery)->count(),
+        ]);
     }
-private function loyaltyStats($baseQuery): array
-{
-    $counts = (clone $baseQuery)
-        ->toBase()
-        ->reorder()
-        ->selectRaw(Customer::levelSql() . ' AS lvl, COUNT(*) AS total')
-        ->groupBy('lvl')
-        ->pluck('total', 'lvl');
+    private function loyaltyStats($baseQuery): array
+    {
+        $counts = (clone $baseQuery)
+            ->toBase()
+            ->reorder()
+            ->selectRaw(Customer::levelSql() . ' AS lvl, COUNT(*) AS total')
+            ->groupBy('lvl')
+            ->pluck('total', 'lvl');
 
-    $stats = [];
-    foreach (range(1, 6) as $level) {
-        $stats[$level] = (int) ($counts[$level] ?? 0);
+        $stats = [];
+        foreach (range(1, 6) as $level) {
+            $stats[$level] = (int) ($counts[$level] ?? 0);
+        }
+
+        // Prospek kumulatif: semua yang pernah mendaftar (level 2 ke atas)
+        $stats[2] = $stats[2] + $stats[3] + $stats[4] + $stats[5] + $stats[6];
+
+        return $stats;
     }
-
-    // Prospek kumulatif: semua yang pernah mendaftar (level 2 ke atas)
-    $stats[2] = $stats[2] + $stats[3] + $stats[4] + $stats[5] + $stats[6];
-
-    return $stats;
-}
     private function readableCategory($value)
     {
         return match ((int) $value) {
@@ -222,7 +222,6 @@ private function loyaltyStats($baseQuery): array
         'role.*' => 'string|exists:roles,name',
         'category' => 'nullable|in:1,2,3,4',
         'channel' => ['nullable', Rule::in(array_keys(Customer::CHANNELS))],
-        'loyalty_level' => 'nullable|in:1,2,3,4,5,6'
     ]);
 
     if ($request->hasFile('photo')) {
@@ -307,9 +306,7 @@ private function loyaltyStats($baseQuery): array
             'postal_code_id' => $validated['postal_code_id'],
             'category' => $validated['category'] ?? null,
             'channel' => $validated['channel'] ?? null,
-            'loyalty_level' => !empty($validated['loyalty_level'])
-                ? (int) $validated['loyalty_level']
-                : 1,
+            'loyalty_level' => 1, // member baru selalu Lead; level selanjutnya dihitung otomatis dari event
             'photo' => $validated['photo'] ?? null,
         ]);
     });
@@ -434,7 +431,6 @@ public function update(Request $request, Customer $member)
         'sub_district_id' => 'nullable|exists:sub_districts,id',
         'postal_code_id' => 'nullable|exists:postal_codes,id',
         'category' => 'nullable|in:1,2,3,4',
-        'loyalty_level' => 'nullable|in:1,2,3,4,5,6',
         'channel' => ['nullable', Rule::in(array_keys(Customer::CHANNELS))],
         'role' => 'nullable|array',
         'role.*' => ['string', Rule::exists('roles', 'name')->where('role_group', 'Eksternal')],
@@ -521,9 +517,6 @@ public function update(Request $request, Customer $member)
                 'category' => $canManage
                     ? ($validated['category'] ?? null)
                     : $customer->category,
-                'loyalty_level' => $canManage
-                    ? (!empty($validated['loyalty_level']) ? (int) $validated['loyalty_level'] : 1)
-                    : $customer->loyalty_level,
                 'photo' => $validated['photo'] ?? $customer->photo,
             ]);
         });

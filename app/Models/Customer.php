@@ -108,14 +108,14 @@ public static function levelSql(): string
 
     $s = self::LEVEL_SILVER; $g = self::LEVEL_GOLD; $p = self::LEVEL_PLATINUM;
 
-    return "GREATEST(COALESCE(customers.loyalty_level, 1), CASE
+    return "CASE
         WHEN $paid >= $p THEN 6
         WHEN $paid >= $g THEN 5
         WHEN $paid >= $s THEN 4
         WHEN $paid >= 1 THEN 3
         WHEN $any THEN 2
         ELSE 1
-    END)";
+    END";
 }
 
 public function getEffectiveLoyaltyLevelAttribute(): int
@@ -136,7 +136,7 @@ public function getEffectiveLoyaltyLevelAttribute(): int
         default                       => 1,
     };
 
-    return max((int) $this->loyalty_level, $auto);
+    return $auto;
 }
 public function getReadableLoyaltyLevelAttribute()
 {

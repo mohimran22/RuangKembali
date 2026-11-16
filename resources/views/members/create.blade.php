@@ -268,19 +268,21 @@
                                     <option value="4" {{ old('category') == '4' ? 'selected' : '' }}>Lainnya</option>
                                 </select>
                             </div>
-
                             <div class="col-md-3">
+                                <label class="form-label">Loyalty Level</label>
+                                <input type="text" class="form-control bg-light" value="Lead" readonly>
+                                <div class="form-text">Member baru selalu Lead. Level naik otomatis dari aktivitas event.</div>
+                            </div>
+                            {{-- <div class="col-md-3">
                                 <label class="form-label">Loyalty Level</label>
                                 <select name="loyalty_level" class="form-select select2">
                                     <option value="">-- Pilih Status --</option>
-                                    <option value="1" {{ old('loyalty_level') == '1' ? 'selected' : '' }}>Lead</option>
-                                    <option value="2" {{ old('loyalty_level') == '2' ? 'selected' : '' }}>Prospek</option>
-                                    <option value="3" {{ old('loyalty_level') == '3' ? 'selected' : '' }}>New Customer</option>
+                                    <option value="1">Otomatis (berdasarkan aktivitas event)</option>
                                     <option value="4" {{ old('loyalty_level') == '4' ? 'selected' : '' }}>Silver</option>
                                     <option value="5" {{ old('loyalty_level') == '5' ? 'selected' : '' }}>Gold</option>
                                     <option value="6" {{ old('loyalty_level') == '6' ? 'selected' : '' }}>Platinum</option>
                                 </select>
-                            </div>
+                            </div> --}}
                             <div class="col-md-3">
                                 <label class="form-label">Tahu dari mana?</label>
                                 <select name="channel" class="form-select select2">

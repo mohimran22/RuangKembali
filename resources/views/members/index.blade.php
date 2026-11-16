@@ -152,7 +152,7 @@
                                     {{-- <th>ID Customer</th> --}}
                                     <th>Channel</th>
                                     <th>Kategori</th>
-                                    <th>Order</th>
+                                    <th>Event</th>
                                     <th>Last Contact</th>
                                     <th>Loyalty</th>
                                     <th width="15%" class="text-end">Aksi</th>

@@ -1215,7 +1215,7 @@
                                     <tr>
                                         <th width="60">No</th>
                                         <th>Peserta</th>
-                                        <th>Gender</th>
+                                        <th>Jenis Kelamin</th>
                                         <th>Pembayaran</th>
                                         <th>Kode Tiket</th>
                                         <th>Waktu terdaftar</th>
