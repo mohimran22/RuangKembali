@@ -249,7 +249,7 @@
                     if (!result.isConfirmed) return;
 
                     $.ajax({
-                        url: `/customers/${customerId}`,
+                        url: `/members/${customerId}`,
                         method: 'DELETE',
                         data: { _token: '{{ csrf_token() }}' },
                         success: function (response) {
