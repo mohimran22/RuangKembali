@@ -109,7 +109,7 @@ Route::middleware('auth')->group(function () {
 });
 
 
-Route::middleware(['auth', 'verified', 'permission:lihat daftar member|lihat data member', 'active.role:Member'])
+Route::middleware(['auth', 'verified', 'active.permission:lihat daftar member|lihat data member', 'active.role:Tim|Member|Tim-FInance'])
     ->group(function () {
         Route::get('/members/generate-nic', [MembersController::class, 'generateNicAjax'])->name('members.generateNic');
         Route::resource('/members', MembersController::class)->whereUuid('member');

@@ -5,7 +5,7 @@
         $cards = [
             1 => ['label' => 'Leads',  'icon' => 'ti-user-search'],
             2 => ['label' => 'Prospek',      'icon' => 'ti-target-arrow'],
-            3 => ['label' => 'New Customer', 'icon' => 'ti-user-plus'],
+            3 => ['label' => 'New Member', 'icon' => 'ti-user-plus'],
             4 => ['label' => 'Silver',       'icon' => 'ti-medal'],
             5 => ['label' => 'Gold',         'icon' => 'ti-trophy'],
             6 => ['label' => 'Platinum',     'icon' => 'ti-diamond'],
@@ -34,10 +34,10 @@
 
         /* ---------- Tabs filter ---------- */
         /* Kartu Total Customer (highlight) */
-        .stat-total { background: #101828; border-color: #101828; }
-        .stat-total .stat-label, .stat-total .stat-sub { color: #d0d5dd; }
-        .stat-total .stat-value { color: #fff; }
-        .stat-total .stat-icon { background: rgba(255,255,255,.14); color: #fff; }
+        .stat-total { background: #dccba8; border-color: #dccba8; }
+        .stat-total .stat-label, .stat-total .stat-sub { color: #000; }
+        .stat-total .stat-value { color: #000; }
+        .stat-total .stat-icon { background: rgba(12, 10, 10, 0.14); color: #000; }
 
         /* Tab bisa digeser (swipe) horizontal di mobile */
         .filter-tabs {
@@ -79,12 +79,12 @@
             <div class="row g-2 align-items-center">
                 <div class="col">
                     <h2 class="page-title">Daftar Member</h2>
-                    <div class="text-secondary small">Semua data pelanggan dalam satu tempat.</div>
+                    <div class="text-secondary small">Semua data member dalam satu tempat.</div>
                 </div>
                 <div class="col-12 col-md-auto ms-auto d-print-none">
                     @can('tambah data member')
-                        <a href="{{ route('members.create') }}" class="btn btn-dark">
-                            <i class="ti ti-plus me-1"></i> Tambah Data Customer
+                        <a href="{{ route('members.create') }}" class="btn btn-primary">
+                            <i class="ti ti-plus me-1"></i> Tambah Data Member
                         </a>
                     @endcan
                 </div>
@@ -102,7 +102,7 @@
                     <div class="card stat-card stat-total">
                         <div class="card-body p-3">
                             <div class="d-flex justify-content-between align-items-start">
-                                <div class="stat-label">Total Customer</div>
+                                <div class="stat-label">Total Member</div>
                                 <span class="stat-icon"><i class="ti ti-users"></i></span>
                             </div>
                             <div class="stat-value mt-1" data-stat="total">{{ number_format($grand) }}</div>
@@ -148,7 +148,7 @@
                             <thead>
                                 <tr>
                                     <th width="5%">No</th>
-                                    <th>Customer</th>
+                                    <th>Nama Member</th>
                                     {{-- <th>ID Customer</th> --}}
                                     <th>Channel</th>
                                     <th>Kategori</th>
