@@ -14,31 +14,62 @@ use App\Notifications\EventRegistrationSuccessNotification;
 
 class EventRegistrationController extends Controller
 {
-    public function create(Event $event)
-    {
-        abort_unless($event->is_published, 404);
-        $registration = EventRegistration::where('event_id', $event->id)
-            ->where('user_id', auth()->id())
-            ->whereNotIn('status', ['cancelled'])
-            ->latest()
-            ->first();
-        $transactionCode = $this->generateTransactionCode();
-        $needsProfile = !$registration && ActiveRole::name() !== 'Super-Admin';
-        $missingProfile = $needsProfile ? auth()->user()->missingProfileFields() : [];
+    // public function create(Event $event)
+    // {
+    //     abort_unless($event->is_published, 404);
+    //     $registration = EventRegistration::where('event_id', $event->id)
+    //         ->where('user_id', auth()->id())
+    //         ->whereNotIn('status', ['cancelled'])
+    //         ->latest()
+    //         ->first();
+    //     $transactionCode = $this->generateTransactionCode();
+    //     $needsProfile = !$registration && ActiveRole::name() !== 'Super-Admin';
+    //     $missingProfile = $needsProfile ? auth()->user()->missingProfileFields() : [];
 
-        // di create()
-        if ($missingProfile) {
-            session(['return_after_profile' => url()->current()]);
-        }
-        $canGiveComplimentary = in_array(ActiveRole::name(), ['Super-Admin', 'Tim'], true);
-        return view('events.register', compact(
-            'event',
-            'registration',
-            'transactionCode',
-            'missingProfile',
-            'canGiveComplimentary'
-        ));
-    }
+    //     // di create()
+    //     if ($missingProfile) {
+    //         session(['return_after_profile' => url()->current()]);
+    //     }
+    //     $canGiveComplimentary = in_array(ActiveRole::name(), ['Super-Admin', 'Tim'], true);
+    //     return view('events.register', compact(
+    //         'event',
+    //         'registration',
+    //         'transactionCode',
+    //         'missingProfile',
+    //         'canGiveComplimentary'
+    //     ));
+    // }
+
+public function create(Event $event)
+{
+    abort_unless($event->is_published, 404);
+
+    $registration = EventRegistration::where('event_id', $event->id)
+        ->where('user_id', auth()->id())
+        ->whereNotIn('status', ['cancelled'])
+        ->latest()
+        ->first();
+
+    $transactionCode = $this->generateTransactionCode();
+
+    // Mandatory profile sementara dinonaktifkan
+    $missingProfile = [];
+
+    // Hak memberikan complimentary
+    $canGiveComplimentary = in_array(
+        ActiveRole::name(),
+        ['Super-Admin', 'Tim'],
+        true
+    );
+
+    return view('events.register', compact(
+        'event',
+        'registration',
+        'transactionCode',
+        'missingProfile',
+        'canGiveComplimentary'
+    ));
+}
 
     public function store(Request $request, Event $event)
     {
@@ -111,32 +142,32 @@ class EventRegistrationController extends Controller
             return back()->withInput()->with('error', 'Kamu wajib ikut sebagai salah satu peserta.');
         }
         // (c) tepat setelah pengecekan "Kamu wajib ikut", sebelum DB::beginTransaction()
-        if (!empty($userIds)) {
-            $incomplete = User::whereIn('id', $userIds)->get()
-                ->reject(fn ($u) => $u->hasCompleteProfile());
+        // if (!empty($userIds)) {
+        //     $incomplete = User::whereIn('id', $userIds)->get()
+        //         ->reject(fn ($u) => $u->hasCompleteProfile());
 
-            // Data pendaftar sendiri kurang: arahkan ke profil, lalu kembali ke sini
-            if ($incomplete->contains('id', auth()->id())) {
-                session(['return_after_profile' => route('events.register', $event->slug)]);
+        //     // Data pendaftar sendiri kurang: arahkan ke profil, lalu kembali ke sini
+        //     if ($incomplete->contains('id', auth()->id())) {
+        //         session(['return_after_profile' => route('events.register', $event->slug)]);
 
-                return redirect()->route('member.profile')->with(
-                    'error',
-                    'Lengkapi data dirimu dulu: ' . implode(', ', auth()->user()->missingProfileFields()) . '.'
-                );
-            }
+        //         return redirect()->route('member.profile')->with(
+        //             'error',
+        //             'Lengkapi data dirimu dulu: ' . implode(', ', auth()->user()->missingProfileFields()) . '.'
+        //         );
+        //     }
 
-            // Data peserta lain kurang: tolak dan sebutkan siapa dan apa yang kurang
-            if ($incomplete->isNotEmpty()) {
-                $detail = $incomplete
-                    ->map(fn ($u) => $u->fullname . ' (belum mengisi: ' . implode(', ', $u->missingProfileFields()) . ')')
-                    ->implode('; ');
+        //     // Data peserta lain kurang: tolak dan sebutkan siapa dan apa yang kurang
+        //     if ($incomplete->isNotEmpty()) {
+        //         $detail = $incomplete
+        //             ->map(fn ($u) => $u->fullname . ' (belum mengisi: ' . implode(', ', $u->missingProfileFields()) . ')')
+        //             ->implode('; ');
 
-                return back()->withInput()->with(
-                    'error',
-                    "Data diri peserta berikut belum lengkap: {$detail}. Minta yang bersangkutan melengkapi profilnya terlebih dahulu."
-                );
-            }
-        }
+        //         return back()->withInput()->with(
+        //             'error',
+        //             "Data diri peserta berikut belum lengkap: {$detail}. Minta yang bersangkutan melengkapi profilnya terlebih dahulu."
+        //         );
+        //     }
+        // }
         $totalParticipants = count($validated['participants']);
        
         $transactionCode = $request->transaction_code;

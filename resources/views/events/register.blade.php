@@ -712,31 +712,22 @@
                     }
 
                     // 4) hasil pencarian: tandai dan blokir akun yang datanya belum lengkap
+                    
                     users.forEach(function (user) {
-                        const incomplete = user.profile_complete === false;
-
                         const item = document.createElement('button');
                         item.type = 'button';
                         item.className = 'list-group-item list-group-item-action';
+
                         item.innerHTML = `
                             <div class="fw-semibold">${esc(user.name)}</div>
                             <div class="text-secondary small">${esc(user.email)}</div>
-                            ${incomplete
-                                ? `<div class="small text-danger">Data diri belum lengkap: ${esc((user.missing || []).join(', '))}</div>`
-                                : ''}
                         `;
 
                         item.addEventListener('click', function () {
-                            if (incomplete) {
-                                showParticipantError(
-                                    `${user.name} belum melengkapi data diri (${(user.missing || []).join(', ')}). ` +
-                                    `Minta yang bersangkutan melengkapi profilnya dulu.`
-                                );
-                                return;
-                            }
-
                             hideParticipantError();
+
                             addParticipant(user);
+
                             searchInput.value = '';
                             searchResults.style.display = 'none';
                             searchResults.innerHTML = '';

@@ -49,8 +49,17 @@ class MembersController extends Controller
             // $query = (clone $baseQuery)->withCount('registrations');
               $query = (clone $baseQuery)->withCount(['registrations' => fn($q) => $q->where('status', 'paid')]);
             // Filter tab (Lead, Prospek, New Customer, Silver, Gold, Platinum)
+            $query = (clone $baseQuery)
+                ->select('customers.*')
+                ->selectRaw(Customer::levelSql() . ' AS auto_level')
+                ->withCount(['registrations' => fn($q) => $q->where('status', 'paid')]);
+
             if ($request->filled('loyalty')) {
-                $query->where('loyalty_level', $request->loyalty);
+                $lvl = (int) $request->loyalty;
+                $query->whereRaw(
+                    $lvl === 2 ? '(' . Customer::levelSql() . ') >= 2' : '(' . Customer::levelSql() . ') = ?',
+                    $lvl === 2 ? [] : [$lvl]
+                );
             }
     
             $customers = $query->get();
@@ -90,9 +99,7 @@ class MembersController extends Controller
                     ? $row->last_contact->locale('id')->diffForHumans()   // "3 hari yang lalu"
                     : '-')
                 ->addColumn('loyalty', function ($row) {
-                    // NOTE: pakai angka loyalty_level untuk warna (bukan teks),
-                    // karena sebelumnya match('1','2',...) tidak pernah cocok dengan teks "Lead", dst.
-                    $level = (int) $row->loyalty_level;
+                    $level = $row->effective_loyalty_level;
                     return '<span class="lv-badge lv-' . $level . '">' . e($row->readable_loyalty_level) . '</span>';
                 })
                 ->addColumn('action', function ($customer) {
@@ -112,30 +119,35 @@ class MembersController extends Controller
                     return $buttons . '</div>';
                 })
                 ->rawColumns(['customer', 'loyalty', 'action'])
-                ->with('stats', $this->loyaltyStats($baseQuery)) // supaya kartu ikut ter-update setelah hapus
+                ->with('stats', $this->loyaltyStats($baseQuery))
+                ->with('total', (clone $baseQuery)->count())
                 ->make(true);
         }
     
-        return view('members.index', [
-            'stats' => $this->loyaltyStats($baseQuery),
-        ]);
+return view('members.index', [
+    'stats' => $this->loyaltyStats($baseQuery),
+    'total' => (clone $baseQuery)->count(),
+]);
     }
-        private function loyaltyStats($baseQuery): array
-    {
-        $counts = (clone $baseQuery)
-            ->toBase()
-            ->reorder()
-            ->selectRaw('loyalty_level, COUNT(*) as total')
-            ->groupBy('loyalty_level')
-            ->pluck('total', 'loyalty_level');
-    
-        $stats = [];
-        foreach (range(1, 6) as $level) {
-            $stats[$level] = (int) ($counts[$level] ?? 0);
-        }
-    
-        return $stats;
+private function loyaltyStats($baseQuery): array
+{
+    $counts = (clone $baseQuery)
+        ->toBase()
+        ->reorder()
+        ->selectRaw(Customer::levelSql() . ' AS lvl, COUNT(*) AS total')
+        ->groupBy('lvl')
+        ->pluck('total', 'lvl');
+
+    $stats = [];
+    foreach (range(1, 6) as $level) {
+        $stats[$level] = (int) ($counts[$level] ?? 0);
     }
+
+    // Prospek kumulatif: semua yang pernah mendaftar (level 2 ke atas)
+    $stats[2] = $stats[2] + $stats[3] + $stats[4] + $stats[5] + $stats[6];
+
+    return $stats;
+}
     private function readableCategory($value)
     {
         return match ((int) $value) {

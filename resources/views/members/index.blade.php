@@ -10,7 +10,7 @@
             5 => ['label' => 'Gold',         'icon' => 'ti-trophy'],
             6 => ['label' => 'Platinum',     'icon' => 'ti-diamond'],
         ];
-        $grand = array_sum($stats);
+        $grand = $total;
     @endphp
 
     <style>
@@ -224,7 +224,7 @@
             // Update kartu setelah data di-reload (misal habis hapus)
             table.on('xhr.dt', function (e, settings, json) {
                 if (!json || !json.stats) return;
-                const total = Object.values(json.stats).reduce((a, b) => a + b, 0);
+                const total = json.total;
                 $('[data-stat="total"]').text(total.toLocaleString('id-ID'));
                 Object.entries(json.stats).forEach(([lvl, n]) => {
                     $('[data-stat="' + lvl + '"]').text(n.toLocaleString('id-ID'));

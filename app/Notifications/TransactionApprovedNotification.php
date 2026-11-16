@@ -21,15 +21,31 @@ class TransactionApprovedNotification extends Notification
     {
         $transaction = $this->transaction;
 
-        return (new MailMessage)
+        $mail = (new MailMessage)
             ->subject('Pembayaran Dikonfirmasi - ' . $transaction->transaction_code)
             ->greeting('Assalamualaikum, ' . ($notifiable->fullname ?? $notifiable->name) . '!')
             ->line('Pembayaran untuk pendaftaran event berikut telah kami konfirmasi.')
             ->line('**Event:** ' . $transaction->event->name)
             ->line('**No. Transaksi:** ' . $transaction->transaction_code)
             ->line('**Total:** Rp ' . number_format($transaction->total_amount, 0, ',', '.'))
-            ->line('**Jumlah Peserta:** ' . $transaction->registrations->count())
-            ->action('Lihat Detail Transaksi', route('transactions.show', $transaction->id))
-            ->line('Terima kasih sudah mendaftar. Sampai jumpa di acaranya!');
+            ->line('**Jumlah Peserta:** ' . $transaction->registrations->count());
+
+        // Pengingat hanya jika gender belum diisi.
+        if (!$notifiable->hasGender()) {
+            $mail
+                ->line('**Pengingat: Lengkapi Data Jenis Kelamin**')
+                ->line(
+                    'Untuk membantu Tim RuKa mengatur pembagian tempat duduk peserta laki-laki dan perempuan, '
+                    . 'mohon lengkapi data jenis kelamin pada profil Anda.'
+                )
+                ->action('Lengkapi Data Profil', route('member.profile'));
+        } else {
+            $mail->action(
+                'Lihat Detail Transaksi',
+                route('transactions.show', $transaction->id)
+            );
+        }
+
+        return $mail->line('Terima kasih sudah mendaftar. Sampai jumpa di acaranya!');
     }
 }

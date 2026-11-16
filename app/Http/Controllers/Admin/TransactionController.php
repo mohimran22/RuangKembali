@@ -327,20 +327,30 @@ public function index(Request $request)
 
         // Muat ulang supaya status 'paid' terbaca di notifikasi
         $transaction->refresh()->load([
-            'event',
-            'registrations.user',
-            'registeredBy',
-        ]);
+                'event',
+                'registrations.user',
+                'registeredBy',
+            ]);
+
+        $recipients = $transaction->registrations
+            ->pluck('user')
+            ->filter();
 
         if ($transaction->registeredBy) {
-            try {
-                $transaction->registeredBy->notify(
-                    new TransactionApprovedNotification($transaction)
-                );
-            } catch (\Throwable $e) {
-                report($e);
-            }
+            $recipients->push($transaction->registeredBy);
         }
+
+        $recipients
+            ->unique('id')
+            ->each(function ($user) use ($transaction) {
+                try {
+                    $user->notify(
+                        new TransactionApprovedNotification($transaction)
+                    );
+                } catch (\Throwable $e) {
+                    report($e);
+                }
+            });
 
         return back()->with(
             'success',

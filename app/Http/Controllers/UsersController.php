@@ -340,8 +340,8 @@ public function search(Request $request)
             'id'               => $user->id,
             'name'             => $user->fullname,
             'email'            => $user->email,
-            'profile_complete' => $user->hasCompleteProfile(),
-            'missing'          => $user->missingProfileFields(),
+            // 'profile_complete' => $user->hasCompleteProfile(),
+            // 'missing'          => $user->missingProfileFields(),
         ])
     );
 }

@@ -185,34 +185,38 @@ public function isExternal(): bool
         ->where('role_group', 'Eksternal')
         ->exists();
 }
-public function missingProfileFields(): array
+public function hasGender(): bool
 {
-    $required = [
-        'gender'          => 'Jenis kelamin',
-        'birth_date'      => 'Tanggal lahir',
-        'address'         => 'Alamat lengkap',
-        'province_id'     => 'Provinsi',
-        'city_id'         => 'Kota/Kabupaten',
-        'district_id'     => 'Kecamatan',
-        'sub_district_id' => 'Kelurahan',
-        'postal_code_id'  => 'Kode pos',
-    ];
-
-    $missing = [];
-
-    foreach ($required as $field => $label) {
-        $value = $this->{$field};
-
-        if ($value === null || (is_string($value) && trim($value) === '')) {
-            $missing[] = $label;
-        }
-    }
-
-    return $missing;
+    return in_array((int) $this->gender, [1, 2], true);
 }
+// public function missingProfileFields(): array
+// {
+//     $required = [
+//         'gender'          => 'Jenis kelamin',
+//         'birth_date'      => 'Tanggal lahir',
+//         'address'         => 'Alamat lengkap',
+//         'province_id'     => 'Provinsi',
+//         'city_id'         => 'Kota/Kabupaten',
+//         'district_id'     => 'Kecamatan',
+//         'sub_district_id' => 'Kelurahan',
+//         'postal_code_id'  => 'Kode pos',
+//     ];
 
-public function hasCompleteProfile(): bool
-{
-    return empty($this->missingProfileFields());
-}
+//     $missing = [];
+
+//     foreach ($required as $field => $label) {
+//         $value = $this->{$field};
+
+//         if ($value === null || (is_string($value) && trim($value) === '')) {
+//             $missing[] = $label;
+//         }
+//     }
+
+//     return $missing;
+// }
+
+// public function hasCompleteProfile(): bool
+// {
+//     return empty($this->missingProfileFields());
+// }
 }

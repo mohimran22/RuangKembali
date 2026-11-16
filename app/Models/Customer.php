@@ -93,9 +93,53 @@ public static function generateNic(): string
 
         ];
     }
+// Level otomatis: 1-3 dihitung dari event, 4-6 (Silver/Gold/Platinum) tetap manual
+public const LEVEL_SILVER   = 2; // jumlah event lunas minimal
+public const LEVEL_GOLD     = 3;
+public const LEVEL_PLATINUM = 5;
 
-    public function getReadableLoyaltyLevelAttribute()
-    {
+public static function levelSql(): string
+{
+    $paid = "(SELECT COUNT(DISTINCT er.event_id) FROM event_registrations er
+              WHERE er.user_id = customers.user_id
+                AND er.status IN ('paid','attended'))";
+    $any  = "EXISTS (SELECT 1 FROM event_registrations er
+              WHERE er.user_id = customers.user_id)";
+
+    $s = self::LEVEL_SILVER; $g = self::LEVEL_GOLD; $p = self::LEVEL_PLATINUM;
+
+    return "GREATEST(COALESCE(customers.loyalty_level, 1), CASE
+        WHEN $paid >= $p THEN 6
+        WHEN $paid >= $g THEN 5
+        WHEN $paid >= $s THEN 4
+        WHEN $paid >= 1 THEN 3
+        WHEN $any THEN 2
+        ELSE 1
+    END)";
+}
+
+public function getEffectiveLoyaltyLevelAttribute(): int
+{
+    if (isset($this->attributes['auto_level'])) {
+        return (int) $this->attributes['auto_level'];
+    }
+
+    $regs = $this->registrations()->get(['event_id', 'status']);
+    $paid = $regs->whereIn('status', ['paid', 'attended'])->pluck('event_id')->unique()->count();
+
+    $auto = match (true) {
+        $paid >= self::LEVEL_PLATINUM => 6,
+        $paid >= self::LEVEL_GOLD     => 5,
+        $paid >= self::LEVEL_SILVER   => 4,
+        $paid >= 1                    => 3,
+        $regs->isNotEmpty()           => 2,
+        default                       => 1,
+    };
+
+    return max((int) $this->loyalty_level, $auto);
+}
+public function getReadableLoyaltyLevelAttribute()
+{
     return [
         1 => 'Lead',
         2 => 'Prospek',
@@ -103,8 +147,8 @@ public static function generateNic(): string
         4 => 'Silver',
         5 => 'Gold',
         6 => 'Platinum',
-    ][$this->loyalty_level] ?? 'Tidak diketahui';
-    }
+    ][$this->effective_loyalty_level] ?? 'Tidak diketahui';
+}
 
     public function getReadableCategoryAttribute()
     {
