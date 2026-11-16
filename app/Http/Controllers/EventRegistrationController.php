@@ -26,8 +26,9 @@ class EventRegistrationController extends Controller
         $needsProfile = !$registration && ActiveRole::name() !== 'Super-Admin';
         $missingProfile = $needsProfile ? auth()->user()->missingProfileFields() : [];
 
+        // di create()
         if ($missingProfile) {
-            session(['url.intended' => url()->current()]);
+            session(['return_after_profile' => url()->current()]);
         }
         $canGiveComplimentary = in_array(ActiveRole::name(), ['Super-Admin', 'Tim'], true);
         return view('events.register', compact(
@@ -73,7 +74,7 @@ class EventRegistrationController extends Controller
             ],
             'transaction_code' => ['nullable', 'string'],
         ]);
-
+        $type = $validated['registration_type'] ?? 'regular';
         foreach ($validated['participants'] as $p) {
             $hasUserId = !empty($p['user_id']);
             $hasGuestInfo = !empty($p['name'])
@@ -116,7 +117,7 @@ class EventRegistrationController extends Controller
 
             // Data pendaftar sendiri kurang: arahkan ke profil, lalu kembali ke sini
             if ($incomplete->contains('id', auth()->id())) {
-                session(['url.intended' => route('events.register', $event->slug)]);
+                session(['return_after_profile' => route('events.register', $event->slug)]);
 
                 return redirect()->route('member.profile')->with(
                     'error',

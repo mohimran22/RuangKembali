@@ -132,7 +132,7 @@
                                                 @if($transaction->expires_at)
                                                     ({{ $transaction->expires_at->translatedFormat('d F Y, H:i') }} WIB)
                                                 @endif
-                                                sudah lewat. Upload bukti dan verifikasi tidak lagi tersedia.
+                                                sudah lewat. Upload bukti dan verifikasi tidak lagi tersedia. Silakan daftar ulang ke event ini.
                                             </div>
                                         </div>
                                     </div>

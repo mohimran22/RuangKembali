@@ -160,7 +160,9 @@
                 </div>
             </div>
         </div>
-
+            {{-- @can('lihat data analitik')
+                @include('dashboard.partials.traffic-analytics')
+            @endcan --}}
             @can('lihat akun-akuntansi')
             <div class="col-12">
                 <div class="card shadow-sm border-0 rounded-4">

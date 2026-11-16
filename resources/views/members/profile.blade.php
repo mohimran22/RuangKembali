@@ -10,7 +10,24 @@
                         <form action="{{ route('member.update', $user->id) }}" method="POST" enctype="multipart/form-data">
                             @csrf
                             @method('PUT')
+                            @if(session('error'))
+                                <div class="alert alert-warning mb-3">{{ session('error') }}</div>
+                            @endif
 
+                            @if(session('success'))
+                                <div class="alert alert-success mb-3">{{ session('success') }}</div>
+                            @endif
+
+                            @if($errors->any())
+                                <div class="alert alert-danger mb-3">
+                                    <div class="fw-semibold mb-1">Data belum bisa disimpan:</div>
+                                    <ul class="mb-0">
+                                        @foreach($errors->all() as $message)
+                                            <li>{{ $message }}</li>
+                                        @endforeach
+                                    </ul>
+                                </div>
+                            @endif
                             <div class="text-center bg-light py-4 position-relative">
                                 <div class="position-relative d-inline-block">
                                     @if ($user->photo)
@@ -100,8 +117,8 @@
                                 <h3 class="fw-bold text-dark mb-3">Kontak & Alamat</h3>
                                 <div class="row g-3">
                                     <div class="col-md-6 mb-3">
-                                        <label for="phone" class="form-label">Nomor Telepon</label>
-                                        <input type="text" name="phone" id="phone" class="form-control"
+                                        <label for="phone" class="form-label required">Nomor Telepon</label>
+                                        <input type="text" name="phone" id="phone" class="form-control" required
                                                value="{{ old('phone', auth()->user()->phone) }}">
                                     </div>
                                     <div class="col-md-6 mb-3">
@@ -112,8 +129,8 @@
                                 </div>
 
                                 <div class="mt-3">
-                                    <label for="address" class="form-label">Alamat Lengkap</label>
-                                    <textarea name="address" id="address" rows="2" class="form-control">{{ old('address', auth()->user()->address) }}</textarea>
+                                    <label for="address" class="form-label required">Alamat Lengkap</label>
+                                    <textarea name="address" id="address" rows="2" class="form-control required">{{ old('address', auth()->user()->address) }}</textarea>
                                 </div>
 
                                 <div class="row g-3 mt-2">

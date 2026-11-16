@@ -161,6 +161,12 @@ class DashboardController extends Controller
         // 🔁 Update data user
         $user->update($validated);
 
+        // Datang dari form pendaftaran event: kembali ke sana
+        if ($back = session()->pull('return_after_profile')) {
+            return redirect($back)
+                ->with('success', 'Data diri berhasil dilengkapi. Silakan lanjutkan pendaftaran.');
+        }
+
         return redirect()->route('dashboard')
             ->with('success', 'Profil Anda berhasil diperbarui.');
     }
