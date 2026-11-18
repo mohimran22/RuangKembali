@@ -38,17 +38,14 @@ class MembersController extends Controller
     {
         $auth = auth()->user();
         // Query dasar (sudah dibatasi hak akses). Dipakai untuk tabel DAN kartu statistik.
+        $canViewAll = ActiveRole::hasPermission('lihat daftar member');
         $baseQuery = Customer::with(['user.roles']);
-    
-        if (!ActiveRole::hasPermission('lihat daftar member')) {
+        if (!$canViewAll) {
             $baseQuery->where('user_id', $auth->id);
         }
 
         if ($request->ajax()) {
-            // withCount hanya di query tabel (bukan di $baseQuery) supaya perhitungan kartu tidak terganggu
-            // $query = (clone $baseQuery)->withCount('registrations');
-              $query = (clone $baseQuery)->withCount(['registrations' => fn($q) => $q->where('status', 'paid')]);
-            // Filter tab (Lead, Prospek, New Customer, Silver, Gold, Platinum)
+
             $query = (clone $baseQuery)
                 ->select('customers.*')
                 ->selectRaw(Customer::levelSql() . ' AS auto_level')
@@ -64,7 +61,7 @@ class MembersController extends Controller
     
             $customers = $query->get();
     
-            return DataTables::of($customers)
+            $dt = DataTables::of($customers)
                 ->addIndexColumn()
                 ->addColumn('customer', function ($row) {
                     $name     = Str::title($row->user->fullname ?? '-');
@@ -118,15 +115,18 @@ class MembersController extends Controller
                     }
                     return $buttons . '</div>';
                 })
-                ->rawColumns(['customer', 'loyalty', 'action'])
-                ->with('stats', $this->loyaltyStats($baseQuery))
-                ->with('total', (clone $baseQuery)->count())
-                ->make(true);
+                ->rawColumns(['customer', 'loyalty', 'action']);
+                if ($canViewAll) {
+                    $dt->with('stats', $this->loyaltyStats($baseQuery))
+                    ->with('total', (clone $baseQuery)->count());
+                }
+                return $dt->make(true);
         }
     
         return view('members.index', [
-            'stats' => $this->loyaltyStats($baseQuery),
-            'total' => (clone $baseQuery)->count(),
+            'canViewAll' => $canViewAll,
+            'stats'      => $canViewAll ? $this->loyaltyStats($baseQuery) : [],
+            'total'      => $canViewAll ? (clone $baseQuery)->count() : 0,
         ]);
     }
     private function loyaltyStats($baseQuery): array

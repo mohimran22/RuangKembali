@@ -95,7 +95,7 @@
     <div class="page-body">
         <div class="container-xl">
 
-            {{-- ===== Kartu ringkasan ===== --}}
+            @if($canViewAll)
             <div class="row g-3 mb-3">
                 {{-- Total seluruh customer --}}
                 <div class="col-12 col-xl">
@@ -128,11 +128,12 @@
                     </div>
                 @endforeach
             </div>
-
+            @endif
             {{-- ===== Tabel ===== --}}
             <div class="card stat-card">
                 <div class="card-body">
                     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                        @if($canViewAll)
                         <div class="filter-tabs" id="loyaltyTabs">
                             <button type="button" class="tab-btn active" data-level="">Semua</button>
                             @foreach ($cards as $level => $c)
@@ -141,6 +142,7 @@
                                 </button>
                             @endforeach
                         </div>
+                        @endif
                     </div>
 
                     <div class="table-responsive">
