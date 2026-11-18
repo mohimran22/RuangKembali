@@ -26,7 +26,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&family=Saira:wght@600;700&display=swap" rel="stylesheet">
     <!-- Tabler Icons -->
     <link rel="stylesheet" href="{{ asset('fonts/tabler-icons.css') }}">
-    {{-- @include('partials.ga4-tracking') --}}
+   @include('partials.footer-css')
     <!-- CSS tambahan -->
     @stack('styles')
 </head>
