@@ -16,10 +16,10 @@ use App\Http\Controllers\AccountController;
 use App\Http\Controllers\MembersController;
 use App\Http\Controllers\AffiliatorController;
 use App\Http\Controllers\EventController;
-use App\Http\Controllers\ProjectLevelController;
+use App\Http\Controllers\WebsiteAnalyticsController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\HomeController;
-use App\Http\Controllers\WorkerController;
+use App\Http\Controllers\TrafficController;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\InvestorController;
 use App\Http\Controllers\PartnerController;
@@ -49,16 +49,24 @@ use App\Http\Controllers\ArticleController;
 use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\TagController;
 
+Route::middleware([\App\Http\Middleware\WebsiteAnalyticsMiddleware::class,])->group(function () {
 Route::get('/', [HomeController::class, 'index'])->name('landing');   // nama 'landing' dipakai banyak view
 Route::get('/artikel', [ArticleController::class, 'index'])->name('artikel.index');
 Route::get('/artikel/{article:slug}', [ArticleController::class, 'show'])->name('articles.show');
 Route::get('/sitemap.xml', [SitemapController::class, 'index']);
+});
 
 // Route::get('/', [HomeController::class, 'index']);
 Route::middleware('noindex')->group(function () {
     require __DIR__.'/auth.php';
 });
-
+Route::post('/analytics/track', [WebsiteAnalyticsController::class,
+        'track',
+    ])->middleware('throttle:60,1')
+    ->name('analytics.track');
+Route::get('/dashboard/traffic', TrafficController::class)
+    ->middleware(['auth', 'can:lihat data analitik'])
+    ->name('dashboard.traffic');
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])
         ->name('dashboard');
@@ -109,7 +117,7 @@ Route::middleware('auth')->group(function () {
 });
 
 
-Route::middleware(['auth', 'verified', 'active.permission:lihat daftar member|lihat data member', 'active.role:Tim|Member|Tim-FInance'])
+Route::middleware(['auth', 'verified', 'active.permission:lihat daftar member|lihat data member', 'active.role:Tim|Member|Tim-Finance'])
     ->group(function () {
         Route::get('/members/generate-nic', [MembersController::class, 'generateNicAjax'])->name('members.generateNic');
         Route::resource('/members', MembersController::class)->whereUuid('member');

@@ -90,7 +90,7 @@ class MembersController extends Controller
                             </div>';
                 })
                 ->editColumn('channel', fn($row) => $row->readable_channel)
-                ->addColumn('category', fn($row) => $this->readableCategory($row->category))
+                ->addColumn('category', fn($row) => $row->readable_category)
                 ->addColumn('orders', fn($row) => (int) $row->registrations_count)
                 ->addColumn('created_at', fn($row) => $row->created_at
                     ? $row->created_at->locale('id')->diffForHumans()   // "3 hari yang lalu"
@@ -147,28 +147,6 @@ class MembersController extends Controller
         $stats[2] = $stats[2] + $stats[3] + $stats[4] + $stats[5] + $stats[6];
 
         return $stats;
-    }
-    private function readableCategory($value)
-    {
-        return match ((int) $value) {
-            1 => 'Individu',
-            2 => 'Perusahaan',
-            3 => 'Instansi',
-            4 => 'Lainnya',
-            default => '-',
-        };
-    }
-
-    private function readableLoyaltyLevel($value)
-    {
-        return match ((int) $value) {
-            1 => 'Lead',
-            2 => 'New Member',
-            3 => 'Silver',
-            4 => 'Gold',
-            5 => 'Platinum',
-            default => '-',
-        };
     }
 
     public function create(Customer $customer)
