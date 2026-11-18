@@ -43,7 +43,7 @@ class MembersController extends Controller
         if (!$canViewAll) {
             $baseQuery->where('user_id', $auth->id);
         }
-
+        $this->applyDateRange($baseQuery, $request);
         if ($request->ajax()) {
 
             $query = (clone $baseQuery)
@@ -148,7 +148,35 @@ class MembersController extends Controller
 
         return $stats;
     }
+        private function applyDateRange($query, Request $request)
+    {
+        $request->validate([
+            'date_start' => 'nullable|date_format:Y-m-d',
+            'date_end'   => 'nullable|date_format:Y-m-d|after_or_equal:start',
+        ]);
 
+        $now = now();
+
+        [$start, $end] = match ($request->input('range')) {
+            'today'      => [$now->copy()->startOfDay(), $now->copy()->endOfDay()],
+            '7d'         => [$now->copy()->subDays(6)->startOfDay(), $now->copy()->endOfDay()],
+            'month'      => [$now->copy()->startOfMonth(), $now->copy()->endOfMonth()],
+            'last_month' => [$now->copy()->subMonthNoOverflow()->startOfMonth(),
+                            $now->copy()->subMonthNoOverflow()->endOfMonth()],
+            '3m'         => [$now->copy()->subMonthsNoOverflow(3)->startOfDay(), $now->copy()->endOfDay()],
+            'year'       => [$now->copy()->startOfYear(), $now->copy()->endOfYear()],
+            'custom'     => [
+                $request->filled('date_start') ? Carbon::parse($request->date_start)->startOfDay() : null,
+                $request->filled('date_end')   ? Carbon::parse($request->date_end)->endOfDay()     : null,
+            ],
+            default      => [null, null],   // kosong = semua data
+        };
+
+        if ($start) $query->where('customers.created_at', '>=', $start);
+        if ($end)   $query->where('customers.created_at', '<=', $end);
+
+        return $query;
+    }
     public function create(Customer $customer)
     {
         $user = auth()->user();

@@ -78,7 +78,7 @@
         <div class="container-xl">
             <div class="row g-2 align-items-center">
                 <div class="col">
-                    <h2 class="page-title">Daftar Member</h2>
+                    <h2>Daftar Member</h2>
                     <div class="text-secondary small">Semua data member dalam satu tempat.</div>
                 </div>
                 <div class="col-12 col-md-auto ms-auto d-print-none">
@@ -96,6 +96,22 @@
         <div class="container-xl">
 
             @if($canViewAll)
+            <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+                <div class="filter-tabs" id="rangeTabs">
+                    <button type="button" class="tab-btn active" data-range="">Semua</button>
+                    <button type="button" class="tab-btn" data-range="today">Hari Ini</button>
+                    <button type="button" class="tab-btn" data-range="7d">7 Hari</button>
+                    <button type="button" class="tab-btn" data-range="month">Bulan Ini</button>
+                    <button type="button" class="tab-btn" data-range="last_month">Bulan Lalu</button>
+                    <button type="button" class="tab-btn" data-range="3m">3 Bulan</button>
+                    <button type="button" class="tab-btn" data-range="year">Tahun Ini</button>
+                </div>
+                <div class="d-flex align-items-center gap-2 ms-md-auto">
+                    <input type="date" id="rangeStart" class="form-control form-control-sm" style="width:auto">
+                    <span class="text-secondary">–</span>
+                    <input type="date" id="rangeEnd" class="form-control form-control-sm" style="width:auto">
+                </div>
+            </div>
             <div class="row g-3 mb-3">
                 {{-- Total seluruh customer --}}
                 <div class="col-12 col-xl">
@@ -106,7 +122,7 @@
                                 <span class="stat-icon"><i class="ti ti-users"></i></span>
                             </div>
                             <div class="stat-value mt-1" data-stat="total">{{ number_format($grand) }}</div>
-                            <div class="stat-sub">Seluruh level</div>
+                            <div class="stat-sub" data-total-sub>Seluruh level</div>
                         </div>
                     </div>
                 </div>
@@ -178,7 +194,7 @@
     <script>
         $(function () {
             let activeLevel = '';
-
+            let activeRange = '', rangeStart = '', rangeEnd = '';
             const table = $('#tableCustomers').DataTable({
                 scrollX: true,
                 serverSide: true,
@@ -186,7 +202,12 @@
                 responsive: false,
                 ajax: {
                     url: '{{ route('members.index') }}',
-                    data: function (d) { d.loyalty = activeLevel; }
+                    data: function (d) {
+                        d.loyalty = activeLevel;
+                        d.range   = activeRange;
+                        d.date_start   = rangeStart;
+                        d.date_end     = rangeEnd;
+                    }
                 },
                 columns: [
                     { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
@@ -222,7 +243,27 @@
                 activeLevel = $(this).data('level');
                 table.ajax.reload();
             });
+            $('#rangeTabs').on('click', '.tab-btn', function () {
+                $('#rangeTabs .tab-btn').removeClass('active');
+                $(this).addClass('active');
+                activeRange = $(this).data('range');
+                rangeStart = rangeEnd = '';
+                $('#rangeStart, #rangeEnd').val('');
+                $('[data-total-sub]').text('Seluruh level' + (activeRange ? ' · ' + $(this).text().trim() : ''));
+                table.ajax.reload();
+            });
 
+            // Filter rentang waktu (tanggal manual)
+            $('#rangeStart, #rangeEnd').on('change', function () {
+                rangeStart = $('#rangeStart').val();
+                rangeEnd   = $('#rangeEnd').val();
+                if (!rangeStart && !rangeEnd) return;
+                if (rangeStart && rangeEnd && rangeEnd < rangeStart) return;   // hindari error validasi 422
+                activeRange = 'custom';
+                $('#rangeTabs .tab-btn').removeClass('active');
+                $('[data-total-sub]').text('Seluruh level · Rentang kustom');
+                table.ajax.reload();
+            });
             // Update kartu setelah data di-reload (misal habis hapus)
             table.on('xhr.dt', function (e, settings, json) {
                 if (!json || !json.stats) return;
