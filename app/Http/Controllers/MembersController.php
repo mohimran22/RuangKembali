@@ -43,6 +43,7 @@ class MembersController extends Controller
         if (!$canViewAll) {
             $baseQuery->where('user_id', $auth->id);
         }
+        $totalQuery = clone $baseQuery; 
         $this->applyDateRange($baseQuery, $request);
         if ($request->ajax()) {
 
@@ -52,11 +53,7 @@ class MembersController extends Controller
                 ->withCount(['registrations' => fn($q) => $q->where('status', 'paid')]);
 
             if ($request->filled('loyalty')) {
-                $lvl = (int) $request->loyalty;
-                $query->whereRaw(
-                    $lvl === 2 ? '(' . Customer::levelSql() . ') >= 2' : '(' . Customer::levelSql() . ') = ?',
-                    $lvl === 2 ? [] : [$lvl]
-                );
+                $query->whereRaw('(' . Customer::levelSql() . ') = ?', [(int) $request->loyalty]);
             }
     
             $customers = $query->get();
@@ -118,36 +115,39 @@ class MembersController extends Controller
                 ->rawColumns(['customer', 'loyalty', 'action']);
                 if ($canViewAll) {
                     $dt->with('stats', $this->loyaltyStats($baseQuery))
-                    ->with('total', (clone $baseQuery)->count());
+                    ->with('total', (clone $totalQuery)->count())
+                    ->with('filtered_total', (clone $baseQuery)->count());
                 }
                 return $dt->make(true);
         }
     
         return view('members.index', [
-            'canViewAll' => $canViewAll,
-            'stats'      => $canViewAll ? $this->loyaltyStats($baseQuery) : [],
-            'total'      => $canViewAll ? (clone $baseQuery)->count() : 0,
+            'canViewAll'    => $canViewAll,
+            'stats'         => $canViewAll ? $this->loyaltyStats($baseQuery) : [],
+            'total'         => $canViewAll ? (clone $totalQuery)->count() : 0,
+            'filteredTotal' => $canViewAll ? (clone $baseQuery)->count() : 0,
         ]);
     }
-    private function loyaltyStats($baseQuery): array
-    {
-        $counts = (clone $baseQuery)
-            ->toBase()
-            ->reorder()
-            ->selectRaw(Customer::levelSql() . ' AS lvl, COUNT(*) AS total')
-            ->groupBy('lvl')
-            ->pluck('total', 'lvl');
+private function loyaltyStats($baseQuery): array
+{
+    $counts = (clone $baseQuery)
+        ->toBase()
+        ->reorder()
+        ->selectRaw(Customer::levelSql() . ' AS lvl, COUNT(*) AS total')
+        ->groupBy('lvl')
+        ->pluck('total', 'lvl');
 
-        $stats = [];
-        foreach (range(1, 6) as $level) {
-            $stats[$level] = (int) ($counts[$level] ?? 0);
-        }
-
-        // Prospek kumulatif: semua yang pernah mendaftar (level 2 ke atas)
-        $stats[2] = $stats[2] + $stats[3] + $stats[4] + $stats[5] + $stats[6];
-
-        return $stats;
+    $exclusive = [];
+    foreach (range(1, 6) as $level) {
+        $exclusive[$level] = (int) ($counts[$level] ?? 0);
     }
+
+    $stats = $exclusive;
+    $stats[2] = $exclusive[2] + $exclusive[3] + $exclusive[4] + $exclusive[5] + $exclusive[6]; 
+    $stats[1] = $exclusive[1] + $stats[2];                                                     
+
+    return $stats;
+}
         private function applyDateRange($query, Request $request)
     {
         $request->validate([
