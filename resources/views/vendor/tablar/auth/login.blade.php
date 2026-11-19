@@ -189,7 +189,9 @@
 
     <div class="login-panel">
         <h3>Masuk</h3>
-
+        @if (session('status'))
+            <div class="alert alert-success small">{{ session('status') }}</div>
+        @endif
         <form method="POST" action="{{ route('login') }}" autocomplete="off" novalidate>
             @csrf
 
@@ -236,9 +238,9 @@
             </div>
             <button type="submit" class="btn btn-login text-white w-100">Masuk</button>
 
-            {{-- <div class="text-center mt-3 small">
+            <div class="text-center mt-3 small">
                 Lupa Password? Tenang, <a href="{{ route('password.request') }}" class="fw-semibold text-dark">klik disini!</a>
-            </div> --}}
+            </div>
 
             <div class="text-center mt-3 small">
                 Atau belum punya akun? <a href="{{ route('register') }}" class="fw-semibold text-dark">Daftar sekarang!</a>
