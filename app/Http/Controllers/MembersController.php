@@ -47,10 +47,11 @@ class MembersController extends Controller
         $this->applyDateRange($baseQuery, $request);
         if ($request->ajax()) {
 
-            $query = (clone $baseQuery)
-                ->select('customers.*')
-                ->selectRaw(Customer::levelSql() . ' AS auto_level')
-                ->withCount(['registrations' => fn($q) => $q->where('status', 'paid')]);
+        $query = (clone $baseQuery)
+            ->select('customers.*')
+            ->selectRaw(Customer::levelSql() . ' AS auto_level')
+            ->selectRaw(Customer::lastTransactionSql() . ' AS last_transaction_at')
+            ->withCount(['registrations' => fn($q) => $q->where('status', 'paid')]);
 
             if ($request->filled('loyalty')) {
                 $query->whereRaw('(' . Customer::levelSql() . ') = ?', [(int) $request->loyalty]);
@@ -86,12 +87,17 @@ class MembersController extends Controller
                 ->editColumn('channel', fn($row) => $row->readable_channel)
                 ->addColumn('category', fn($row) => $row->readable_category)
                 ->addColumn('orders', fn($row) => (int) $row->registrations_count)
-                ->addColumn('created_at', fn($row) => $row->created_at
-                    ? $row->created_at->locale('id')->diffForHumans()   // "3 hari yang lalu"
-                    : '-')
-                ->addColumn('last_contact', fn($row) => $row->last_contact
-                    ? $row->last_contact->locale('id')->diffForHumans()   // "3 hari yang lalu"
-                    : '-')
+
+                ->addColumn('last_contact', function ($row) {
+                    if (!$row->last_transaction_at) {
+                        return '-';
+                    }
+
+                    $date = Carbon::parse($row->last_transaction_at);
+
+                    return '<span title="' . e($date->translatedFormat('d F Y, H:i')) . '">'
+                        . e($date->locale('id')->diffForHumans()) . '</span>';
+                })
                 ->addColumn('loyalty', function ($row) {
                     $level = $row->effective_loyalty_level;
                     return '<span class="lv-badge lv-' . $level . '">' . e($row->readable_loyalty_level) . '</span>';
@@ -112,7 +118,7 @@ class MembersController extends Controller
                     }
                     return $buttons . '</div>';
                 })
-                ->rawColumns(['customer', 'loyalty', 'action']);
+                ->rawColumns(['customer', 'loyalty', 'action', 'last_contact']);
                 if ($canViewAll) {
                     $dt->with('stats', $this->loyaltyStats($baseQuery))
                     ->with('total', (clone $totalQuery)->count())

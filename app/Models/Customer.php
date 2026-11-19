@@ -98,7 +98,7 @@ public const LEVEL_SILVER   = 2; // jumlah event lunas minimal
 public const LEVEL_GOLD     = 3;
 public const LEVEL_PLATINUM = 5;
 
-public static function levelSql(): string
+    public static function levelSql(): string
 {
     $paid = "(SELECT COUNT(DISTINCT er.event_id) FROM event_registrations er
               WHERE er.user_id = customers.user_id
@@ -117,7 +117,15 @@ public static function levelSql(): string
         ELSE 1
     END";
 }
-
+public static function lastTransactionSql(): string
+{
+    return "(SELECT MAX(t.paid_at)
+             FROM event_registrations er
+             JOIN transactions t ON t.id = er.transaction_id
+             WHERE er.user_id = customers.user_id
+               AND er.status IN ('paid','attended')
+               AND t.paid_at IS NOT NULL)";
+}
 public function getEffectiveLoyaltyLevelAttribute(): int
 {
     if (isset($this->attributes['auto_level'])) {
