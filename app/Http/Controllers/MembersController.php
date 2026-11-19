@@ -50,7 +50,7 @@ class MembersController extends Controller
         $query = (clone $baseQuery)
             ->select('customers.*')
             ->selectRaw(Customer::levelSql() . ' AS auto_level')
-            ->selectRaw(Customer::lastTransactionSql() . ' AS last_transaction_at')
+            ->selectRaw(Customer::lastContactSql() . ' AS last_contact_at')
             ->withCount(['registrations' => fn($q) => $q->where('status', 'paid')]);
 
             if ($request->filled('loyalty')) {
@@ -88,12 +88,18 @@ class MembersController extends Controller
                 ->addColumn('category', fn($row) => $row->readable_category)
                 ->addColumn('orders', fn($row) => (int) $row->registrations_count)
 
-                ->addColumn('last_contact', function ($row) {
-                    if (!$row->last_transaction_at) {
-                        return '-';
-                    }
+                // ->addColumn('last_contact', function ($row) {
+                //     if (!$row->last_transaction_at) {
+                //         return '-';
+                //     }
 
-                    $date = Carbon::parse($row->last_transaction_at);
+                //     $date = Carbon::parse($row->last_transaction_at);
+
+                //     return '<span title="' . e($date->translatedFormat('d F Y, H:i')) . '">'
+                //         . e($date->locale('id')->diffForHumans()) . '</span>';
+                // })
+                ->addColumn('last_contact', function ($row) {
+                    $date = Carbon::parse($row->last_contact_at);
 
                     return '<span title="' . e($date->translatedFormat('d F Y, H:i')) . '">'
                         . e($date->locale('id')->diffForHumans()) . '</span>';
@@ -134,31 +140,31 @@ class MembersController extends Controller
             'filteredTotal' => $canViewAll ? (clone $baseQuery)->count() : 0,
         ]);
     }
-private function loyaltyStats($baseQuery): array
-{
-    $counts = (clone $baseQuery)
-        ->toBase()
-        ->reorder()
-        ->selectRaw(Customer::levelSql() . ' AS lvl, COUNT(*) AS total')
-        ->groupBy('lvl')
-        ->pluck('total', 'lvl');
+    private function loyaltyStats($baseQuery): array
+    {
+        $counts = (clone $baseQuery)
+            ->toBase()
+            ->reorder()
+            ->selectRaw(Customer::levelSql() . ' AS lvl, COUNT(*) AS total')
+            ->groupBy('lvl')
+            ->pluck('total', 'lvl');
 
-    $exclusive = [];
-    foreach (range(1, 6) as $level) {
-        $exclusive[$level] = (int) ($counts[$level] ?? 0);
+        $exclusive = [];
+        foreach (range(1, 6) as $level) {
+            $exclusive[$level] = (int) ($counts[$level] ?? 0);
+        }
+
+        $stats = $exclusive;
+        $stats[2] = $exclusive[2] + $exclusive[3] + $exclusive[4] + $exclusive[5] + $exclusive[6]; 
+        $stats[1] = $exclusive[1] + $stats[2];                                                     
+
+        return $stats;
     }
-
-    $stats = $exclusive;
-    $stats[2] = $exclusive[2] + $exclusive[3] + $exclusive[4] + $exclusive[5] + $exclusive[6]; 
-    $stats[1] = $exclusive[1] + $stats[2];                                                     
-
-    return $stats;
-}
         private function applyDateRange($query, Request $request)
     {
         $request->validate([
             'date_start' => 'nullable|date_format:Y-m-d',
-            'date_end'   => 'nullable|date_format:Y-m-d|after_or_equal:start',
+            'date_end'   => 'nullable|date_format:Y-m-d|after_or_equal:date_start',
         ]);
 
         $now = now();
@@ -183,6 +189,7 @@ private function loyaltyStats($baseQuery): array
 
         return $query;
     }
+
     public function create(Customer $customer)
     {
         $user = auth()->user();

@@ -117,6 +117,11 @@ public const LEVEL_PLATINUM = 5;
         ELSE 1
     END";
 }
+public static function lastContactSql(): string
+{
+    // TODO: tambahkan sumber follow-up di depan COALESCE kalau tabelnya sudah ada
+    return "COALESCE(" . self::lastTransactionSql() . ", customers.created_at)";
+}
 public static function lastTransactionSql(): string
 {
     return "(SELECT MAX(t.paid_at)
@@ -124,7 +129,8 @@ public static function lastTransactionSql(): string
              JOIN transactions t ON t.id = er.transaction_id
              WHERE er.user_id = customers.user_id
                AND er.status IN ('paid','attended')
-               AND t.paid_at IS NOT NULL)";
+               AND t.paid_at IS NOT NULL
+               AND t.total_amount > 0)";
 }
 public function getEffectiveLoyaltyLevelAttribute(): int
 {
