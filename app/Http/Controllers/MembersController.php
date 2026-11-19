@@ -88,21 +88,11 @@ class MembersController extends Controller
                 ->addColumn('category', fn($row) => $row->readable_category)
                 ->addColumn('orders', fn($row) => (int) $row->registrations_count)
 
-                // ->addColumn('last_contact', function ($row) {
-                //     if (!$row->last_transaction_at) {
-                //         return '-';
-                //     }
-
-                //     $date = Carbon::parse($row->last_transaction_at);
-
-                //     return '<span title="' . e($date->translatedFormat('d F Y, H:i')) . '">'
-                //         . e($date->locale('id')->diffForHumans()) . '</span>';
-                // })
                 ->addColumn('last_contact', function ($row) {
-                    $date = Carbon::parse($row->last_contact_at);
+                    $date = Carbon::parse($row->last_contact_at)->locale('id');
 
-                    return '<span title="' . e($date->translatedFormat('d F Y, H:i')) . '">'
-                        . e($date->locale('id')->diffForHumans()) . '</span>';
+                    return '<div>' . e($date->diffForHumans()) . '</div>'
+                        . '<div class="text-secondary small">' . e($date->translatedFormat('d M Y, H:i')) . '</div>';
                 })
                 ->addColumn('loyalty', function ($row) {
                     $level = $row->effective_loyalty_level;
