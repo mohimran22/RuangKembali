@@ -11,6 +11,7 @@ use App\Services\SeoAnalyzer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 
 class ArticleController extends Controller
 {
@@ -18,7 +19,8 @@ class ArticleController extends Controller
     {
         $this->middleware('permission:lihat data artikel')->only(['index']);
         $this->middleware('permission:tambah data artikel')->only(['create', 'store']);
-        $this->middleware('permission:ubah data artikel')->only(['edit', 'update', 'analyze']);
+        $this->middleware('permission:ubah data artikel')->only(['edit', 'update']);
+        $this->middleware('permission:tambah data artikel|ubah data artikel')->only(['analyze', 'uploadImage']);
         $this->middleware('permission:hapus data artikel')->only(['destroy']);
     }
 
@@ -123,8 +125,9 @@ class ArticleController extends Controller
             'featured_image'   => 'nullable|image|max:2048',
             'og_image'         => 'nullable|image|max:2048',
             'categories'   => 'nullable|array',
-            'categories.*' => 'exists:categories,id',
+            'categories.*' => ['integer', Rule::exists(Category::class, 'id')],
             'tags'         => 'nullable|string|max:500',
+            'published_at' => 'nullable|date',
             'cta_title'  => 'nullable|string|max:120',
             'cta_text'   => 'nullable|string|max:300',
             'cta_button' => 'required_if:cta_enabled,1|nullable|string|max:60',
@@ -134,7 +137,9 @@ class ArticleController extends Controller
         $data['content'] = \App\Support\VideoEmbed::sanitize($data['content']);          // sanitasi HTML (mews/purifier)
         $data['noindex'] = $request->boolean('noindex');
         $data['cta_enabled'] = $request->boolean('cta_enabled');
-        
+        if (! $request->user()->can('publikasi data artikel')) {
+            $data['status'] = $article?->status ?? 'draft';
+        }
         if ($data['status'] === 'published') {
             $data['published_at'] = $request->input('published_at') ?: ($article?->published_at ?? now());
         } else {
@@ -147,13 +152,13 @@ class ArticleController extends Controller
     private function handleFiles(Request $request, array $data, ?Article $article = null): array
     {
         foreach (['featured_image', 'og_image'] as $field) {
-            if ($article?->$field) {
-                Storage::disk('public')->delete($article->$field);
-            }
             if ($request->hasFile($field)) {
+                if ($article?->$field) {
+                    Storage::disk('public')->delete($article->$field);
+                }
                 $data[$field] = $request->file($field)->store('articles', 'public');
             } else {
-                unset($data[$field]); // jangan timpa gambar lama dengan null
+                unset($data[$field]); // pertahankan gambar lama
             }
         }
         return $data;
@@ -219,14 +224,39 @@ class ArticleController extends Controller
 
         return back()->with('success', $articles->count() . ' artikel diproses.');
     }
+    public function uploadImage(Request $request)
+{
+    $request->validate([
+        'upload' => ['required', 'file', 'image', 'mimes:jpg,jpeg,png,webp,gif', 'max:5120'],   // maks 5 MB
+    ]);
 
+    $file = $request->file('upload');
+    $path = $file->store('articles/content', 'public');
+
+    // Kecilkan dan ubah ke WebP (GIF dibiarkan agar animasinya tidak hilang).
+    // Kalau class ImageVariants belum ada, gambar asli yang dipakai.
+    if (strtolower($file->extension()) !== 'gif' && class_exists(\App\Support\ImageVariants::class)) {
+        $web = \App\Support\ImageVariants::web($path, null, 1600, 82);
+
+        if ($web) {
+            Storage::disk('public')->delete($path);   // buang file asli yang besar
+            $path = $web;
+        }
+    }
+
+    return response()->json(['url' => '/storage/' . $path]);
+}
     private function afterSave(Request $request, Article $article): void
     {
         $article->categories()->sync($request->input('categories', []));
 
         $tagIds = collect(explode(',', (string) $request->input('tags')))
-            ->map(fn ($t) => trim($t))->filter()->unique()
-            ->map(fn ($name) => Tag::firstOrCreate(['slug' => Str::slug($name)], ['name' => $name])->id);
+            ->map(fn ($t) => trim($t))->filter()
+            ->map(fn ($name) => [$name, Str::slug($name)])
+            ->filter(fn ($p) => $p[1] !== '')
+            ->unique(fn ($p) => $p[1])
+            ->map(fn ($p) => Tag::firstOrCreate(['slug' => $p[1]], ['name' => $p[0]])->id)
+            ->values();
 
         $article->tags()->sync($tagIds);
         $regenerate = $request->hasFile('featured_image') || $request->hasFile('og_image') || ! $article->og_auto;
