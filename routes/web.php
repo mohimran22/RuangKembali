@@ -21,7 +21,7 @@ use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\TrafficController;
 use App\Http\Controllers\TeamController;
-use App\Http\Controllers\InvestorController;
+use App\Http\Controllers\VoucherController;
 use App\Http\Controllers\PartnerController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\TicketController;
@@ -102,6 +102,9 @@ Route::middleware('auth', 'verified')->group(function () {
         '/events/{event}/register',
         [EventRegistrationController::class, 'store']
     )->name('events.register.store');
+    Route::post('/events/{event}/voucher/check', [EventRegistrationController::class, 'checkVoucher'])
+    ->middleware('throttle:20,1')
+    ->name('events.voucher.check');
 });
 Route::middleware(['auth', 'permission:lihat daftar tim|lihat data tim', 'activerole:Tim'])->group(function () {
     Route::resource('/teams', TeamController::class)->whereUuid('team');
@@ -294,6 +297,9 @@ Route::middleware(['auth', 'active.permission:lihat daftar event|lihat data even
 
     Route::post('/events/{event}/participants/checkin-scan', [EventController::class, 'checkinScan'])
         ->name('events.participants.checkinScan');
+});
+Route::middleware(['auth', 'active.permission:lihat daftar voucher'])->group(function () {
+    Route::resource('vouchers', VoucherController::class)->except(['show']);
 });
 Route::get('/events/{event:event_code}', [EventController::class, 'showPublic'])
     ->name('events.show')

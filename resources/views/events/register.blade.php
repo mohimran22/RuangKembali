@@ -328,9 +328,37 @@
                             {{-- Hidden input transaction_code: selalu ikut ke-submit, terlepas jenis event --}}
                             <input type="hidden" name="transaction_code" value="{{ $transactionCode }}">
                             @if($event->event_type !== 'free')
-
                                 <div class="mb-4" id="paymentSection">
+                                    <input type="hidden" name="voucher_code" id="voucherCodeHidden" value="{{ old('voucher_code') }}">
 
+                                    <div class="mb-3" id="voucherRow">
+
+                                        {{-- Belum ada voucher: baris yang bisa diketuk --}}
+                                        <button type="button" class="voucher-row" id="voucherEmptyState"
+                                                data-bs-toggle="modal" data-bs-target="#voucherModal">
+                                            <span class="voucher-icon"><i class="ti ti-discount-2"></i></span>
+                                            <span class="flex-fill fw-semibold">Yuk, gunakan voucher!</span>
+                                            <i class="ti ti-chevron-right text-secondary"></i>
+                                        </button>
+
+                                        {{-- Voucher sudah diterapkan --}}
+                                        <div class="voucher-row is-applied d-none" id="voucherAppliedState">
+                                            <span class="voucher-icon"><i class="ti ti-circle-check"></i></span>
+                                            <span class="flex-fill">
+                                                <span class="fw-semibold d-block">
+                                                    Voucher <span id="voucherAppliedCode"></span> diterapkan
+                                                </span>
+                                                <span class="small text-success" id="voucherAppliedInfo"></span>
+                                            </span>
+                                            <button type="button" class="btn btn-sm btn-link" data-bs-toggle="modal" data-bs-target="#voucherModal">
+                                                Ganti
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-link text-danger" id="removeVoucherBtn">
+                                                Hapus
+                                            </button>
+                                        </div>
+
+                                    </div>
                                     <h3 class="mb-3">
                                         Ringkasan Pembayaran
                                     </h3>
@@ -365,7 +393,10 @@
                                                     1
                                                 </div>
                                             </div>
-
+                                            <div class="d-flex justify-content-between d-none" id="discountRow">
+                                                <div class="text-secondary">Potongan Voucher</div>
+                                                <div class="fw-semibold text-success" id="discountLabel">- Rp 0</div>
+                                            </div>
                                             <hr class="my-2">
 
                                             <div class="d-flex justify-content-between">
@@ -426,7 +457,7 @@
                                         </div>
 
                                     </div>
-
+                                    
                                 </div>
 
                             @endif
@@ -448,6 +479,7 @@
                             </div>
 
                         </form>
+
                 </div>
 
             </div>
@@ -457,7 +489,30 @@
     </div>
 
 </div>
+@if($event->event_type !== 'free')
+    <div class="modal modal-blur fade" id="voucherModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
 
+                <div class="modal-header">
+                    <h5 class="modal-title">Gunakan Voucher</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+                </div>
+
+                <div class="modal-body">
+                    <label class="form-label" for="voucherInput">Kode Voucher</label>
+                    <div class="input-group">
+                        <input type="text" id="voucherInput" class="form-control text-uppercase"
+                            maxlength="50" autocomplete="off" placeholder="Masukkan kode voucher">
+                        <button type="button" class="btn btn-primary" id="applyVoucherBtn">Terapkan</button>
+                    </div>
+                    <div class="small mt-2" id="voucherMessage"></div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+@endif
 @endsection
 @push('js')
 <script>
@@ -638,18 +693,152 @@
             genderSelect.value = '';
         });
     }
+    let discountPerTicket = 0;
     function updateTotalPrice(count) {
-        const total = isComplimentary() ? 0 : pricePerParticipant * count;
+        const net   = Math.max(0, pricePerParticipant - discountPerTicket);
+        const total = net * count;
 
         const countLabel = document.getElementById('participantCountLabel');
         const totalLabel = document.getElementById('totalPriceLabel');
         const totalInput = document.getElementById('totalPriceInput');
+        const discountRow = document.getElementById('discountRow');
+        const discountLabel = document.getElementById('discountLabel');
 
         if (countLabel) countLabel.textContent = count;
         if (totalLabel) totalLabel.textContent = 'Rp ' + total.toLocaleString('id-ID');
         if (totalInput) totalInput.value = total;
-    }
 
+        if (discountRow && discountLabel) {
+            discountRow.classList.toggle('d-none', discountPerTicket <= 0);
+            discountLabel.textContent = '- Rp ' + (discountPerTicket * count).toLocaleString('id-ID');
+        }
+    }
+    const voucherRow = document.getElementById('voucherRow');
+
+    if (voucherRow) {
+
+        const hidden        = document.getElementById('voucherCodeHidden');
+        const emptyState    = document.getElementById('voucherEmptyState');
+        const appliedState  = document.getElementById('voucherAppliedState');
+        const appliedCode   = document.getElementById('voucherAppliedCode');
+        const appliedInfo   = document.getElementById('voucherAppliedInfo');
+        const modalEl       = document.getElementById('voucherModal');
+        const input         = document.getElementById('voucherInput');
+        const message       = document.getElementById('voucherMessage');
+        const applyBtn      = document.getElementById('applyVoucherBtn');
+        const removeBtn     = document.getElementById('removeVoucherBtn');
+        document.body.appendChild(modalEl);
+
+        const participantCount = () => wrapper.querySelectorAll('.participant-row:not([data-off])').length;
+        const rupiah = (n) => 'Rp ' + Number(n).toLocaleString('id-ID');
+
+        function showMessage(text, ok) {
+            message.textContent = text;
+            message.className = 'small mt-2 ' + (ok ? 'text-success' : 'text-danger');
+        }
+
+        function setApplied(code, perTicket) {
+            hidden.value = code;
+            discountPerTicket = perTicket;
+
+            appliedCode.textContent = code;
+            appliedInfo.textContent = 'Hemat ' + rupiah(perTicket) + ' per tiket';
+
+            emptyState.classList.add('d-none');
+            appliedState.classList.remove('d-none');
+
+            updateTotalPrice(participantCount());
+        }
+
+        function clearVoucher() {
+            hidden.value = '';
+            discountPerTicket = 0;
+            input.value = '';
+            message.textContent = '';
+
+            appliedState.classList.add('d-none');
+            emptyState.classList.remove('d-none');
+
+            updateTotalPrice(participantCount());
+        }
+        function closeVoucherModal() {
+            modalEl.querySelector('[data-bs-dismiss="modal"]').click();
+        }
+        async function checkVoucher(code, silent) {
+            applyBtn.disabled = true;
+
+            try {
+                const res = await fetch(`{{ route('events.voucher.check', $event->slug) }}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    },
+                    body: JSON.stringify({ code: code, participants: participantCount() || 1 }),
+                });
+                const data = await res.json();
+
+                if (!res.ok || !data.valid) {
+                    if (silent) { clearVoucher(); } else { showMessage(data.message || 'Voucher tidak valid.', false); }
+                    return;
+                }
+
+                setApplied(code, Number(data.per_ticket_discount) || 0);
+                message.textContent = '';
+                closeVoucherModal();
+
+            } catch (e) {
+                if (silent) { clearVoucher(); } else { showMessage('Voucher tidak bisa diperiksa. Coba lagi.', false); }
+            } finally {
+                applyBtn.disabled = false;
+            }
+        }
+
+        applyBtn.addEventListener('click', function () {
+            const code = input.value.trim().toUpperCase();
+
+            if (!code) {
+                showMessage('Masukkan kode voucher.', false);
+                return;
+            }
+
+            checkVoucher(code, false);
+        });
+
+        // Enter di kolom kode = Terapkan (modal di luar form, jadi tidak mengirim pendaftaran)
+        input.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                applyBtn.click();
+            }
+        });
+
+        input.addEventListener('input', () => { message.textContent = ''; });
+
+        removeBtn.addEventListener('click', clearVoucher);
+
+        modalEl.addEventListener('shown.bs.modal', () => input.focus());
+        modalEl.addEventListener('hidden.bs.modal', function () {
+            document.querySelectorAll('.modal-backdrop').forEach(function (b) { b.remove(); });
+            document.body.classList.remove('modal-open');
+            document.body.style.removeProperty('overflow');
+            document.body.style.removeProperty('padding-right');
+        });
+        // Halaman dimuat ulang setelah error validasi: pulihkan voucher yang tadi dipakai
+        if (hidden.value) {
+            checkVoucher(hidden.value.toUpperCase(), true);
+        }
+
+        // Jenis Pendaftaran sponsor/undangan tidak memakai voucher
+        const typeSelect = document.querySelector('[name="registration_type"]');
+
+        if (typeSelect) {
+            typeSelect.addEventListener('change', function () {
+                if (typeSelect.value !== 'regular') clearVoucher();
+            });
+        }
+    }
     function addParticipant(user) {
         if (getSelectedUserIds().includes(String(user.id))) {
             return; // sudah dipilih, jangan duplikat

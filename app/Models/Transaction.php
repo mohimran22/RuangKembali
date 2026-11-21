@@ -20,7 +20,8 @@ class Transaction extends Model
         'status',
         'paid_at',
         'proof_uploaded_by',
-        'expires_at'
+        'expires_at',
+        'voucher_id', 'voucher_code', 'subtotal_amount', 'discount_amount'
     ];
 
     protected $casts = [
@@ -47,6 +48,11 @@ public function registrations()
 public function proofUploader()
 {
     return $this->belongsTo(User::class, 'proof_uploaded_by');
+}
+
+public function voucher()
+{
+    return $this->belongsTo(EventVoucher::class);
 }
 
 public function getIsExpiredAttribute(): bool

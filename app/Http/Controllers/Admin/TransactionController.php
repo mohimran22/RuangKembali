@@ -261,6 +261,20 @@ public function index(Request $request)
                 ->where('license_id', $licenseId)
                 ->where('is_active', true)
                 ->firstOrFail();
+            $jumlahPeserta   = $locked->registrations->count();
+            $diskonPerTiket  = $jumlahPeserta > 0
+                ? round((float) $locked->discount_amount / $jumlahPeserta, 2)
+                : 0;
+
+            $akunDiskon = null;
+            if ($diskonPerTiket > 0) {
+                $akunDiskon = AccountingAccount::where('license_id', $licenseId)
+                    ->where('account_code', '5-100-002')   // sesuaikan nama kolom kode akunmu
+                    ->where('is_active', true)
+                    ->first();
+
+                abort_unless($akunDiskon, 422, 'Akun Potongan Penjualan (Voucher) belum dibuat.');
+            }
 
             // Bandingkan dalam satuan sen (integer), tanpa bcmath
             $totalPeserta = $locked->registrations
@@ -294,33 +308,44 @@ public function index(Request $request)
             ]);
 
             foreach ($locked->registrations as $registration) {
-
                 $person = $registration->user?->fullname
                     ?? $registration->guest_name
                     ?? $registration->ticket_code;
 
-                $nominalPeserta = round((float) $registration->price, 2);
+                $nominalNeto  = round((float) $registration->price, 2);
+                $nominalBruto = round($nominalNeto + $diskonPerTiket, 2);
+                $ket          = $event->name . ' - ' . $registration->ticket_code;
 
-                // Debit Kas / Bank
+                // Debit Kas / Bank (uang yang benar-benar masuk)
                 AccountingJournalDetail::create([
                     'journal_id'  => $journal->id,
                     'account_id'  => $akunKas->id,
                     'person'      => $person,
-                    'debit'       => $nominalPeserta,
+                    'debit'       => $nominalNeto,
                     'credit'      => 0,
-                    'description' => 'Penerimaan pembayaran event - '
-                                    . $event->name . ' - ' . $registration->ticket_code,
+                    'description' => 'Penerimaan pembayaran event - ' . $ket,
                 ]);
 
-                // Kredit Pendapatan Event
+                // Debit Potongan Voucher (hanya kalau ada voucher)
+                if ($akunDiskon) {
+                    AccountingJournalDetail::create([
+                        'journal_id'  => $journal->id,
+                        'account_id'  => $akunDiskon->id,
+                        'person'      => $person,
+                        'debit'       => $diskonPerTiket,
+                        'credit'      => 0,
+                        'description' => 'Potongan voucher ' . $locked->voucher_code . ' - ' . $ket,
+                    ]);
+                }
+
+                // Kredit Pendapatan Event (nilai kotor)
                 AccountingJournalDetail::create([
                     'journal_id'  => $journal->id,
                     'account_id'  => $akunPendapatanEvent->id,
                     'person'      => $person,
                     'debit'       => 0,
-                    'credit'      => $nominalPeserta,
-                    'description' => 'Pendapatan pendaftaran event - '
-                                    . $event->name . ' - ' . $registration->ticket_code,
+                    'credit'      => $nominalBruto,
+                    'description' => 'Pendapatan pendaftaran event - ' . $ket,
                 ]);
             }
         });
@@ -330,6 +355,7 @@ public function index(Request $request)
                 'event',
                 'registrations.user',
                 'registeredBy',
+                'voucher'
             ]);
 
         $recipients = $transaction->registrations

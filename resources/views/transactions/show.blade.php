@@ -106,6 +106,18 @@
 
                     <hr>
 
+                    @if($transaction->discount_amount > 0)
+                        <div class="d-flex justify-content-between text-secondary">
+                            <div>Subtotal</div>
+                            <div>Rp {{ number_format($transaction->subtotal_amount, 0, ',', '.') }}</div>
+                        </div>
+                        <div class="d-flex justify-content-between text-success">
+                            <div>Voucher <span class="badge bg-green-lt">{{ $transaction->voucher_code }}</span></div>
+                            <div>- Rp {{ number_format($transaction->discount_amount, 0, ',', '.') }}</div>
+                        </div>
+                        <hr>
+                    @endif
+
                     <div class="d-flex justify-content-between">
                         <div class="fw-bold">Total Harga</div>
                         <div class="fs-3 fw-bold text-primary">

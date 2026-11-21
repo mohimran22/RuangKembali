@@ -27,9 +27,19 @@ class TransactionApprovedNotification extends Notification
             ->line('Pembayaran untuk pendaftaran event berikut telah kami konfirmasi.')
             ->line('**Event:** ' . $transaction->event->name)
             ->line('**No. Transaksi:** ' . $transaction->transaction_code)
-            ->line('**Total:** Rp ' . number_format($transaction->total_amount, 0, ',', '.'))
             ->line('**Jumlah Peserta:** ' . $transaction->registrations->count());
 
+        if (! empty($transaction->voucher_code) && (float) $transaction->discount_amount > 0) {
+            $voucherLabel = $transaction->voucher_code
+                . ($transaction->voucher?->name ? ' (' . $transaction->voucher->name . ')' : '');
+
+            $mail->line(
+                '**Subtotal:** Rp ' . number_format($transaction->subtotal_amount, 0, ',', '.') . '  ' . "\n" .
+                '**Voucher ' . $voucherLabel . ':** -Rp ' . number_format($transaction->discount_amount, 0, ',', '.')
+            );
+        }
+
+        $mail->line('**Total Dibayar:** Rp ' . number_format($transaction->total_amount, 0, ',', '.'));
         // Pengingat hanya jika gender belum diisi.
         if (!$notifiable->hasGender()) {
             $mail

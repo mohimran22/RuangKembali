@@ -63,15 +63,28 @@ class EventRegistrationSuccessNotification extends Notification
                 'Harga: ' . $this->rupiah($r->price)
             );
         }
+        if (! empty($t->voucher_code)) {
+            $mail->line('**Voucher:** ' . $t->voucher_code);
+            $mail->line('**Nama Voucher:** ' . $t->voucher?->name);
+        }
+        if (! empty($t->voucher_code) && (float) $t->discount_amount > 0) {
+            $voucherLabel = $t->voucher_code . ($t->voucher?->name ? ' (' . $t->voucher->name . ')' : '');
+
+            $mail->line(
+                'Subtotal: ' . $this->rupiah($t->subtotal_amount) . '  ' . "\n" .
+                'Voucher **' . $voucherLabel . '**: -' . $this->rupiah($t->discount_amount)
+            );
+        }
 
         $mail->line('**Total Harga: ' . $this->rupiah($t->total_amount) . '**');
 
         // ===== Pembayaran =====
         if ($isPaid) {
-            $text = match ($t->registration_type) {
-                'sponsor'    => 'Peserta didaftarkan sebagai tamu sponsor' . ($t->complimentary_note ? ' (' . $t->complimentary_note . ')' : '') . '. Tiket sudah aktif.',
-                'invitation' => 'Peserta didaftarkan sebagai tamu undangan' . ($t->complimentary_note ? ' (' . $t->complimentary_note . ')' : '') . '. Tiket sudah aktif.',
-                default      => 'Event ini gratis, jadi pendaftaran kamu sudah langsung terkonfirmasi. Sampai jumpa di acaranya!',
+            $text = match (true) {
+                $t->registration_type === 'sponsor'    => 'Peserta didaftarkan sebagai tamu sponsor' . ($t->complimentary_note ? ' (' . $t->complimentary_note . ')' : '') . '. Tiket sudah aktif.',
+                $t->registration_type === 'invitation' => 'Peserta didaftarkan sebagai tamu undangan' . ($t->complimentary_note ? ' (' . $t->complimentary_note . ')' : '') . '. Tiket sudah aktif.',
+                ! empty($t->voucher_code)              => 'Voucher ' . $t->voucher_code . ' berhasil digunakan dan menutup seluruh biaya, jadi pendaftaran kamu langsung terkonfirmasi. Sampai jumpa di acaranya!',
+                default                                => 'Event ini gratis, jadi pendaftaran kamu sudah langsung terkonfirmasi. Sampai jumpa di acaranya!',
             };
 
             return $mail->line($text)->action('Lihat Detail Transaksi', $url);

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\VoucherService;
 use App\Models\User;
 use App\Models\Event;
 use App\Models\EventRegistration;
@@ -104,6 +105,7 @@ public function create(Event $event)
                 'in:transfer,gateway',
             ],
             'transaction_code' => ['nullable', 'string'],
+            'voucher_code' => ['nullable', 'string', 'max:50'],
         ]);
         $type = $validated['registration_type'] ?? 'regular';
         foreach ($validated['participants'] as $p) {
@@ -177,8 +179,9 @@ public function create(Event $event)
         }
         $paidImmediately = $event->event_type === 'free' || $isComplimentary;
 
-        $pricePerParticipant = $paidImmediately ? 0 : $event->price;
-        $totalAmount = $pricePerParticipant * $totalParticipants;
+        // $pricePerParticipant = $paidImmediately ? 0 : $event->price;
+        // $totalAmount = $pricePerParticipant * $totalParticipants;
+        $voucherCode = trim((string) ($validated['voucher_code'] ?? ''));
         DB::beginTransaction();
 
         try {
@@ -216,19 +219,47 @@ public function create(Event $event)
                     return back()->withInput()->with('error', "Kuota tersisa hanya {$remainingQuota} peserta, kamu mencoba mendaftarkan {$totalParticipants} peserta.");
                 }
             }
+                        // (c) di dalam try, sesudah pengecekan kuota event dan sebelum Transaction::create
+            $listPrice = $paidImmediately ? 0.0 : (float) $event->price;
+
+            $voucher = null;
+            $discountPerTicket = 0.0;
+
+            if ($voucherCode !== '' && ! $paidImmediately) {
+                $res = VoucherService::resolve($voucherCode, $event, auth()->id(), $totalParticipants, lock: true);
+
+                if ($res['error']) {
+                    DB::rollBack();
+                    return back()->withInput()->with('error', $res['error']);
+                }
+
+                $voucher = $res['voucher'];
+                $discountPerTicket = $res['per_ticket_discount'];
+            }
+
+            $netPrice    = max(0, $listPrice - $discountPerTicket);
+            $subtotal    = $listPrice * $totalParticipants;
+            $totalAmount = $netPrice * $totalParticipants;
+
+            // Voucher menutup seluruh harga: diperlakukan seperti tiket gratis
+            $paidNow = $paidImmediately || ($voucher && $totalAmount <= 0);
             // 1. Buat transaksi induk
             $transaction = Transaction::create([
                 'id' => (string) Str::uuid(),
                 'transaction_code' => $transactionCode,
                 'event_id' => $event->id,
                 'registered_by' => auth()->id(),
-                'total_amount' => $totalAmount,
-                'payment_method' => $isComplimentary ? null : $request->payment_method,
+                'total_amount'    => $totalAmount,
+                'subtotal_amount' => $subtotal,
+                'discount_amount' => $subtotal - $totalAmount,
+                'voucher_id'      => $voucher?->id,
+                'voucher_code'    => $voucher?->code,
+                'payment_method'  => ($isComplimentary || $paidNow) ? null : $request->payment_method,
                 'registration_type'  => $type,
                 'complimentary_note' => $isComplimentary ? $request->complimentary_note : null,
-                'status'     => $paidImmediately ? 'paid' : 'pending',
-                'paid_at'    => $paidImmediately ? now() : null,
-                'expires_at' => $paidImmediately ? null : now()->addDay(),
+                'status'          => $paidNow ? 'paid' : 'pending',
+                'paid_at'         => $paidNow ? now() : null,
+                'expires_at'      => $paidNow ? null : now()->addDay(),
             ]);
 
             // 2. Buat registrasi per peserta, link ke transaksi
@@ -243,10 +274,10 @@ public function create(Event $event)
                     'registered_by' => auth()->id(),
                     'transaction_id' => $transaction->id,
                     'ticket_code' => $this->generateTicketCode(),
-                    'price' => $pricePerParticipant,
+                    'price' => $netPrice,
                     'registered_at' => now(),
                     'guest_gender' => $isGuest ? (int) $p['gender'] : null,
-                    'status' => $paidImmediately ? 'paid' : 'pending',
+                    'status' => $paidNow ? 'paid' : 'pending',
                 ]);
             }
 
@@ -258,7 +289,7 @@ public function create(Event $event)
             return back()->withInput()->with('error', 'Pendaftaran gagal diproses. Silakan coba lagi.');
         }
             try {
-                $transaction->load(['event', 'registrations.user', 'registeredBy']);
+                $transaction->load(['event', 'registrations.user', 'registeredBy', 'voucher']);
 
                 if ($transaction->registeredBy) {
                     $transaction->registeredBy->notify(
@@ -268,7 +299,7 @@ public function create(Event $event)
             } catch (\Throwable $mailError) {
                 report($mailError);
             }
-            if ($paidImmediately) {
+            if ($paidNow) {
                 return redirect()
                     ->route('events.register', $event->slug)
                     ->with('success', $isComplimentary
@@ -299,4 +330,27 @@ public function create(Event $event)
 
         return $code;
     }
+
+    public function checkVoucher(Request $request, Event $event)
+{
+    abort_unless($event->is_published, 404);
+
+    $data = $request->validate([
+        'code'         => ['required', 'string', 'max:50'],
+        'participants' => ['nullable', 'integer', 'min:1', 'max:200'],
+    ]);
+
+    $res = VoucherService::resolve($data['code'], $event, auth()->id(), (int) ($data['participants'] ?? 1));
+
+    if ($res['error']) {
+        return response()->json(['valid' => false, 'message' => $res['error']], 422);
+    }
+
+    return response()->json([
+        'valid'               => true,
+        'message'             => 'Voucher berhasil diterapkan.',
+        'per_ticket_discount' => $res['per_ticket_discount'],
+        'net_price'           => $res['net_price'],
+    ]);
+}
 }
