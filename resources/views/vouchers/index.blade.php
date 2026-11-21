@@ -3,7 +3,7 @@
 @section('content')
     <div class="page-header d-print-none">
         <div class="container-xl">
-            <div class="row g-2 align-items-center">
+            <div class="row align-items-center">
                 <div class="col-12 col-md-auto ms-auto d-print-none">
                     <div class="btn-list">
                     @if(\App\Helpers\ActiveRole::hasPermission('tambah data voucher'))
@@ -30,8 +30,11 @@
                             <div class="text-secondary small">Kode potongan harga untuk pendaftaran event.</div>
                             </div>
                         </div>
+                        @if(session('success'))
+                            <div class="alert alert-success">{{ session('success') }}</div>
+                        @endif
                         <div class="table-responsive">
-                            <table id="tableVouchers" class="table card-table table-vcenter text-nowrap w-100">
+                            <table id="tableVouchers" class="table card-table table-vcenter text-nowrap">
                                 <thead>
                                     <tr>
                                         <th width="40">No</th>
@@ -54,7 +57,7 @@
         </div>
     </div>
 @if(\App\Helpers\ActiveRole::hasPermission('tambah data voucher'))
-<a href="{{ route('events.create') }}"
+<a href="{{ route('vouchers.create') }}"
    class="mobile-fab d-md-none">
 
     <svg xmlns="http://www.w3.org/2000/svg"
