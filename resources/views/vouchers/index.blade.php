@@ -4,16 +4,14 @@
     <div class="page-header d-print-none">
         <div class="container-xl">
             <div class="row g-2 align-items-center">
-                <div class="col">
-                    <h2>Manajemen Voucher</h2>
-                    <div class="text-secondary small">Kode potongan harga untuk pendaftaran event.</div>
-                </div>
                 <div class="col-12 col-md-auto ms-auto d-print-none">
+                    <div class="btn-list">
                     @if(\App\Helpers\ActiveRole::hasPermission('tambah data voucher'))
                         <a href="{{ route('vouchers.create') }}" class="btn btn-primary">
                             <i class="ti ti-plus me-1"></i> Tambah Voucher
                         </a>
                     @endif
+                    </div>
                 </div>
             </div>
         </div>
@@ -21,28 +19,62 @@
 
     <div class="page-body">
         <div class="container-xl">
-            <div class="card">
-                <div class="table-responsive">
-                    <table id="tableVouchers" class="table card-table table-vcenter text-nowrap w-100">
-                        <thead>
-                            <tr>
-                                <th width="40">No</th>
-                                <th>Id Voucher</th>
-                                <th>Kode</th>
-                                <th>Nama Voucher</th>
-                                <th>Event</th>
-                                <th>Nilai</th>
-                                <th>Kuota (Terpakai)</th>
-                                <th>Masa Berlaku</th>
-                                <th>Status</th>
-                                <th width="90">Aksi</th>
-                            </tr>
-                        </thead>
-                    </table>
+            <div class="row row-deck row-cards">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                            <h2>
+                                Manajemen Voucher
+                            </h2>
+                            <div class="text-secondary small">Kode potongan harga untuk pendaftaran event.</div>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table id="tableVouchers" class="table card-table table-vcenter text-nowrap w-100">
+                                <thead>
+                                    <tr>
+                                        <th width="40">No</th>
+                                        <th>Id Voucher</th>
+                                        <th>Kode</th>
+                                        <th>Nama Voucher</th>
+                                        <th>Event</th>
+                                        <th>Nilai</th>
+                                        <th>Kuota (Terpakai)</th>
+                                        <th>Masa Berlaku</th>
+                                        <th>Status</th>
+                                        <th width="90">Aksi</th>
+                                    </tr>
+                                </thead>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
+@if(\App\Helpers\ActiveRole::hasPermission('tambah data voucher'))
+<a href="{{ route('events.create') }}"
+   class="mobile-fab d-md-none">
+
+    <svg xmlns="http://www.w3.org/2000/svg"
+         width="26"
+         height="26"
+         viewBox="0 0 24 24"
+         stroke-width="2"
+         stroke="currentColor"
+         fill="none"
+         stroke-linecap="round"
+         stroke-linejoin="round">
+
+        <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+        <line x1="12" y1="5" x2="12" y2="19"/>
+        <line x1="5" y1="12" x2="19" y2="12"/>
+
+    </svg>
+
+</a>
+@endif
 @endsection
 
 @push('js')
