@@ -309,5 +309,7 @@
     #dailyModal #badgeWeek{
         font-size:.8rem;
     }
+    #filterVerifikasi { width: auto; } 
 
 }
+@media (max-width: 575.98px) { #filterVerifikasi { width: 100%; } }

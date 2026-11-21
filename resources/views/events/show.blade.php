@@ -169,7 +169,7 @@
                                         </button>
                                         <div class="dropdown-menu dropdown-menu-end">
                                             <a href="{{ route('events.edit', $event->slug) }}" class="dropdown-item">
-                                                <i class="ti ti-edit me-2"></i> Edit Event
+                                                <i class="ti ti-edit me-2"></i> Ubah data Event
                                             </a>
                                             <button type="button" class="dropdown-item text-danger" onclick="confirmDelete()">
                                                 <i class="ti ti-trash me-2"></i> Hapus Event

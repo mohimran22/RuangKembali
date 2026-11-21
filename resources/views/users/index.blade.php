@@ -33,12 +33,9 @@
                 <div class="col-12">
                     <div class="card">
                         <div class="card-header">
-                            <div class="d-flex align-items-center justify-content-between w-100 flex-wrap gap-2">
-                                <p class="mb-0">
-                                    Daftar Pengguna
-                                </p>
-
-                                <select id="filterVerifikasi" class="form-select w-auto">
+                            <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between w-100 gap-2">
+                                <p class="mb-0">Daftar Pengguna</p>
+                                <select id="filterVerifikasi" class="form-select">
                                     <option value="">Semua Status Email</option>
                                     <option value="belum">Belum Verifikasi</option>
                                 </select>

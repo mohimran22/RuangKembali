@@ -27,7 +27,7 @@
             <div class="col-md-4">
                 <label class="form-label">Id Voucher</label>
                 <input type="text" class="form-control" readonly
-                       value="{{ $voucher->voucher_number ?? 'Dibuat otomatis (VCH-xxxx)' }}">
+                       value="{{ $voucher->voucher_number ?? '' }}" placeholder="Auto Generate">
             </div>
 
             <div class="col-md-4">
