@@ -36,7 +36,11 @@
                             @forelse($ongoingEvents as $event)
                                 <div class="col-md-6 col-xl-4">
                                     <div class="border rounded-3 p-3 h-100">
-                                        <div class="fw-bold">{{ $event->name }}</div>
+                                        <div class="fw-bold">
+                                            <a href="{{ route('events.manage', $event->slug) }}" class="text-reset text-decoration-none">
+                                                {{ $event->name }}
+                                            </a>
+                                        </div>
                                         <div class="text-secondary small mt-1">
                                             {{ $event->start_at->translatedFormat('d M Y, H:i') }}
                                             @if($event->location) · {{ $event->location }} @endif
@@ -75,27 +79,35 @@
                                 @forelse($myRegistrations as $reg)
                                     @php [$color, $label, $action] = $regStatus($reg); @endphp
                                     <tr>
-                                        <td>{{ $reg->event?->name ?? '-' }}</td>
+                                        <td>
+                                            @if($reg->event)
+                                                <a href="{{ route('events.manage', $reg->event->slug) }}" class="text-reset fw-medium">
+                                                    {{ $reg->event->name }}
+                                                </a>
+                                            @else
+                                                -
+                                            @endif
+                                        </td>
                                         <td>{{ $reg->participant_name ?? '-' }}</td>
                                         <td>{{ $reg->event?->start_at?->translatedFormat('d M Y') ?? '-' }}</td>
                                         <td>
-    <div class="d-flex align-items-center gap-2">
-        <code>{{ $reg->ticket_code }}</code>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <code>{{ $reg->ticket_code }}</code>
 
-        @if(in_array($reg->status, ['paid', 'attended']))
-            <button type="button"
-                    class="btn btn-icon btn-sm btn-outline-secondary"
-                    data-bs-toggle="modal"
-                    data-bs-target="#ticketQrModal"
-                    data-ticket-code="{{ $reg->ticket_code }}"
-                    data-name="{{ $reg->participant_name }}"
-                    data-event="{{ $reg->event?->name }}"
-                    title="Tampilkan QR Code">
-                <i class="ti ti-qrcode"></i>
-            </button>
-        @endif
-    </div>
-</td>
+                                                @if(in_array($reg->status, ['paid', 'attended']))
+                                                    <button type="button"
+                                                            class="btn btn-icon btn-sm btn-outline-secondary"
+                                                            data-bs-toggle="modal"
+                                                            data-bs-target="#ticketQrModal"
+                                                            data-ticket-code="{{ $reg->ticket_code }}"
+                                                            data-name="{{ $reg->participant_name }}"
+                                                            data-event="{{ $reg->event?->name }}"
+                                                            title="Tampilkan QR Code">
+                                                        <i class="ti ti-qrcode"></i>
+                                                    </button>
+                                                @endif
+                                            </div>
+                                        </td>
                                         <td><span class="badge bg-{{ $color }}-lt">{{ $label }}</span></td>
                                         <td class="text-end">
                                             @if($action && $reg->transaction_id)

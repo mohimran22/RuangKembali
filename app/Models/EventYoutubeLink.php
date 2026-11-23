@@ -10,25 +10,10 @@ class EventYoutubeLink extends Model
 
     protected $appends = ['embed_url'];
 
-    public function getEmbedUrlAttribute()
-    {
-        $url = $this->url;
+public function getEmbedUrlAttribute(): ?string
+{
+    $id = \App\Support\VideoEmbed::youtubeId((string) $this->url);
 
-        try {
-            $parsed = parse_url($url);
-            parse_str($parsed['query'] ?? '', $query);
-
-            if (str_contains($parsed['host'] ?? '', 'youtube.com') && isset($query['v'])) {
-                return 'https://www.youtube.com/embed/' . $query['v'];
-            }
-
-            if (str_contains($parsed['host'] ?? '', 'youtu.be')) {
-                return 'https://www.youtube.com/embed/' . ltrim($parsed['path'] ?? '', '/');
-            }
-        } catch (\Throwable $e) {
-            return null;
-        }
-
-        return null;
-    }
+    return $id ? 'https://www.youtube-nocookie.com/embed/' . $id : null;
+}
 }

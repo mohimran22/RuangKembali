@@ -174,7 +174,7 @@ class DashboardController extends Controller
     private function memberDashboard($user)
 {
     // Event yang saya daftar
-    $myRegistrations = EventRegistration::with('event:id,name,start_at,end_at,location,quota','transaction:id,status')
+    $myRegistrations = EventRegistration::with('event:id,slug,name,start_at,end_at,location,quota', 'transaction:id,status')
         ->where(fn ($q) => $q->where('user_id', $user->id)->orWhere('registered_by', $user->id))
         ->latest('registered_at')
         ->get();

@@ -120,7 +120,7 @@
 
                             @if($event->poster)
 
-                                <img src="{{ Storage::url($event->poster) }}"
+                                <img src="{{ asset('storage/' . $event->poster) }}"
                                     alt="{{ $event->name }}"
                                     class="event-poster">
 
@@ -720,10 +720,9 @@
                                                         <iframe
                                                             src="{{ $link->embed_url }}"
                                                             title="{{ $link->title ?? $event->name }}"
-                                                            frameborder="0"
                                                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                                                            allowfullscreen
-                                                            loading="lazy">
+                                                            referrerpolicy="strict-origin-when-cross-origin"
+                                                            allowfullscreen>
                                                         </iframe>
                                                     @endif
 

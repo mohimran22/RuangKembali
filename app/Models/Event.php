@@ -202,39 +202,11 @@ public function youtubeLinks()
         return $query->where('status', $status);
     }
 
-    public function getYoutubeEmbedUrlAttribute()
+public function getYoutubeEmbedUrlAttribute(): ?string
 {
-    if (!$this->youtube_url) {
-        return null;
-    }
+    $id = \App\Support\VideoEmbed::youtubeId((string) $this->youtube_url);
 
-    $url = $this->youtube_url;
-
-    if (str_contains($url, 'youtube.com/watch')) {
-
-        parse_str(parse_url($url, PHP_URL_QUERY), $query);
-
-        if (!empty($query['v'])) {
-            return 'https://www.youtube.com/embed/' . $query['v'];
-        }
-    }
-
-    if (str_contains($url, 'youtu.be/')) {
-
-        $path = parse_url($url, PHP_URL_PATH);
-
-        $videoId = trim($path, '/');
-
-        if ($videoId) {
-            return 'https://www.youtube.com/embed/' . $videoId;
-        }
-    }
-
-    if (str_contains($url, 'youtube.com/embed/')) {
-        return $url;
-    }
-
-    return null;
+    return $id ? 'https://www.youtube-nocookie.com/embed/' . $id : null;
 }
 public function rundowns()
 {

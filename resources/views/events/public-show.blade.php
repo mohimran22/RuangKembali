@@ -821,12 +821,13 @@
                             @foreach ($event->youtubeLinks as $link)
                                 @if ($link->embed_url)
                                     <div class="event-detail-video-item">
-                                        <div class="event-detail-video">
-                                            <iframe src="{{ $link->embed_url }}"
-                                                    title="{{ $link->title ?? $event->name }}"
-                                                    loading="lazy"
-                                                    allowfullscreen></iframe>
-                                        </div>
+                                            <div class="event-detail-video">
+                                                <iframe src="{{ $link->embed_url }}"
+                                                        title="{{ $link->title ?? $event->name }}"
+                                                        referrerpolicy="strict-origin-when-cross-origin"
+                                                        allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                                        allowfullscreen></iframe>
+                                            </div>
 
                                         @if ($link->title)
                                             <div class="event-detail-video-title">
