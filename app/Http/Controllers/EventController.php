@@ -27,6 +27,7 @@ use Illuminate\Support\Str;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
 
 class EventController extends Controller
 {
@@ -1076,15 +1077,17 @@ public function update(Request $request, Event $event)
             );
     }
 }
-public function show(Event $event)
+
+private function canViewAll(): bool
 {
-    $event->load('category', 'galleries', 'youtubeLinks');
+    return in_array(ActiveRole::name(), ['Super-Admin', 'Tim']);
+}
 
+private function visibleRegistrations(Event $event, bool $canViewAll)
+{
     $user = auth()->user();
-    $canViewAll = in_array(ActiveRole::name(), ['Super-Admin', 'Tim']);
 
-    abort_unless($canViewAll || $event->is_published, 404);
-    $registrations = $event->registrations()
+    return $event->registrations()
         ->with(['user', 'transaction:id,status'])
         ->when(!$canViewAll, function ($q) use ($user) {
             $q->where(function ($w) use ($user) {
@@ -1094,9 +1097,16 @@ public function show(Event $event)
                             ->whereHas('transaction', fn ($t) => $t->where('registration_type', 'regular'));
                     });
             });
-        })
-        ->latest()
-        ->get();
+        });
+}
+public function show(Event $event)
+{
+    $event->load('category', 'galleries', 'youtubeLinks');
+
+    $canViewAll = $this->canViewAll();
+    abort_unless($canViewAll || $event->is_published, 404);
+
+    $registrations = $this->visibleRegistrations($event, $canViewAll)->latest()->get();
     $counted = $registrations->whereIn('status', ['pending', 'paid', 'attended']);
 
     $genderSummary = [
@@ -1280,5 +1290,58 @@ public function showPublic(Event $event)
     }
 
     return view('events.public-show', compact('event'));
+}
+public function participantsData(Event $event)
+{
+    $canViewAll = $this->canViewAll();
+    abort_unless($canViewAll || $event->is_published, 404);
+
+    $query = $this->visibleRegistrations($event, $canViewAll);
+
+    return DataTables::eloquent($query)
+        ->addIndexColumn()
+        ->addColumn('participant', fn ($r) =>
+            '<div class="d-flex align-items-center"><span class="avatar me-2"><i class="ti ti-user"></i></span>'
+            . '<div class="fw-semibold">' . e($r->participant_name) . '</div></div>')
+        ->filterColumn('participant', function ($q, $keyword) {
+            $like = '%' . mb_strtolower($keyword) . '%';
+            $q->where(function ($w) use ($like) {
+                $w->whereRaw('LOWER(guest_name) LIKE ?', [$like])
+                  ->orWhereHas('user', fn ($u) => $u
+                      ->whereRaw('LOWER(fullname) LIKE ?', [$like])
+                      ->orWhereRaw('LOWER(name) LIKE ?', [$like]));
+            });
+        })
+        ->addColumn('gender', fn ($r) =>
+            in_array((int) $r->participant_gender, [1, 2], true)
+                ? e($r->participant_gender_label)
+                : '<span class="badge bg-warning"><i class="ti ti-alert-triangle me-1"></i>Belum diisi</span>')
+        ->addColumn('payment', fn ($r) => view('events.partials.payment-badge', ['registration' => $r])->render())
+        ->editColumn('ticket_code', function ($r) use ($event, $canViewAll) {
+            $url = null;
+            if ($canViewAll && in_array($r->status, ['paid', 'confirmed', 'attended'])) {
+                $url = URL::temporarySignedRoute(
+                    'tickets.public',
+                    $event->end_at->copy()->addDay(),
+                    ['registration' => $r->id]
+                );
+            }
+            return view('events.partials.ticket-cell', [
+                'registration' => $r, 'event' => $event, 'canViewAll' => $canViewAll, 'ticketUrl' => $url,
+            ])->render();
+        })
+        ->addColumn('registered', function ($r) {
+            $d = $r->registered_at ?? $r->created_at;
+            return $d
+                ? $d->translatedFormat('d F Y') . '<div class="text-secondary small">' . $d->format('H:i') . ' WIB</div>'
+                : '-';
+        })
+        ->orderColumn('registered', 'COALESCE(registered_at, created_at) $1')
+        ->addColumn('checkin', fn ($r) => $r->status === 'attended'
+            ? '<span class="badge bg-success"><i class="ti ti-shield-check me-1"></i>Sudah Check-in</span>'
+            : '<span class="badge bg-secondary">Belum Check-in</span>')
+        ->orderColumn('checkin', 'status $1')
+        ->rawColumns(['participant', 'gender', 'payment', 'ticket_code', 'registered', 'checkin'])
+        ->make(true);
 }
 }

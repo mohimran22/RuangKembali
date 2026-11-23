@@ -1204,7 +1204,7 @@
     @endif
 
 @endif
-                    @if($registrations->count())
+                    {{-- @if($registrations->count())
 
                         <div class="table-responsive">
 
@@ -1270,11 +1270,7 @@
                                                         <i class="ti ti-clock me-1"></i>
                                                         {{ $registration->transaction?->status === 'waiting_confirmation' ? 'Menunggu Konfirmasi' : 'Menunggu Pembayaran' }}
                                                     </span>
-                                                {{-- @elseif($registration->status === 'pending')
-                                                    <span class="badge bg-warning-lt">
-                                                        <i class="ti ti-clock me-1"></i>
-                                                        Pending
-                                                    </span> --}}
+                                                
                                                 @elseif($registration->status === 'cancelled')
                                                     <span class="badge bg-danger-lt">
                                                         <i class="ti ti-circle-x me-1"></i>
@@ -1377,8 +1373,22 @@
 
                         </div>
 
-                    @endif
-
+                    @endif --}}
+<div class="table-responsive">
+    <table id="participantsTable" class="table table-vcenter participants-table w-100">
+        <thead>
+            <tr>
+                <th width="60">No</th>
+                <th>Peserta</th>
+                <th>Jenis Kelamin</th>
+                <th>Pembayaran</th>
+                <th>Kode Tiket</th>
+                <th>Waktu terdaftar</th>
+                <th>Status Check-in</th>
+            </tr>
+        </thead>
+    </table>
+</div>
                 </div>
 
             </div>
@@ -1694,7 +1704,7 @@
 
                         if (response.ok && data.success) {
                             showResult(true, 'Check-in Berhasil', data.message ?? (data.participant?.name ?? 'Peserta') + ' berhasil di-check-in.');
-                            updateRowStatus(foundTicketCode);
+                            participantsTable?.ajax.reload(null, false);
 
                             if (data.participant) {
                                 showParticipantCard(data.participant);
@@ -1781,6 +1791,43 @@
             });
         });
     </script>
+
+<script>
+    let participantsTable = null;
+
+    document.getElementById('participants-tab').addEventListener('shown.bs.tab', function () {
+        if (participantsTable) {
+            participantsTable.columns.adjust();
+            return;
+        }
+
+        participantsTable = new DataTable('#participantsTable', {
+            processing: true,
+            serverSide: true,
+            ajax: '{{ route("events.participants.data", $event->id) }}',
+            order: [[5, 'desc']],
+            columns: [
+                { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
+                { data: 'participant', name: 'participant', orderable: false },
+                { data: 'gender', name: 'gender', orderable: false, searchable: false },
+                { data: 'payment', name: 'status', searchable: false },
+                { data: 'ticket_code', name: 'ticket_code' },
+                { data: 'registered', name: 'registered', searchable: false },
+                { data: 'checkin', name: 'checkin', searchable: false },
+            ],
+            language: {
+                search: 'Cari:',
+                lengthMenu: 'Tampilkan _MENU_ data',
+                info: 'Menampilkan _START_–_END_ dari _TOTAL_ peserta',
+                infoEmpty: 'Belum ada peserta',
+                emptyTable: 'Belum ada pendaftaran peserta untuk event ini.',
+                zeroRecords: 'Peserta tidak ditemukan',
+                processing: 'Memuat...',
+                paginate: { previous: '‹', next: '›' },
+            },
+        });
+    });
+</script>
 @endpush
 </div>
 

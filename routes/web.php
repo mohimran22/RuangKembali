@@ -297,6 +297,8 @@ Route::middleware(['auth', 'active.permission:lihat daftar event|lihat data even
 
     Route::post('/events/{event}/participants/checkin-scan', [EventController::class, 'checkinScan'])
         ->name('events.participants.checkinScan');
+    Route::get('events/{event}/participants/data', [EventController::class, 'participantsData'])
+        ->name('events.participants.data');
 });
 Route::middleware(['auth', 'active.permission:lihat daftar voucher'])->group(function () {
     Route::resource('vouchers', VoucherController::class)->except(['show']);
