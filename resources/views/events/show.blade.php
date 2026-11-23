@@ -1804,12 +1804,13 @@
         participantsTable = new DataTable('#participantsTable', {
             processing: true,
             serverSide: true,
+            scrollX: true,
             ajax: '{{ route("events.participants.data", $event->id) }}',
             order: [[5, 'desc']],
             columns: [
                 { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
-                { data: 'participant', name: 'participant', orderable: false },
-                { data: 'gender', name: 'gender', orderable: false, searchable: false },
+                { data: 'participant', name: 'participant' },
+                { data: 'gender', name: 'gender', searchable: false },
                 { data: 'payment', name: 'status', searchable: false },
                 { data: 'ticket_code', name: 'ticket_code' },
                 { data: 'registered', name: 'registered', searchable: false },

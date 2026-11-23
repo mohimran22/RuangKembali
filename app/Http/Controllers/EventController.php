@@ -1091,9 +1091,9 @@ private function visibleRegistrations(Event $event, bool $canViewAll)
         ->with(['user', 'transaction:id,status'])
         ->when(!$canViewAll, function ($q) use ($user) {
             $q->where(function ($w) use ($user) {
-                $w->where('user_id', $user->id)
+                $w->where('event_registrations.user_id', $user->id)
                     ->orWhere(function ($w2) use ($user) {
-                        $w2->where('registered_by', $user->id)
+                        $w2->where('event_registrations.registered_by', $user->id)
                             ->whereHas('transaction', fn ($t) => $t->where('registration_type', 'regular'));
                     });
             });
@@ -1296,27 +1296,30 @@ public function participantsData(Event $event)
     $canViewAll = $this->canViewAll();
     abort_unless($canViewAll || $event->is_published, 404);
 
-    $query = $this->visibleRegistrations($event, $canViewAll);
+    $nameExpr   = 'LOWER(COALESCE(users.fullname, event_registrations.guest_name))';
+    $genderExpr = 'CASE WHEN event_registrations.user_id IS NOT NULL
+                        THEN users.gender ELSE event_registrations.guest_gender END';
+
+    $query = $this->visibleRegistrations($event, $canViewAll)
+        ->leftJoin('users', 'users.id', '=', 'event_registrations.user_id')
+        ->select('event_registrations.*');
 
     return DataTables::eloquent($query)
         ->addIndexColumn()
         ->addColumn('participant', fn ($r) =>
             '<div class="d-flex align-items-center"><span class="avatar me-2"><i class="ti ti-user"></i></span>'
             . '<div class="fw-semibold">' . e($r->participant_name) . '</div></div>')
-        ->filterColumn('participant', function ($q, $keyword) {
-            $like = '%' . mb_strtolower($keyword) . '%';
-            $q->where(function ($w) use ($like) {
-                $w->whereRaw('LOWER(guest_name) LIKE ?', [$like])
-                  ->orWhereHas('user', fn ($u) => $u
-                      ->whereRaw('LOWER(fullname) LIKE ?', [$like])
-                      ->orWhereRaw('LOWER(name) LIKE ?', [$like]));
-            });
+        ->filterColumn('participant', function ($q, $keyword) use ($nameExpr) {
+            $q->whereRaw("$nameExpr LIKE ?", ['%' . mb_strtolower($keyword) . '%']);
         })
+        ->orderColumn('participant', "$nameExpr \$1")
         ->addColumn('gender', fn ($r) =>
             in_array((int) $r->participant_gender, [1, 2], true)
                 ? e($r->participant_gender_label)
                 : '<span class="badge bg-warning"><i class="ti ti-alert-triangle me-1"></i>Belum diisi</span>')
+        ->orderColumn('gender', "$genderExpr \$1")
         ->addColumn('payment', fn ($r) => view('events.partials.payment-badge', ['registration' => $r])->render())
+        ->orderColumn('payment', 'event_registrations.status $1')
         ->editColumn('ticket_code', function ($r) use ($event, $canViewAll) {
             $url = null;
             if ($canViewAll && in_array($r->status, ['paid', 'confirmed', 'attended'])) {
@@ -1336,11 +1339,11 @@ public function participantsData(Event $event)
                 ? $d->translatedFormat('d F Y') . '<div class="text-secondary small">' . $d->format('H:i') . ' WIB</div>'
                 : '-';
         })
-        ->orderColumn('registered', 'COALESCE(registered_at, created_at) $1')
+        ->orderColumn('registered', 'COALESCE(event_registrations.registered_at, event_registrations.created_at) $1')
         ->addColumn('checkin', fn ($r) => $r->status === 'attended'
             ? '<span class="badge bg-success"><i class="ti ti-shield-check me-1"></i>Sudah Check-in</span>'
             : '<span class="badge bg-secondary">Belum Check-in</span>')
-        ->orderColumn('checkin', 'status $1')
+        ->orderColumn('checkin', 'event_registrations.status $1')
         ->rawColumns(['participant', 'gender', 'payment', 'ticket_code', 'registered', 'checkin'])
         ->make(true);
 }
