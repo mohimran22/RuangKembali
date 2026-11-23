@@ -63,12 +63,18 @@ public function create(Event $event)
         true
     );
 
+    // Kode voucher dari link (?voucher=KODE). Hanya huruf, angka, dan tanda hubung yang diterima.
+    $raw = request()->query('voucher');
+    $prefillVoucher = is_string($raw) ? strtoupper(trim($raw)) : '';
+    $prefillVoucher = preg_match('/^[A-Z0-9\-]{1,50}$/', $prefillVoucher) ? $prefillVoucher : '';
+
     return view('events.register', compact(
         'event',
         'registration',
         'transactionCode',
         'missingProfile',
-        'canGiveComplimentary'
+        'canGiveComplimentary',
+        'prefillVoucher'
     ));
 }
 

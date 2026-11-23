@@ -1,5 +1,7 @@
 @extends('layouts.website')
-
+@php
+    $voucherParam = is_string(request('voucher')) ? strtoupper(trim(request('voucher'))) : null;
+@endphp
 @section('content')
 <style>
 .event-detail-hero{
@@ -1013,7 +1015,7 @@
                 <div class="event-sidebar-card event-sidebar-cta">
                     @if (!$event->is_full && $event->is_registration_open)
                         @auth
-                            <a href="{{ route('events.register', $event->id) }}" class="btn-daftar-event">
+                            <a href="{{ route('events.register', ['event' => $event->slug, 'voucher' => $voucherParam ?: null]) }}" class="btn-daftar-event">
                                 <i class="ti ti-ticket"></i> Daftar Sekarang
                             </a>
                         @else

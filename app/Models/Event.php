@@ -246,9 +246,14 @@ public function resolveRouteBinding($value, $field = null)
         return parent::resolveRouteBinding($value, $field);
     }
 
-    return Str::isUuid($value)
-        ? $this->where('id', $value)->first()
-        : $this->where('slug', $value)->first();
+    // UUID tidak boleh dibandingkan dengan kolom teks di PostgreSQL, jadi dipisah
+    if (Str::isUuid($value)) {
+        return $this->where('id', $value)->first();
+    }
+
+    return $this->where('slug', $value)
+        ->orWhere('event_code', $value)
+        ->first();
 }
 
 public function isCheckinOpen(): bool

@@ -329,7 +329,8 @@
                             <input type="hidden" name="transaction_code" value="{{ $transactionCode }}">
                             @if($event->event_type !== 'free')
                                 <div class="mb-4" id="paymentSection">
-                                    <input type="hidden" name="voucher_code" id="voucherCodeHidden" value="{{ old('voucher_code') }}">
+                                    <input type="hidden" name="voucher_code" id="voucherCodeHidden"
+                                        value="{{ old('voucher_code', $prefillVoucher ?? '') }}">
 
                                     <div class="mb-3" id="voucherRow">
 
@@ -356,6 +357,7 @@
                                             <button type="button" class="btn btn-sm btn-link text-danger" id="removeVoucherBtn">
                                                 Hapus
                                             </button>
+                                            <div class="small text-danger mt-2 d-none" id="voucherNotice"></div>
                                         </div>
 
                                     </div>
@@ -736,7 +738,17 @@
             message.textContent = text;
             message.className = 'small mt-2 ' + (ok ? 'text-success' : 'text-danger');
         }
+        const notice = document.getElementById('voucherNotice');
 
+        function showNotice(text) {
+            notice.textContent = text;
+            notice.classList.remove('d-none');
+        }
+
+        function hideNotice() {
+            notice.textContent = '';
+            notice.classList.add('d-none');
+        }
         function setApplied(code, perTicket) {
             hidden.value = code;
             discountPerTicket = perTicket;
@@ -748,6 +760,7 @@
             appliedState.classList.remove('d-none');
 
             updateTotalPrice(participantCount());
+            hideNotice();
         }
 
         function clearVoucher() {
@@ -760,6 +773,7 @@
             emptyState.classList.remove('d-none');
 
             updateTotalPrice(participantCount());
+            hideNotice();
         }
         function closeVoucherModal() {
             modalEl.querySelector('[data-bs-dismiss="modal"]').click();
@@ -780,7 +794,13 @@
                 const data = await res.json();
 
                 if (!res.ok || !data.valid) {
-                    if (silent) { clearVoucher(); } else { showMessage(data.message || 'Voucher tidak valid.', false); }
+                    if (silent) {
+                        clearVoucher();
+                        input.value = code;   // kode tetap terisi di modal supaya mudah diganti
+                        showNotice('Voucher ' + code + ' tidak bisa dipakai: ' + (data.message || 'tidak valid.'));
+                    } else {
+                        showMessage(data.message || 'Voucher tidak valid.', false);
+                    }
                     return;
                 }
 
@@ -789,7 +809,13 @@
                 closeVoucherModal();
 
             } catch (e) {
-                if (silent) { clearVoucher(); } else { showMessage('Voucher tidak bisa diperiksa. Coba lagi.', false); }
+                if (silent) {
+                    clearVoucher();
+                    input.value = code;
+                    showNotice('Voucher ' + code + ' belum bisa diperiksa. Ketuk "Yuk, gunakan voucher!" untuk mencoba lagi.');
+                } else {
+                    showMessage('Voucher tidak bisa diperiksa. Coba lagi.', false);
+                }
             } finally {
                 applyBtn.disabled = false;
             }

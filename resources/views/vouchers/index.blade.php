@@ -110,7 +110,29 @@ $(function () {
             paginate: { first: 'Awal', last: 'Akhir', next: '›', previous: '‹' }
         }
     });
+    function copyText(text) {
+    // clipboard API hanya tersedia di HTTPS; ruangkembali.test (http) memakai cadangan
+    if (navigator.clipboard && window.isSecureContext) {
+        return navigator.clipboard.writeText(text);
+    }
 
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    ta.remove();
+
+    return Promise.resolve();
+}
+
+$('#tableVouchers').on('click', '.btn-copy-voucher-link', function () {
+    const link = $(this).data('link');
+
+    copyText(link).then(() => {
+        Swal.fire({ icon: 'success', title: 'Link disalin', text: link, timer: 2200, showConfirmButton: false });
+    });
+});
     $('#tableVouchers').on('click', '.btn-delete-voucher', function () {
         const id = $(this).data('id');
 

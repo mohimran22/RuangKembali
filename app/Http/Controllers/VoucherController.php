@@ -23,7 +23,7 @@ class VoucherController extends Controller
         $this->authorizePermission('lihat daftar voucher');
 
         if ($request->ajax()) {
-            $query = EventVoucher::with('event:id,name')->latest();
+            $query = EventVoucher::with('event:id,name,event_code')->latest();
 
             return DataTables::eloquent($query)
                 ->addIndexColumn()
@@ -49,6 +49,13 @@ class VoucherController extends Controller
 
                     return '<span class="badge ' . $class . '">' . $label . '</span>';
                 })
+                ->addColumn('code', function ($v) {
+                    $url = route('vouchers.edit', $v->id);
+
+                    return '<a href="' . $url . '">'
+                        . e(strtoupper($v->code ?? '-'))
+                        . '</a>';
+                })
                 ->addColumn('action', function ($v) {
                     $html = '<div class="btn-list flex-nowrap">';
 
@@ -58,10 +65,18 @@ class VoucherController extends Controller
                     if (ActiveRole::hasPermission('hapus data voucher')) {
                         $html .= '<button type="button" class="btn btn-sm btn-danger btn-delete-voucher" data-id="' . $v->id . '" title="Hapus"><i class="ti ti-trash"></i></button>';
                     }
+                    if ($v->event) {
+                        $link = route('events.register', ['event' => $v->event->event_code, 'voucher' => $v->code]);
+
+                        $html .= '<button type="button" class="btn btn-sm btn-outline-primary btn-copy-voucher-link"
+                                        data-link="' . e($link) . '" title="Salin link voucher">
+                                    <i class="ti ti-link"></i>
+                                </button>';
+                    }
 
                     return $html . '</div>';
                 })
-                ->rawColumns(['event_name', 'status_badge', 'action'])
+                ->rawColumns(['event_name', 'status_badge', 'code', 'action'])
                 ->make(true);
         }
 
