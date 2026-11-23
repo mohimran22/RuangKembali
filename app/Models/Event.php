@@ -265,4 +265,34 @@ public function isCheckinOpen(): bool
         $this->end_at->copy()->endOfDay()
     );
 }
+
+public function getRegistrationStateAttribute(): array
+{
+    $closed = fn (string $label) => ['open' => false, 'label' => $label];
+
+    return match (true) {
+        ! $this->is_published
+            => $closed('Pendaftaran Ditutup'),
+
+        $this->status === 'cancelled'
+            => $closed('Event Dibatalkan'),
+
+        $this->status === 'finished' || ($this->end_at && now()->gt($this->end_at))
+            => $closed('Event Selesai'),
+
+        $this->status === 'ongoing' || ($this->start_at && now()->gte($this->start_at))
+            => $closed('Event Sedang Berlangsung'),
+
+        $this->registration_open && now()->lt($this->registration_open)
+            => $closed('Pendaftaran Belum Dibuka'),
+
+        $this->registration_close && now()->gt($this->registration_close)
+            => $closed('Pendaftaran Ditutup'),
+
+        $this->status === 'sold_out' || $this->is_full
+            => $closed('Kuota Penuh'),
+
+        default => ['open' => true, 'label' => 'Daftar Sekarang'],
+    };
+}
 }

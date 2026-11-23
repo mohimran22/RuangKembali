@@ -25,7 +25,7 @@ use App\Http\Controllers\VoucherController;
 use App\Http\Controllers\PartnerController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\TicketController;
-use App\Http\Controllers\ProductColorController;
+use App\Http\Controllers\CertificateController;
 use App\Http\Controllers\EventSpeakerController;
 use App\Http\Controllers\ProductTypeController;
 use App\Http\Controllers\EventCategoryController;
@@ -54,6 +54,8 @@ Route::get('/', [HomeController::class, 'index'])->name('landing');   // nama 'l
 Route::get('/artikel', [ArticleController::class, 'index'])->name('artikel.index');
 Route::get('/artikel/{article:slug}', [ArticleController::class, 'show'])->name('articles.show');
 Route::get('/sitemap.xml', [SitemapController::class, 'index']);
+Route::get('certificates/verify/{code}', [CertificateController::class, 'verify'])
+    ->name('certificates.verify');
 });
 
 // Route::get('/', [HomeController::class, 'index']);
@@ -87,6 +89,8 @@ Route::middleware(['auth'])->group(function () {
     Route::post('articles/bulk', [AdminArticleController::class, 'bulk'])->name('articles.bulk');
     Route::post('articles/analyze', [AdminArticleController::class, 'analyze'])->name('articles.analyze');
     Route::post('articles/upload-image', [AdminArticleController::class, 'uploadImage'])->name('articles.upload-image');
+    Route::get('events/{event}/certificate', [CertificateController::class, 'download'])
+    ->name('events.certificate');
 });
 Route::get('/member/profile', [DashboardController::class, 'edit'])->name('member.profile');
 Route::put('/member/profile', [DashboardController::class, 'update'])->name('member.update');

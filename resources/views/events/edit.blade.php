@@ -1251,6 +1251,49 @@
     </div>
 
 </div>
+                            @php $cert = $event->certificate ?? null; @endphp
+                            <div class="card mb-3">
+                                <div class="card-header"><h3 class="card-title">E-Certificate</h3></div>
+                                <div class="card-body">
+
+                                    <input type="hidden" name="has_certificate" value="0">
+                                    <label class="form-check form-switch mb-0">
+                                        <input type="checkbox" id="has_certificate" name="has_certificate" value="1"
+                                            class="form-check-input"
+                                            @checked((bool) old('has_certificate', $cert ? 1 : 0))>
+                                        <span class="form-check-label fw-semibold">Event ini memberikan e-certificate</span>
+                                    </label>
+
+                                    <div id="certificate-fields" class="mt-3">
+                                        <label class="form-label">Desain sertifikat (JPG/PNG, landscape)</label>
+                                        <input type="file" name="certificate_template" accept="image/png,image/jpeg" class="form-control">
+                                        <div class="form-text">Kosongkan area nama di desain. Nama peserta akan ditempatkan otomatis di tengah.</div>
+
+                                        @if($cert?->template)
+                                            <img src="{{ asset('storage/'.$cert->template) }}" class="img-fluid rounded border mt-2" style="max-height:160px" alt="">
+                                            <div class="form-text">Pilih file baru hanya jika ingin mengganti desain.</div>
+                                        @endif
+
+                                        <div class="row g-3 mt-1">
+                                            <div class="col-md-4">
+                                                <label class="form-label">Posisi nama (% dari atas)</label>
+                                                <input type="number" name="name_top" min="0" max="100" class="form-control"
+                                                    value="{{ old('name_top', $cert->name_top ?? 50) }}">
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label">Ukuran huruf</label>
+                                                <input type="number" name="name_size" min="12" max="100" class="form-control"
+                                                    value="{{ old('name_size', $cert->name_size ?? 40) }}">
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label">Warna</label>
+                                                <input type="color" name="name_color" class="form-control form-control-color"
+                                                    value="{{ old('name_color', $cert->name_color ?? '#000000') }}">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                             <div class="card mb-4">
                                 <div class="card-header">
                                         <div>
@@ -2093,5 +2136,16 @@ function renderYoutubeEmptyState() {
         `;
     }
 }
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const toggle = document.getElementById('has_certificate');
+    const fields = document.getElementById('certificate-fields');
+    if (!toggle || !fields) return;
+
+    const sync = () => fields.classList.toggle('d-none', !toggle.checked);
+    toggle.addEventListener('change', sync);
+    sync();
+});
 </script>
 @endpush

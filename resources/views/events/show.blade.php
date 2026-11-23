@@ -26,19 +26,18 @@
 
             <div class="col-auto">
                 <div class="btn-list">
+                    @if($canCert)
+                        <a href="{{ route('events.certificate', $event->slug) }}" class="btn btn-success">
+                            <i class="ti ti-certificate me-1"></i>
+                            Unduh E-Certificate
+                        </a>
+                    @endif
 
-                    <a href="{{ route('events.register', $event->slug) }}"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="btn btn-primary">
-
-                        <i class="ti ti-ticket me-1"></i>
-                        Daftar Sekarang
-
-                    </a>
+                    @unless($event->end_at->isPast())
+                        @include('events.partials.register_button', ['class' => 'btn btn-primary'])
+                    @endunless
                 </div>
             </div>
-
         </div>
     </div>
     <div class="event-tabs-wrapper">
@@ -1396,13 +1395,20 @@
         </div>
     </div>
     <div class="event-sticky-cta d-md-none">
-        <a href="{{ route('events.register', $event->slug) }}"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="btn btn-primary w-100">
+        @if($canCert)
+        <a href="{{ route('events.certificate', $event->slug) }}" class="btn btn-success w-100">
+            <i class="ti ti-certificate me-1"></i> Unduh E-Certificate
+        </a>
+        @elseif(! $event->end_at->isPast())
+        @include('events.partials.register_button', ['class' => 'btn-daftar-event'])
+        {{-- <a href="{{ route('events.register', $event->slug) }}"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="btn btn-primary w-100">
             <i class="ti ti-ticket me-1"></i>
             Daftar Sekarang
-        </a>
+        </a> --}}
+        @endif
     </div>
     <form id="delete-form"
         action="{{ route('events.destroy', $event->id) }}"

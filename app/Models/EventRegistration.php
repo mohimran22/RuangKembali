@@ -29,10 +29,11 @@ class EventRegistration extends Model
         'guest_gender'
     ];
 
-    protected $casts = [
-        'registered_at' => 'datetime',
-        'price' => 'decimal:2',
-    ];
+protected $casts = [
+    'registered_at' => 'datetime',
+    'checked_in_at' => 'datetime',
+    'price' => 'decimal:2',
+];
 
     public function event()
     {
@@ -54,6 +55,11 @@ class EventRegistration extends Model
     return $this->belongsTo(Transaction::class);
 }
 
+public function certificate()
+{
+    return $this->hasOne(EventCertificate::class, 'registration_id');
+}
+
 public function getParticipantNameAttribute()
 {
     return $this->user?->fullname ?? $this->user?->name ?? $this->guest_name;
@@ -71,5 +77,12 @@ public function getParticipantGenderAttribute()
 public function getParticipantGenderLabelAttribute(): string
 {
     return [1 => 'Laki-laki', 2 => 'Perempuan'][(int) $this->participant_gender] ?? '-';
+}
+
+public function canDownloadCertificate(): bool
+{
+    return $this->status === 'attended'
+        && $this->checked_in_at !== null
+        && $this->event?->end_at?->isPast();
 }
 }

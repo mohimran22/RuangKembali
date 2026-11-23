@@ -369,6 +369,11 @@ public function store(Request $request)
         'faqs.*.answer' => 'required|string',
         'sponsorship_whatsapp' => 'nullable|string|max:30',
         'sponsorship_qris'     => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
+        'has_certificate'      => 'nullable|boolean',
+        'certificate_template' => ['required_if:has_certificate,1', 'nullable', 'image', 'mimes:jpg,jpeg,png', 'max:4096'],
+        'name_top'             => 'nullable|integer|between:0,100',
+        'name_size'            => 'nullable|integer|between:12,100',
+        'name_color'           => ['nullable', 'regex:/^#[0-9a-fA-F]{6}$/'],
     ]);
 
     DB::beginTransaction();
@@ -414,6 +419,7 @@ public function store(Request $request)
             'is_published' => $request->boolean('is_published'),
             'cash_account_id'   => $request->cash_account_id,
             'income_account_id' => $request->income_account_id,
+            'sponsorship_whatsapp' => $request->sponsorship_whatsapp,
         ]);
         $event->speakers()->sync($request->speaker_ids ?? []);
         if ($request->filled('rundowns')) {
@@ -470,11 +476,11 @@ public function store(Request $request)
             }
         }
         if ($request->hasFile('sponsorship_qris')) {
-            $event->sponsorship_qris = $request
-                ->file('sponsorship_qris')
-                ->store('events/qris', 'public');
+            $qris = $request->file('sponsorship_qris')->store('events/qris', 'public');
+            $uploadedFiles[] = $qris;
+            $event->update(['sponsorship_qris' => $qris]);
         }
-
+        $this->saveCertificate($request, $event, $uploadedFiles);
         DB::commit();
 
         return redirect()
@@ -681,6 +687,14 @@ public function update(Request $request, Event $event)
         'faqs' => 'nullable|array',
         'faqs.*.question' => 'required|string|max:255',
         'faqs.*.answer' => 'required|string',
+        'has_certificate'      => 'nullable|boolean',
+        'certificate_template' => [
+            Rule::requiredIf(fn () => $request->boolean('has_certificate') && ! $event->certificate?->template),
+            'nullable', 'image', 'mimes:jpg,jpeg,png', 'max:4096',
+        ],
+        'name_top'             => 'nullable|integer|between:0,100',
+        'name_size'            => 'nullable|integer|between:12,100',
+        'name_color'           => ['nullable', 'regex:/^#[0-9a-fA-F]{6}$/'],
     ]);
 
     $eventStart = Carbon::parse($request->start_at);
@@ -821,6 +835,7 @@ public function update(Request $request, Event $event)
             $eventData['sponsorship_qris'] = null;
         }
         $event->update($eventData);
+        $oldCertTemplate = $this->saveCertificate($request, $event, $newFiles);
         $event->speakers()->sync($request->speaker_ids ?? []);
         if ($request->filled('delete_gallery_ids')) {
 
@@ -1051,7 +1066,9 @@ public function update(Request $request, Event $event)
 
         $youtubeQuery->delete();
         DB::commit();
-
+        if (! empty($oldCertTemplate)) {
+            Storage::disk('public')->delete($oldCertTemplate);   // hapus file lama setelah sukses
+        }
         return redirect()
             ->route('events.index')
             ->with(
@@ -1077,7 +1094,44 @@ public function update(Request $request, Event $event)
             );
     }
 }
+/** Mengembalikan path template lama (kalau diganti) supaya dihapus setelah commit. */
+private function saveCertificate(Request $request, Event $event, array &$newFiles): ?string
+{
+    $cert = $event->certificate;
 
+    // Saklar mati: event ini tidak memberi sertifikat
+    if (! $request->boolean('has_certificate')) {
+        if ($cert) {
+            $old = $cert->template;
+            $cert->delete();
+            return $old;           // file dihapus setelah commit
+        }
+        return null;
+    }
+
+    if (! $request->hasFile('certificate_template') && ! $cert) {
+        return null;
+    }
+
+    $data = array_filter([
+        'name_top'   => $request->input('name_top'),
+        'name_size'  => $request->input('name_size'),
+        'name_color' => $request->input('name_color'),
+    ], fn ($v) => $v !== null);
+
+    $old = null;
+
+    if ($request->hasFile('certificate_template')) {
+        $path = $request->file('certificate_template')->store('certificates', 'public');
+        $newFiles[] = $path;
+        $data['template'] = $path;
+        $old = $cert?->template;
+    }
+
+    $event->certificate()->updateOrCreate(['event_id' => $event->id], $data);
+
+    return $old;
+}
 private function canViewAll(): bool
 {
     return in_array(ActiveRole::name(), ['Super-Admin', 'Tim']);
@@ -1118,7 +1172,21 @@ public function show(Event $event)
     $unknownGender = $counted
         ->filter(fn ($r) => !in_array((int) $r->participant_gender, [1, 2], true))
         ->values();
-    return view('events.show', compact('event', 'registrations', 'canViewAll', 'genderSummary', 'unknownGender'));
+    $myRegistration = auth()->check()
+        ? $event->registrations()
+            ->where('user_id', auth()->id())
+            ->where('status', '!=', 'cancelled')
+            ->orderByRaw("CASE WHEN status = 'attended' THEN 0 ELSE 1 END")
+            ->latest('registered_at')
+            ->first()
+        : null;
+
+    $myRegistration?->setRelation('event', $event);   // hindari query ulang
+    $canCert = (bool) $myRegistration?->canDownloadCertificate();
+    $alreadyRegistered = $myRegistration !== null;
+    return view('events.show', compact('event', 'registrations', 'canViewAll', 'genderSummary', 'unknownGender',
+        'myRegistration', 'canCert', 'alreadyRegistered'
+    ));
 }
 public function destroy(Event $event)
 {
