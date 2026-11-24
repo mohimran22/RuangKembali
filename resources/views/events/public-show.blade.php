@@ -1060,6 +1060,24 @@
                         <span class="label">Kuota</span>
                         <span class="value">{{ $event->quota ? $event->quota . ' Peserta' : 'Tidak terbatas' }}</span>
                     </div>
+                    @if ($event->certificate)
+                    <div class="event-sidebar-row">
+                        <span class="label">E-Certificate</span>
+                        <span class="value">
+                                <span class="event-sidebar-badge free">Tersedia</span>
+                        </span>
+                    </div>
+                    @endif
+                    {{-- <div class="event-sidebar-row">
+                        <span class="label">E-Certificate</span>
+                        <span class="value">
+                            @if ($event->certificate)
+                                <span class="event-sidebar-badge free">Tersedia</span>
+                            @else
+                                <span class="event-sidebar-badge" style="background:#f1f1f1;color:#666;">Tidak tersedia</span>
+                            @endif
+                        </span>
+                    </div> --}}
                 </div>
 
                 <div class="event-sidebar-card">

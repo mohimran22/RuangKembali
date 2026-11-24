@@ -26,12 +26,12 @@
 
             <div class="col-auto">
                 <div class="btn-list">
-                    @if($canCert)
+                    {{-- @if($canCert)
                         <a href="{{ route('events.certificate', $event->slug) }}" class="btn btn-success">
                             <i class="ti ti-certificate me-1"></i>
                             Unduh E-Certificate
                         </a>
-                    @endif
+                    @endif --}}
 
                     @unless($event->end_at->isPast())
                         @include('events.partials.register_button', ['class' => 'btn btn-primary'])
@@ -446,9 +446,7 @@
                                 @endif
 
                             </div>
-
-
-                            <div class="d-flex justify-content-between align-items-center">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
 
                                 <span class="text-secondary">
                                     Audience
@@ -473,6 +471,25 @@
                                             -
                                     @endswitch
                                 </span>
+
+                            </div>
+
+                            <div class="d-flex justify-content-between align-items-center">
+
+                                <span class="text-secondary">
+                                    E-Certificate
+                                </span>
+
+                                @if($event->certificate)
+                                    <span class="badge bg-success-lt">
+                                        <i class="ti ti-certificate me-1"></i>
+                                        Tersedia
+                                    </span>
+                                @else
+                                    <span class="badge bg-secondary-lt">
+                                        Tidak tersedia
+                                    </span>
+                                @endif
 
                             </div>
 
@@ -1015,7 +1032,6 @@
 
                                     </div>
 
-
                                     @if($event->sponsorship_qris)
 
                                         <div class="text-center">
@@ -1223,6 +1239,9 @@
                                     <th>Kode Tiket</th>
                                     <th>Waktu terdaftar</th>
                                     <th>Status Check-in</th>
+                                    @if($event->certificate)
+                                        <th>E-Certificate</th>
+                                    @endif
                                 </tr>
                             </thead>
                         </table>
@@ -1234,20 +1253,9 @@
         </div>
     </div>
     <div class="event-sticky-cta d-md-none">
-        @if($canCert)
-        <a href="{{ route('events.certificate', $event->slug) }}" class="btn btn-success w-100">
-            <i class="ti ti-certificate me-1"></i> Unduh E-Certificate
-        </a>
-        @elseif(! $event->end_at->isPast())
-        @include('events.partials.register_button', ['class' => 'btn-daftar-event'])
-        {{-- <a href="{{ route('events.register', $event->slug) }}"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="btn btn-primary w-100">
-            <i class="ti ti-ticket me-1"></i>
-            Daftar Sekarang
-        </a> --}}
-        @endif
+        @unless($event->end_at->isPast())
+            @include('events.partials.register_button', ['class' => 'btn-daftar-event'])
+        @endunless
     </div>
     <form id="delete-form"
         action="{{ route('events.destroy', $event->id) }}"
@@ -1660,6 +1668,9 @@
                 { data: 'ticket_code', name: 'ticket_code' },
                 { data: 'registered', name: 'registered', searchable: false },
                 { data: 'checkin', name: 'checkin', searchable: false },
+                @if($event->certificate)
+                { data: 'certificate', name: 'certificate', orderable: false, searchable: false },
+                @endif
             ],
             language: {
                 search: 'Cari:',

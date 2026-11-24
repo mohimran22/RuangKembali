@@ -1156,7 +1156,7 @@ private function visibleRegistrations(Event $event, bool $canViewAll)
 }
 public function show(Event $event)
 {
-    $event->load('category', 'galleries', 'youtubeLinks');
+    $event->load('category', 'galleries', 'youtubeLinks', 'certificate');
 
     $canViewAll = $this->canViewAll();
     abort_unless($canViewAll || $event->is_published, 404);
@@ -1329,7 +1329,7 @@ public function showPublic(Event $event)
 {
     abort_unless($event->is_published, 404);
 
-    $event->load('category', 'galleries', 'faqs', 'sponsors', 'speakers', 'rundowns');
+    $event->load('category', 'galleries', 'faqs', 'sponsors', 'speakers', 'rundowns', 'certificate');
 
     $description = Str::limit(
         trim(preg_replace('/\s+/', ' ', strip_tags($event->description ?? ''))),
@@ -1366,11 +1366,14 @@ public function showPublic(Event $event)
         ->exists();
     return view('events.public-show', compact('event', 'alreadyRegistered'));
 }
+
 public function participantsData(Event $event)
 {
     $canViewAll = $this->canViewAll();
     abort_unless($canViewAll || $event->is_published, 404);
-
+    $event->loadMissing('certificate');
+    $certReady = $event->certificate !== null && $event->end_at->isPast();
+    $myId      = auth()->id();
     $nameExpr   = 'LOWER(COALESCE(users.fullname, event_registrations.guest_name))';
     $genderExpr = 'CASE WHEN event_registrations.user_id IS NOT NULL
                         THEN users.gender ELSE event_registrations.guest_gender END';
@@ -1419,7 +1422,21 @@ public function participantsData(Event $event)
             ? '<span class="badge bg-success"><i class="ti ti-shield-check me-1"></i>Sudah Check-in</span>'
             : '<span class="badge bg-secondary">Belum Check-in</span>')
         ->orderColumn('checkin', 'event_registrations.status $1')
-        ->rawColumns(['participant', 'gender', 'payment', 'ticket_code', 'registered', 'checkin'])
+        ->addColumn('certificate', function ($r) use ($event, $certReady, $myId) {
+            // Bukan baris milik akun yang login, atau belum check-in
+            if ($r->status !== 'attended' || ! $r->user_id || (string) $r->user_id !== (string) $myId) {
+                return '<span class="text-secondary">-</span>';
+            }
+
+            if (! $certReady) {
+                return '<span class="text-secondary small">Tersedia setelah event selesai</span>';
+            }
+
+            return '<a href="' . e(route('events.certificate', $event->slug)) . '" '
+                . 'class="btn btn-sm btn-success" title="Unduh E-Certificate">'
+                . '<i class="ti ti-certificate me-1"></i>Unduh</a>';
+        })
+        ->rawColumns(['participant', 'gender', 'payment', 'ticket_code', 'registered', 'checkin', 'certificate'])
         ->make(true);
 }
 }
