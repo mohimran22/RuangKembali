@@ -14,6 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use DB;
 use Yajra\DataTables\Facades\DataTables;
+use Illuminate\Support\Facades\Log;
 
 class TransactionController extends Controller
 {
@@ -21,7 +22,17 @@ class TransactionController extends Controller
 {
     abort_unless(in_array(ActiveRole::name(), ['Super-Admin', 'Tim']), 403);
 }
+private function canApprove(Transaction $transaction): bool
+{
+    // Super-Admin boleh menyetujui semua, termasuk transaksi miliknya sendiri
+    if (ActiveRole::name() === 'Super-Admin') {
+        return true;
+    }
 
+    // Staf lain: tidak boleh menyetujui yang ia daftarkan atau yang buktinya ia unggah
+    return $transaction->registered_by !== auth()->id()
+        && $transaction->proof_uploaded_by !== auth()->id();
+}
 public function index(Request $request)
 {
     $this->authorizeStaff();
@@ -193,13 +204,17 @@ public function index(Request $request)
     return view('admin.index', compact('status'));
 }
 
-    public function show(Transaction $transaction)
-    {
-        $this->authorizeStaff();
-        $transaction->load(['event', 'registeredBy', 'registrations.user']);
+public function show(Transaction $transaction)
+{
+    $this->authorizeStaff();
 
-        return view('admin.show', compact('transaction'));
-    }
+    $transaction->load(['event', 'registeredBy', 'registrations.user', 'proofUploader']);
+
+    return view('admin.show', [
+        'transaction' => $transaction,
+        'canApprove'  => $this->canApprove($transaction),
+    ]);
+}
 
     public function approve(Transaction $transaction)
     {
@@ -210,11 +225,14 @@ public function index(Request $request)
             400,
             'Transaksi ini tidak dalam status menunggu konfirmasi.'
         );
-        abort_if(
-            $transaction->registered_by === auth()->id(),
+        abort_unless(
+            $this->canApprove($transaction),
             403,
-            'Kamu tidak bisa menyetujui transaksi yang kamu daftarkan sendiri.'
+            'Kamu tidak bisa menyetujui transaksi yang kamu daftarkan atau yang buktinya kamu unggah sendiri. Minta staf lain untuk menyetujuinya.'
         );
+
+        $selfApproved = $transaction->registered_by === auth()->id()
+            || $transaction->proof_uploaded_by === auth()->id();
         DB::transaction(function () use ($transaction) {
 
             // Kunci baris transaksi supaya approve bersamaan tidak lolos dua kali
@@ -365,7 +383,14 @@ public function index(Request $request)
         if ($transaction->registeredBy) {
             $recipients->push($transaction->registeredBy);
         }
-
+        if ($selfApproved) {
+            Log::notice('Transaksi disetujui oleh pendaftarnya sendiri (Super-Admin)', [
+                'transaction_code' => $transaction->transaction_code,
+                'approved_by'      => auth()->id(),
+                'registered_by'    => $transaction->registered_by,
+                'proof_uploaded_by' => $transaction->proof_uploaded_by,
+            ]);
+        }
         $recipients
             ->unique('id')
             ->each(function ($user) use ($transaction) {

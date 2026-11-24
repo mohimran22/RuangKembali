@@ -26,7 +26,8 @@ class EventRegistration extends Model
         'checked_in_by',
         'guest_name',
         'guest_email',
-        'guest_gender'
+        'guest_gender',
+        'certificate_code',
     ];
 
 protected $casts = [

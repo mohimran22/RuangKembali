@@ -40,6 +40,11 @@
             </div>
         </div>
     </div>
+    @if(session('error'))
+        <div class="alert alert-warning">
+            <i class="ti ti-alert-triangle me-2"></i>{{ session('error') }}
+        </div>
+    @endif
     <div class="event-tabs-wrapper">
         <ul class="nav nav-tabs mb-4" id="eventDetailTabs" role="tablist">
             <li class="nav-item" role="presentation">
@@ -1122,272 +1127,106 @@
                         .participants-table td { white-space: nowrap; }
                     </style>
 
-@if($canViewAll)
+                    @if($canViewAll)
 
-    <div class="row g-3 mb-3">
-        <div class="col-6 col-lg-3">
-            <div class="part-stat">
-                <div class="part-stat-label"><i class="ti ti-users me-1"></i>Total Pendaftar</div>
-                <div class="part-stat-value">{{ $registrations->count() }}</div>
-            </div>
-        </div>
-        <div class="col-6 col-lg-3">
-            <div class="part-stat">
-                <div class="part-stat-label"><i class="ti ti-gender-male me-1"></i>Laki-laki</div>
-                <div class="part-stat-value text-blue">{{ $genderSummary['male'] }}</div>
-            </div>
-        </div>
-        <div class="col-6 col-lg-3">
-            <div class="part-stat">
-                <div class="part-stat-label"><i class="ti ti-gender-female me-1"></i>Perempuan</div>
-                <div class="part-stat-value text-pink">{{ $genderSummary['female'] }}</div>
-            </div>
-        </div>
-        <div class="col-6 col-lg-3">
-            <div class="part-stat">
-                <div class="part-stat-label"><i class="ti ti-clock me-1"></i>Belum Lunas</div>
-                <div class="part-stat-value text-warning">{{ $genderSummary['pending'] }}</div>
-            </div>
-        </div>
-    </div>
-
-    @if($genderSummary['unknown'] > 0)
-        <div class="alert alert-warning mb-3">
-            <div class="d-flex">
-                <i class="ti ti-alert-triangle fs-2 me-3"></i>
-                <div class="flex-fill">
-                    <h4 class="alert-title">
-                        {{ $genderSummary['unknown'] }} peserta belum memiliki data gender
-                    </h4>
-                    <div class="text-secondary">
-                        Jumlah laki-laki dan perempuan di atas belum lengkap, sehingga pembagian kursi belum akurat.
-                        Minta peserta berikut melengkapi data diri di profilnya.
-                    </div>
-
-                    <a class="btn btn-sm btn-warning mt-2" data-bs-toggle="collapse" href="#unknownGenderList">
-                        Lihat daftar peserta
-                    </a>
-
-                    <div class="collapse mt-3" id="unknownGenderList">
-                        @foreach($unknownGender as $reg)
-                            @php
-                                $phone = preg_replace('/\D/', '', $reg->user?->phone ?? '');
-                                if ($phone !== '' && str_starts_with($phone, '0')) {
-                                    $phone = '62' . substr($phone, 1);
-                                }
-                                $waText = "Halo {$reg->participant_name}, mohon lengkapi data diri "
-                                    . "(jenis kelamin, tanggal lahir, dan alamat) di profil Ruang Kembali "
-                                    . "untuk pembagian kursi event {$event->name}. Terima kasih.";
-                            @endphp
-
-                            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 py-2 border-top">
-                                <span class="fw-semibold">{{ $reg->participant_name }}</span>
-
-                                @if($phone !== '')
-                                    <a href="https://wa.me/{{ $phone }}?text={{ rawurlencode($waText) }}"
-                                       target="_blank" rel="noopener"
-                                       class="btn btn-sm btn-outline-success">
-                                        <i class="ti ti-brand-whatsapp me-1"></i> Ingatkan
-                                    </a>
-                                @elseif(!$reg->user_id)
-                                    <span class="badge bg-orange-lt">Peserta tamu</span>
-                                @else
-                                    <span class="text-secondary small">Nomor HP belum diisi</span>
-                                @endif
+                        <div class="row g-3 mb-3">
+                            <div class="col-6 col-lg-3">
+                                <div class="part-stat">
+                                    <div class="part-stat-label"><i class="ti ti-users me-1"></i>Total Peserta</div>
+                                    <div class="part-stat-value">{{ $genderSummary['total'] }}</div>
+                                    @if($genderSummary['cancelled'] > 0)
+                                        <div class="small text-secondary mt-1">{{ $genderSummary['cancelled'] }} dibatalkan tidak dihitung</div>
+                                    @endif
+                                </div>
                             </div>
-                        @endforeach
-                    </div>
-                </div>
-            </div>
-        </div>
-    @endif
+                            <div class="col-6 col-lg-3">
+                                <div class="part-stat">
+                                    <div class="part-stat-label"><i class="ti ti-gender-male me-1"></i>Laki-laki</div>
+                                    <div class="part-stat-value text-blue">{{ $genderSummary['male'] }}</div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-lg-3">
+                                <div class="part-stat">
+                                    <div class="part-stat-label"><i class="ti ti-gender-female me-1"></i>Perempuan</div>
+                                    <div class="part-stat-value text-pink">{{ $genderSummary['female'] }}</div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-lg-3">
+                                <div class="part-stat">
+                                    <div class="part-stat-label"><i class="ti ti-clock me-1"></i>Belum Lunas</div>
+                                    <div class="part-stat-value text-warning">{{ $genderSummary['pending'] }}</div>
+                                </div>
+                            </div>
+                        </div>
 
-@endif
-                    {{-- @if($registrations->count())
+                        @if($genderSummary['unknown'] > 0)
+                            <div class="alert alert-warning mb-3">
+                                <div class="d-flex">
+                                    <i class="ti ti-alert-triangle fs-2 me-3"></i>
+                                    <div class="flex-fill">
+                                        <h4 class="alert-title">
+                                            {{ $genderSummary['unknown'] }} peserta belum memiliki data gender
+                                        </h4>
+                                        <div class="text-secondary">
+                                            Jumlah laki-laki dan perempuan di atas belum lengkap, sehingga pembagian kursi belum akurat.
+                                            Minta peserta berikut melengkapi data diri di profilnya.
+                                        </div>
 
-                        <div class="table-responsive">
+                                        <a class="btn btn-sm btn-warning mt-2" data-bs-toggle="collapse" href="#unknownGenderList">
+                                            Lihat daftar peserta
+                                        </a>
 
-                            <table class="table table-vcenter participants-table">
+                                        <div class="collapse mt-3" id="unknownGenderList">
+                                            @foreach($unknownGender as $reg)
+                                                @php
+                                                    $phone = preg_replace('/\D/', '', $reg->user?->phone ?? '');
+                                                    if ($phone !== '' && str_starts_with($phone, '0')) {
+                                                        $phone = '62' . substr($phone, 1);
+                                                    }
+                                                    $waText = "Halo {$reg->participant_name}, mohon lengkapi data diri "
+                                                        . "(jenis kelamin, tanggal lahir, dan alamat) di profil Ruang Kembali "
+                                                        . "untuk pembagian kursi event {$event->name}. Terima kasih.";
+                                                @endphp
 
-                                <thead>
-                                    <tr>
-                                        <th width="60">No</th>
-                                        <th>Peserta</th>
-                                        <th>Jenis Kelamin</th>
-                                        <th>Pembayaran</th>
-                                        <th>Kode Tiket</th>
-                                        <th>Waktu terdaftar</th>
-                                        <th>Status Check-in</th>
-                                    </tr>
-                                </thead>
+                                                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 py-2 border-top">
+                                                    <span class="fw-semibold">{{ $reg->participant_name }}</span>
 
-                                <tbody>
-
-                                    @foreach($registrations as $index => $registration)
-
-                                        <tr data-registration-id="{{ $registration->id }}"
-                                            data-ticket-code="{{ $registration->ticket_code }}">
-
-                                            <td data-label="No">  
-                                                {{ $index + 1 }}
-                                            </td>
-
-                                            <td data-label="Peserta">
-                                                <div class="d-flex align-items-center">
-
-                                                    <span class="avatar me-2">
-                                                        <i class="ti ti-user"></i>
-                                                    </span>
-
-                                                    <div>
-                                                        <div class="fw-semibold">
-                                                            {{ $registration->participant_name }}
-                                                        </div>
-                                                    </div>
-
-                                                </div>
-                                            </td>
-                                            <td data-label="Gender">
-                                                @if(in_array((int) $registration->participant_gender, [1, 2], true))
-                                                    {{ $registration->participant_gender_label }}
-                                                @else
-                                                    <span class="badge bg-warning-lt">
-                                                        <i class="ti ti-alert-triangle me-1"></i>Belum diisi
-                                                    </span>
-                                                @endif
-                                            </td>
-                                            <td data-label="Pembayaran">  
-
-                                                @if(in_array($registration->status, ['paid', 'confirmed', 'attended']))
-
-                                                <span class="badge bg-success-lt">
-                                                    <i class="ti ti-circle-check me-1"></i>
-                                                    Lunas
-                                                </span>
-                                                  @elseif($registration->status === 'pending')
-                                                    <span class="badge bg-warning-lt">
-                                                        <i class="ti ti-clock me-1"></i>
-                                                        {{ $registration->transaction?->status === 'waiting_confirmation' ? 'Menunggu Konfirmasi' : 'Menunggu Pembayaran' }}
-                                                    </span>
-                                                
-                                                @elseif($registration->status === 'cancelled')
-                                                    <span class="badge bg-danger-lt">
-                                                        <i class="ti ti-circle-x me-1"></i>
-                                                        Dibatalkan
-                                                    </span>
-                                                @else
-                                                    <span class="badge bg-secondary-lt">
-                                                        {{ ucfirst($registration->status ?? '-') }}
-                                                    </span>
-                                                @endif
-
-                                            </td>
-                                            <td data-label="Kode Tiket">  
-                                                <div class="d-flex align-items-center gap-2">
-                                                    <span>{{ $registration->ticket_code }}</span>
-
-                                                    @if(in_array($registration->status, ['paid', 'confirmed', 'attended']))
-                                                    @if($canViewAll)
-                                                        @php
-                                                            $ticketUrl = \Illuminate\Support\Facades\URL::temporarySignedRoute(
-                                                                'tickets.public',
-                                                                $event->end_at->copy()->addDay(),
-                                                                ['registration' => $registration->id]
-                                                            );
-                                                        @endphp
-
-                                                        <button type="button"
-                                                                class="btn btn-icon btn-sm btn-outline-secondary btn-copy-ticket"
-                                                                data-url="{{ $ticketUrl }}"
-                                                                title="Salin link tiket">
-                                                            <i class="ti ti-link"></i>
-                                                        </button>
-
-                                                        <button type="button"
-                                                                class="btn btn-icon btn-sm btn-outline-success btn-wa-ticket"
-                                                                data-url="{{ $ticketUrl }}"
-                                                                data-name="{{ $registration->participant_name }}"
-                                                                data-event="{{ $event->name }}"
-                                                                title="Kirim via WhatsApp">
-                                                            <i class="ti ti-brand-whatsapp"></i>
-                                                        </button>
+                                                    @if($phone !== '')
+                                                        <a href="https://wa.me/{{ $phone }}?text={{ rawurlencode($waText) }}"
+                                                        target="_blank" rel="noopener"
+                                                        class="btn btn-sm btn-outline-success">
+                                                            <i class="ti ti-brand-whatsapp me-1"></i> Ingatkan
+                                                        </a>
+                                                    @elseif(!$reg->user_id)
+                                                        <span class="badge bg-orange-lt">Peserta tamu</span>
                                                     @else
-                                                        <button type="button"
-                                                                class="btn btn-icon btn-sm btn-outline-secondary"
-                                                                data-bs-toggle="modal"
-                                                                data-bs-target="#ticketQrModal"
-                                                                data-ticket-code="{{ $registration->ticket_code }}"
-                                                                data-name="{{ $registration->participant_name }}"
-                                                                title="Tampilkan QR Code">
-                                                            <i class="ti ti-qrcode"></i>
-                                                        </button>
-                                                    @endif
+                                                        <span class="text-secondary small">Nomor HP belum diisi</span>
                                                     @endif
                                                 </div>
-                                            </td>
-                                            <td data-label="Terdaftar">  
-                                                {{ ($registration->registered_at ?? $registration->created_at)?->translatedFormat('d F Y') }}
-
-                                                <div class="text-secondary small">
-                                                    {{ ($registration->registered_at ?? $registration->created_at)?->format('H:i') }} WIB
-                                                </div>
-                                            </td>     
-                                            <td class="checkin-status-cell" data-label="Check-In"> 
-                                                @if($registration->status === 'attended')
-
-                                                    <span class="badge bg-success-lt">
-                                                        <i class="ti ti-shield-check me-1"></i>
-                                                        Sudah Check-in
-                                                    </span>
-
-                                                @else
-
-                                                    <span class="badge bg-secondary-lt">
-                                                        Belum Check-in
-                                                    </span>
-
-                                                @endif
-
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-
-                        </div>
-
-                    @else
-
-                        <div class="event-gallery-empty">
-
-                            <i class="ti ti-users-off"></i>
-
-                            <div class="fw-semibold mt-2">
-                                Belum ada peserta
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
+                        @endif
 
-                            <div class="text-secondary small">
-                                Belum ada pendaftaran peserta untuk event ini.
-                            </div>
+                    @endif
 
-                        </div>
-
-                    @endif --}}
-<div class="table-responsive">
-    <table id="participantsTable" class="table table-vcenter participants-table w-100">
-        <thead>
-            <tr>
-                <th width="60">No</th>
-                <th>Peserta</th>
-                <th>Jenis Kelamin</th>
-                <th>Pembayaran</th>
-                <th>Kode Tiket</th>
-                <th>Waktu terdaftar</th>
-                <th>Status Check-in</th>
-            </tr>
-        </thead>
-    </table>
-</div>
+                    <div class="table-responsive">
+                        <table id="participantsTable" class="table table-vcenter participants-table w-100">
+                            <thead>
+                                <tr>
+                                    <th width="60">No</th>
+                                    <th>Peserta</th>
+                                    <th>Jenis Kelamin</th>
+                                    <th>Pembayaran</th>
+                                    <th>Kode Tiket</th>
+                                    <th>Waktu terdaftar</th>
+                                    <th>Status Check-in</th>
+                                </tr>
+                            </thead>
+                        </table>
+                    </div>
                 </div>
 
             </div>

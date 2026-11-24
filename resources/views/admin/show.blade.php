@@ -203,13 +203,19 @@
 
                             @if($transaction->status === 'waiting_confirmation')
 
-                                <div class="row g-2">
+                                @unless($canApprove)
+                                    <div class="alert alert-warning mb-3">
+                                        <i class="ti ti-alert-triangle me-2"></i>
+                                        Transaksi ini kamu daftarkan atau buktinya kamu unggah sendiri, jadi harus disetujui oleh staf lain.
+                                        Kamu tetap bisa menolaknya.
+                                    </div>
+                                @endunless
 
+                                <div class="row g-2">
                                     <div class="col-6">
-                                        <form action="{{ route('admin.transactions.approve', $transaction->id) }}"
-                                            method="POST">
+                                        <form action="{{ route('admin.transactions.approve', $transaction->id) }}" method="POST">
                                             @csrf
-                                            <button type="submit" class="btn btn-success w-100">
+                                            <button type="submit" class="btn btn-success w-100" @disabled(!$canApprove)>
                                                 <i class="ti ti-check me-1"></i>
                                                 Setujui (Lunas)
                                             </button>
@@ -217,19 +223,14 @@
                                     </div>
 
                                     <div class="col-6">
-                                        <button type="button"
-                                                class="btn btn-danger w-100"
-                                                data-bs-toggle="modal"
-                                                data-bs-target="#rejectModal">
+                                        <button type="button" class="btn btn-danger w-100"
+                                                data-bs-toggle="modal" data-bs-target="#rejectModal">
                                             <i class="ti ti-x me-1"></i>
                                             Tolak
                                         </button>
                                     </div>
-
                                 </div>
 
-
-                                {{-- Modal alasan penolakan --}}
                                 <div class="modal fade" id="rejectModal" tabindex="-1">
                                     <div class="modal-dialog modal-dialog-centered">
                                         <div class="modal-content">

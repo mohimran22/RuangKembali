@@ -44,7 +44,13 @@ class EventRegistrationController extends Controller
 public function create(Event $event)
 {
     abort_unless($event->is_published, 404);
+    $state = $event->registration_state;
 
+    if (! $state['open']) {
+        return redirect()
+            ->route('events.show', $event->event_code)
+            ->with('error', $state['label'] . '. Pendaftaran untuk event ini sudah tidak bisa dilakukan.');
+    }
     $registration = EventRegistration::where('event_id', $event->id)
         ->where('user_id', auth()->id())
         ->whereNotIn('status', ['cancelled'])
@@ -89,13 +95,10 @@ public function create(Event $event)
             403
         );
         abort_unless($event->is_published, 404);
+        $state = $event->registration_state;
 
-        if ($event->registration_open && now()->lt($event->registration_open)) {
-            return back()->with('error', 'Pendaftaran event belum dibuka.');
-        }
-
-        if ($event->registration_close && now()->gt($event->registration_close)) {
-            return back()->with('error', 'Pendaftaran event sudah ditutup.');
+        if (! $state['open']) {
+            return back()->with('error', $state['label'] . '. Pendaftaran untuk event ini sudah tidak bisa dilakukan.');
         }
 
         $validated = $request->validate([

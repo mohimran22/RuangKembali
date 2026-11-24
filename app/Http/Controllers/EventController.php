@@ -1162,13 +1162,15 @@ public function show(Event $event)
     abort_unless($canViewAll || $event->is_published, 404);
 
     $registrations = $this->visibleRegistrations($event, $canViewAll)->latest()->get();
-    $counted = $registrations->whereIn('status', ['pending', 'paid', 'attended']);
+    $counted = $registrations->whereIn('status', ['paid', 'attended']);
 
     $genderSummary = [
-        'male'    => $counted->filter(fn ($r) => (int) $r->participant_gender === 1)->count(),
-        'female'  => $counted->filter(fn ($r) => (int) $r->participant_gender === 2)->count(),
-        'unknown' => $counted->filter(fn ($r) => !in_array((int) $r->participant_gender, [1, 2], true))->count(),
-        'pending' => $registrations->where('status', 'pending')->count(),
+        'total'     => $counted->count(),
+        'male'      => $counted->filter(fn ($r) => (int) $r->participant_gender === 1)->count(),
+        'female'    => $counted->filter(fn ($r) => (int) $r->participant_gender === 2)->count(),
+        'unknown'   => $counted->filter(fn ($r) => !in_array((int) $r->participant_gender, [1, 2], true))->count(),
+        'pending'   => $registrations->where('status', 'pending')->count(),
+        'cancelled' => $registrations->where('status', 'cancelled')->count(),
     ];
     $unknownGender = $counted
         ->filter(fn ($r) => !in_array((int) $r->participant_gender, [1, 2], true))
@@ -1357,8 +1359,12 @@ public function showPublic(Event $event)
         SEOTools::opengraph()->addImage($image);
         SEOTools::twitter()->setImage($image);
     }
-
-    return view('events.public-show', compact('event'));
+    $alreadyRegistered = auth()->check()
+    && EventRegistration::where('event_id', $event->id)
+        ->where('user_id', auth()->id())
+        ->where('status', '!=', 'cancelled')
+        ->exists();
+    return view('events.public-show', compact('event', 'alreadyRegistered'));
 }
 public function participantsData(Event $event)
 {

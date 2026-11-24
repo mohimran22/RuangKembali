@@ -3,6 +3,7 @@
     $voucherParam = is_string(request('voucher')) ? strtoupper(trim(request('voucher'))) : null;
 @endphp
 @section('content')
+
 <style>
 .event-detail-hero{
     position:relative;
@@ -375,8 +376,6 @@
     display:block;
 }
 
-/* ============ RUNDOWN TIMELINE ============ */
-
 .event-timeline-date{
     font-size:12px;
     font-weight:700;
@@ -528,7 +527,13 @@
     background:#a3854f;
     color:#fff;
 }
-
+.btn-daftar-event.is-closed {
+    background: #e9ecef;
+    border-color: #dee2e6;
+    color: #868e96;
+    cursor: not-allowed;
+    box-shadow: none;
+}
 .badge-sold-out,
 .badge-closed{
     display:inline-block;
@@ -743,7 +748,11 @@
     }
 }
 </style>
-
+@if(session('error'))
+    <div class="container mt-3">
+        <div class="alert alert-warning mb-0">{{ session('error') }}</div>
+    </div>
+@endif
 <section class="event-detail-hero">
     <div class="container">
         @if ($event->poster)
@@ -1012,26 +1021,19 @@
             {{-- ================= SIDEBAR ================= --}}
             <aside class="event-detail-sidebar">
 
-                <div class="event-sidebar-card event-sidebar-cta">
-                    @if (!$event->is_full && $event->is_registration_open)
-                        @auth
-                            <a href="{{ route('events.register', ['event' => $event->slug, 'voucher' => $voucherParam ?: null]) }}" class="btn-daftar-event">
-                                <i class="ti ti-ticket"></i> Daftar Sekarang
-                            </a>
-                        @else
-                            <a href="{{ route('login') }}" class="btn-daftar-event">
-                                <i class="ti ti-login"></i> Masuk untuk Mendaftar
-                            </a>
-                            <p class="text-center mt-2 mb-0 small">
-                                Belum punya akun? <a href="{{ route('register') }}">Daftar akun</a>
-                            </p>
-                        @endauth
-                    @elseif ($event->is_full)
-                        <span class="badge-sold-out">Kuota Penuh</span>
-                    @else
-                        <span class="badge-closed">Pendaftaran Belum/Sudah Ditutup</span>
-                    @endif
-                </div>
+<div class="event-sidebar-card event-sidebar-cta">
+
+    @include('events.partials.register_button', ['class' => 'btn-daftar-event'])
+
+    @guest
+        @if($event->registration_state['open'])
+            <p class="text-center mt-2 mb-0 small">
+                Belum punya akun? <a href="{{ route('register') }}">Daftar akun</a>
+            </p>
+        @endif
+    @endguest
+
+</div>
 
                 <div class="event-sidebar-card">
                     <h3><i class="ti ti-info-circle"></i> Info Event</h3>
