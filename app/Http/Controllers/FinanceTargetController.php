@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\DB;
 
 class FinanceTargetController extends Controller
 {
-public function storeTarget(Request $request)
+public function store(Request $request)
 {
     $data = $request->validate([
         'year'             => 'required|integer|min:2000|max:2100',
