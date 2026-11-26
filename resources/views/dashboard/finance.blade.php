@@ -179,7 +179,6 @@
 @endsection
 @push('js')
 
-{{-- <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script> --}}
 <script>
     const labels = @json(collect($tabel['omset']['rows'])->pluck('label')->values());
     const jt = a => a.map(v => v === null ? null : v / 1e6);
