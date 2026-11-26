@@ -77,7 +77,12 @@
                             </span>
                         </div>
                     </div>
-
+                    @if($transaction->complimentary_note)
+                        <div class="mb-3">
+                            <div class="text-secondary small">Catatan</div>
+                            <div class="fw-semibold">{{ $transaction->complimentary_note }}</div>
+                        </div>
+                    @endif
                     <hr>
 
                     <div class="mb-2">

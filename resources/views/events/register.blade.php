@@ -264,52 +264,87 @@
 
                                 <div id="participantsWrapper">
                                     @if(!$registration && \App\Helpers\ActiveRole::name() !== 'Super-Admin')
-                                        {{-- Peserta pertama = akun yang login, tidak bisa dihapus --}}
+                                        {{-- Peserta pertama = akun yang login. Boleh dimatikan bila hanya mendaftarkan orang lain --}}
                                         <div class="card card-sm border mb-3 participant-row participant-self" data-user-id="{{ auth()->id() }}">
-                                            <div class="card-body d-flex justify-content-between align-items-center">
-                                                <div>
+                                            <div class="card-body d-flex justify-content-between align-items-center gap-3">
+                                                <div class="self-info">
                                                     <div class="text-secondary small fw-semibold">Kamu (Pendaftar)</div>
                                                     <div class="fw-semibold">{{ auth()->user()->fullname ?? auth()->user()->name }}</div>
                                                     <div class="text-secondary small">{{ auth()->user()->email }}</div>
+                                                    <div class="small text-secondary mt-1 d-none" id="selfOffHint">
+                                                        Kamu hanya mendaftarkan peserta lain dan tidak ikut sebagai peserta.
+                                                    </div>
                                                 </div>
+
+                                                <label class="form-check form-switch mb-0 flex-shrink-0">
+                                                    <input class="form-check-input" type="checkbox" id="selfParticipateSwitch" checked>
+                                                    <span class="form-check-label small">Saya ikut</span>
+                                                </label>
                                             </div>
-                                                <input type="hidden" name="participants[0][user_id]" value="{{ auth()->id() }}">
+                                            <input type="hidden" name="participants[0][user_id]" value="{{ auth()->id() }}">
                                         </div>
                                     @endif
-
                                 </div>
 
                                 {{-- Search box untuk tambah peserta --}}
-                                <div class="position-relative mb-2">
-                                    <div class="text-danger small mb-2" id="participantError" style="display:none;"></div>
-                                    <input type="text"
-                                        class="form-control"
-                                        id="participantSearchInput"
-                                        placeholder="Cari nama atau email peserta terdaftar...">
+{{-- Tombol tambah peserta --}}
+                                <div class="d-flex flex-wrap gap-2 mb-3">
+                                    <button type="button" class="btn btn-outline-primary flex-fill flex-md-grow-0" id="toggleAccountBoxBtn">
+                                        <i class="ti ti-user-search me-1"></i>
+                                        Tambahkan Peserta
+                                    </button>
 
-                                    <div class="list-group position-absolute w-100 bg-white shadow-sm rounded border"
-                                        id="participantSearchResults"
-                                        style="z-index: 1000; display: none; max-height: 250px; overflow-y: auto; top: 100%;">
-                                    </div>
-
-                                </div>
-                                <div class="mb-2">
-                                    <button type="button" class="btn btn-sm btn-link px-0" id="toggleGuestFormBtn">
+                                    <button type="button" class="btn btn-outline-secondary flex-fill flex-md-grow-0" id="toggleGuestFormBtn">
                                         <i class="ti ti-user-plus me-1"></i>
                                         Peserta belum punya akun? Tambahkan manual
                                     </button>
                                 </div>
 
+                                {{-- Panel pencarian peserta yang sudah punya akun --}}
+                                <div id="accountBox" class="card card-sm border mb-3" style="display: none;">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <div class="fw-semibold small">Cari peserta yang sudah punya akun</div>
+                                            <button type="button" class="btn btn-sm btn-link text-secondary p-0" id="closeAccountBoxBtn">
+                                                Selesai
+                                            </button>
+                                        </div>
+
+                                        <div class="position-relative">
+                                            <div class="text-danger small mb-2" id="participantError" style="display:none;"></div>
+
+                                            <input type="text"
+                                                class="form-control"
+                                                id="participantSearchInput"
+                                                autocomplete="off"
+                                                placeholder="Ketik nama atau email (minimal 2 huruf)...">
+
+                                            <div class="list-group position-absolute w-100 bg-white shadow-sm rounded border"
+                                                id="participantSearchResults"
+                                                style="z-index: 1000; display: none; max-height: 250px; overflow-y: auto; top: 100%;">
+                                            </div>
+                                        </div>
+
+                                        <div class="form-hint mt-2">
+                                            Pilih nama dari hasil pencarian. Kamu bisa menambahkan lebih dari satu peserta.
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div id="guestFormBox" class="card card-sm border mb-3" style="display: none;">
                                     <div class="card-body">
-                                        <div class="row g-2">
+                                        <div class="row g-2 align-items-end">
                                             <div class="col-md-4">
+                                                <label class="form-label small mb-1 required" for="guestNameInput">Nama lengkap</label>
                                                 <input type="text" class="form-control form-control-sm" id="guestNameInput" placeholder="Nama lengkap">
                                             </div>
                                             <div class="col-md-4">
+                                                <label class="form-label small mb-1 {{ $canGiveComplimentary ? '' : 'required' }}"
+                                                    for="guestEmailInput" id="guestEmailLabel">Email</label>
                                                 <input type="email" class="form-control form-control-sm" id="guestEmailInput" placeholder="Email">
                                             </div>
                                             <div class="col-md-2">
+                                                <label class="form-label small mb-1 required" for="guestGenderSelect">Jenis kelamin</label>
                                                 <select class="form-select form-select-sm" id="guestGenderSelect">
                                                     <option value="">Pilih</option>
                                                     <option value="1">Laki-laki</option>
@@ -520,6 +555,8 @@
 <script>
 (function () {
     const wrapper = document.getElementById('participantsWrapper');
+    const selfSwitch = document.getElementById('selfParticipateSwitch');
+    const selfHint   = document.getElementById('selfOffHint');
     const searchInput = document.getElementById('participantSearchInput');
     const searchResults = document.getElementById('participantSearchResults');
 
@@ -607,16 +644,33 @@
         wrapper.appendChild(row);
         renumberParticipants();
     }
+    const selfRow = wrapper.querySelector('.participant-self');
+
+function syncSelf() {
+    if (!selfRow || !selfSwitch) return;
+
+    const off = !selfSwitch.checked;
+
+    selfRow.classList.toggle('is-off', off);
+    if (selfHint) selfHint.classList.toggle('d-none', !off);
+
+    off ? selfRow.setAttribute('data-off', '') : selfRow.removeAttribute('data-off');
+
+    renumberParticipants();
+}
+
+if (selfSwitch) selfSwitch.addEventListener('change', syncSelf);
     if (typeSelect) {
     const paymentSection = document.getElementById('paymentSection');
     const noteWrap = document.getElementById('complimentaryNoteWrap');
-    const selfRow = wrapper.querySelector('.participant-self');
+
     const submitBtn = document.getElementById('submitBtn');
     const submitInitiallyDisabled = submitBtn.disabled;
 
     typeSelect.addEventListener('change', function () {
         const free = isComplimentary();
-
+        const emailLabel = document.getElementById('guestEmailLabel');
+        if (emailLabel) emailLabel.classList.toggle('required', !free);
         noteWrap.classList.toggle('d-none', !free);
 
         if (paymentSection) {
@@ -629,7 +683,12 @@
 
         if (selfRow) {
             selfRow.classList.toggle('d-none', free);
-            free ? selfRow.setAttribute('data-off', '') : selfRow.removeAttribute('data-off');
+
+            const optedOut = selfSwitch && !selfSwitch.checked;
+
+            (free || optedOut)
+                ? selfRow.setAttribute('data-off', '')
+                : selfRow.removeAttribute('data-off');
         }
 
         // data diri staf tidak relevan saat mendaftarkan tamu
@@ -680,7 +739,36 @@
             guestFormBox.style.display = guestFormBox.style.display === 'none' ? 'block' : 'none';
         });
     }
+    const toggleAccountBoxBtn = document.getElementById('toggleAccountBoxBtn');
+const closeAccountBoxBtn  = document.getElementById('closeAccountBoxBtn');
+const accountBox          = document.getElementById('accountBox');
 
+function openAccountBox() {
+    if (guestFormBox) guestFormBox.style.display = 'none';   // satu panel terbuka pada satu waktu
+    accountBox.style.display = 'block';
+    searchInput.focus();
+}
+
+function closeAccountBox() {
+    accountBox.style.display = 'none';
+    searchInput.value = '';
+    searchResults.style.display = 'none';
+    searchResults.innerHTML = '';
+    hideParticipantError();
+}
+
+toggleAccountBoxBtn.addEventListener('click', function () {
+    accountBox.style.display === 'none' ? openAccountBox() : closeAccountBox();
+});
+
+closeAccountBoxBtn.addEventListener('click', closeAccountBox);
+
+// Membuka form manual menutup panel akun
+if (toggleGuestFormBtn) {
+    toggleGuestFormBtn.addEventListener('click', function () {
+        if (guestFormBox.style.display === 'block') closeAccountBox();
+    });
+}
     const addGuestBtn = document.getElementById('addGuestBtn');
     if (addGuestBtn) {
         addGuestBtn.addEventListener('click', function () {
@@ -946,6 +1034,7 @@
                             searchInput.value = '';
                             searchResults.style.display = 'none';
                             searchResults.innerHTML = '';
+                            searchInput.focus();
                         });
 
                         searchResults.appendChild(item);
@@ -967,18 +1056,10 @@
         if (activeRows().length === 0) {
             e.preventDefault();
             alert('Tambahkan minimal 1 peserta sebelum mendaftar.');
-            searchInput.focus();
+            openAccountBox();
         }
     });
-    // form.addEventListener('submit', function (e) {
-    //     const rows = wrapper.querySelectorAll('.participant-row');
 
-    //     if (rows.length === 0) {
-    //         e.preventDefault();
-    //         alert('Tambahkan minimal 1 peserta sebelum mendaftar.');
-    //         searchInput.focus();
-    //     }
-    // });
     renumberParticipants();
 })();
 </script> 

@@ -47,10 +47,19 @@
                         <div class="text-secondary small">{{ $transaction->registeredBy?->email }}</div>
                     </div>
 
-                    <div class="fw-semibold text-capitalize">
-                        @if($transaction->registration_type === 'sponsor') Sponsor (gratis)
-                        @elseif($transaction->registration_type === 'invitation') Undangan (gratis)
-                        @else {{ $transaction->payment_method ?? '-' }}
+                    <div class="mb-3">
+                        <div class="text-secondary small">Jenis Pendaftaran / Pembayaran</div>
+                        <div class="fw-semibold text-capitalize">
+                            @if($transaction->registration_type === 'sponsor') Sponsor (gratis)
+                            @elseif($transaction->registration_type === 'invitation') Undangan (gratis)
+                            @else {{ $transaction->payment_method ?? '-' }}
+                            @endif
+                        </div>
+
+                        @if($transaction->complimentary_note)
+                            <div class="text-secondary small mt-1">
+                                {{ $transaction->complimentary_note }}
+                            </div>
                         @endif
                     </div>
 

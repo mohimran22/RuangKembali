@@ -21,7 +21,8 @@ class Transaction extends Model
         'paid_at',
         'proof_uploaded_by',
         'expires_at',
-        'voucher_id', 'voucher_code', 'subtotal_amount', 'discount_amount'
+        'voucher_id', 'voucher_code', 'subtotal_amount', 'discount_amount',
+        'registration_type', 'complimentary_note',
     ];
 
     protected $casts = [

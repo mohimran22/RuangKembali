@@ -141,17 +141,17 @@ public function create(Event $event)
             return back()->withInput()->with('error', 'Terdapat email peserta manual yang sama, cek kembali.');
         }
 
-        $iAmRegistered = EventRegistration::where('event_id', $event->id)
-            ->where('user_id', auth()->id())
-            ->where('status', '!=', 'cancelled')
-            ->exists();
+        // $iAmRegistered = EventRegistration::where('event_id', $event->id)
+        //     ->where('user_id', auth()->id())
+        //     ->where('status', '!=', 'cancelled')
+        //     ->exists();
 
-        if (! $isComplimentary
-            && ActiveRole::name() !== 'Super-Admin'
-            && !$iAmRegistered
-            && !in_array(auth()->id(), $userIds)) {
-            return back()->withInput()->with('error', 'Kamu wajib ikut sebagai salah satu peserta.');
-        }
+        // if (! $isComplimentary
+        //     && ActiveRole::name() !== 'Super-Admin'
+        //     && !$iAmRegistered
+        //     && !in_array(auth()->id(), $userIds)) {
+        //     return back()->withInput()->with('error', 'Kamu wajib ikut sebagai salah satu peserta.');
+        // }
         // (c) tepat setelah pengecekan "Kamu wajib ikut", sebelum DB::beginTransaction()
         // if (!empty($userIds)) {
         //     $incomplete = User::whereIn('id', $userIds)->get()
