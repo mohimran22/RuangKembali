@@ -1380,13 +1380,19 @@ public function participantsData(Event $event)
 
     $query = $this->visibleRegistrations($event, $canViewAll)
         ->leftJoin('users', 'users.id', '=', 'event_registrations.user_id')
-        ->select('event_registrations.*');
+        ->select('event_registrations.*')
+        ->with('transaction:id,registration_type,complimentary_note');
 
     return DataTables::eloquent($query)
         ->addIndexColumn()
-        ->addColumn('participant', fn ($r) =>
-            '<div class="d-flex align-items-center"><span class="avatar me-2"><i class="ti ti-user"></i></span>'
-            . '<div class="fw-semibold">' . e($r->participant_name) . '</div></div>')
+        ->addColumn('participant', function ($r) use ($canViewAll) {
+            $note = ($canViewAll && $r->transaction?->complimentary_note)
+                ? '<div class="text-secondary small fst-italic">' . e($r->transaction->complimentary_note) . '</div>'
+                : '';
+
+            return '<div class="d-flex align-items-center"><span class="avatar me-2"><i class="ti ti-user"></i></span>'
+                . '<div><div class="fw-semibold">' . e($r->participant_name) . '</div>' . $note . '</div></div>';
+        })
         ->filterColumn('participant', function ($q, $keyword) use ($nameExpr) {
             $q->whereRaw("$nameExpr LIKE ?", ['%' . mb_strtolower($keyword) . '%']);
         })
@@ -1423,7 +1429,6 @@ public function participantsData(Event $event)
             : '<span class="badge bg-secondary">Belum Check-in</span>')
         ->orderColumn('checkin', 'event_registrations.status $1')
         ->addColumn('certificate', function ($r) use ($event, $certReady, $myId) {
-            // Bukan baris milik akun yang login, atau belum check-in
             if ($r->status !== 'attended' || ! $r->user_id || (string) $r->user_id !== (string) $myId) {
                 return '<span class="text-secondary">-</span>';
             }

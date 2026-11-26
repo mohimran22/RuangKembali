@@ -23,11 +23,11 @@ use App\Http\Controllers\TrafficController;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\VoucherController;
 use App\Http\Controllers\PartnerController;
-use App\Http\Controllers\ProductController;
+use App\Http\Controllers\FinanceTargetController;
 use App\Http\Controllers\TicketController;
 use App\Http\Controllers\CertificateController;
 use App\Http\Controllers\EventSpeakerController;
-use App\Http\Controllers\ProductTypeController;
+use App\Http\Controllers\DashboardFinanceController;
 use App\Http\Controllers\EventCategoryController;
 use App\Http\Controllers\SupplierCatalogController;
 use App\Http\Controllers\ProductCatalogController;
@@ -122,6 +122,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::get('/dashboard-finance', [DashboardFinanceController::class, 'index'])
+    ->name('dashboard-finance');
 });
 
 
@@ -161,8 +163,8 @@ Route::get('/supplier/product-detail/{id}', [SupplierCatalogController::class, '
     ->name('supplier.productDetail');
 
 // Create product baru via AJAX (tidak pakai reload)
-Route::post('/products/store-ajax', [ProductController::class, 'storeAjax'])
-    ->name('products.store.ajax');
+Route::post('/dashboard-finance/target', [FinanceTargetController::class, 'store'])
+    ->name('dashboard-finance.target.store');
 
 // Simpan produk ke supplier (pivot)
 Route::post('/supplier/products/store', [SupplierCatalogController::class, 'storeSupplierProduct'])
@@ -279,17 +281,9 @@ route::resource('/event_categories', EventCategoryController::class);
 route::resource('/product_types', ProductTypeController::class);
 
 
-
-Route::middleware(['auth', 'permission:lihat daftar produk|lihat data produk'])->group(function () {
-    Route::resource('/products', ProductController::class);
-});
-
 Route::middleware(['auth', 'permission:lihat daftar produk'])->group(function () {
     Route::resource('/products/catalog', ProductCatalogController::class);
 });
-
-Route::post('/products/generate-sku', [ProductController::class, 'generateSku'])
-    ->name('products.generateSku');
 
 Route::middleware(['auth', 'active.permission:lihat daftar event|lihat data event'])->group(function () {
     Route::resource('/events', EventController::class)->except(['show']);
