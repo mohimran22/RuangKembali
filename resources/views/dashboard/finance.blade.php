@@ -34,6 +34,10 @@
     .df-sec{margin-top:28px}
     .df-sec h2{font-size:18px;margin:0 0 12px}
     .df-chart{padding:18px;height:360px}
+    .df-year{display:flex;align-items:center;gap:6px}
+    .df-year select.df-chip{border:0;appearance:none;-webkit-appearance:none;cursor:pointer;padding:6px 16px;text-align:center;outline:0}
+    .df-nav{width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-size:20px;line-height:1;text-decoration:none}
+    .df-nav:hover{background:var(--brand-soft);color:var(--brand)}
     .df-btn{background:var(--brand);color:#fff;border:0;font-weight:700;padding:8px 18px;border-radius:999px;cursor:pointer}
     .df-btn:hover{filter:brightness(1.1)}
     .df-btn.ghost{background:var(--head);color:var(--ink);border:1px solid var(--line)}
@@ -56,7 +60,15 @@
         </div>
         <div style="display:flex;gap:10px;align-items:center">
             <button type="button" class="df-btn" data-bs-toggle="modal" data-bs-target="#modalTarget">Atur Target</button>
-            <span class="df-chip">{{ $year }}</span>
+            <div class="df-year">
+                <a href="{{ request()->fullUrlWithQuery(['year' => $year - 1]) }}" class="df-nav" title="Tahun sebelumnya">&#8249;</a>
+                <select class="df-chip" onchange="location.href=this.value" aria-label="Pilih tahun">
+                    @for ($y = now()->year + 2; $y >= now()->year - 5; $y--)
+                        <option value="{{ request()->fullUrlWithQuery(['year' => $y]) }}" @selected($y == $year)>{{ $y }}</option>
+                    @endfor
+                </select>
+                <a href="{{ request()->fullUrlWithQuery(['year' => $year + 1]) }}" class="df-nav" title="Tahun berikutnya">&#8250;</a>
+            </div>
         </div>
     </div>
 
@@ -171,7 +183,7 @@
                             <div class="df-input">
                                 <span>Rp</span>
                                 <input type="text" inputmode="numeric" class="rupiah target-bulan"
-                                       name="targets[{{ $i + 1 }}]"
+                                       name="targets[{{ $i }}]"
                                        value="{{ $r['target'] ? number_format($r['target'], 0, ',', '.') : '' }}"
                                        placeholder="0">
                             </div>
