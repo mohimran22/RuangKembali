@@ -8,25 +8,26 @@ use Illuminate\Support\Facades\DB;
 
 class FinanceTargetController extends Controller
 {
-    public function store(Request $request)
-    {
-        $data = $request->validate([
-            'year'        => ['required', 'integer', 'between:2000,2100'],
-            'targets'     => ['required', 'array'],
-            'targets.*'   => ['nullable', 'numeric', 'min:0'],
-        ]);
+public function storeTarget(Request $request)
+{
+    $data = $request->validate([
+        'year'             => 'required|integer|min:2000|max:2100',
+        'targets.omset.*'  => 'nullable|numeric|min:0',
+        'targets.cost.*'   => 'nullable|numeric|min:0',
+        'targets.profit.*' => 'nullable|numeric',
+    ]);
 
-        DB::transaction(function () use ($data) {
-            foreach (range(1, 12) as $month) {
+    DB::transaction(function () use ($data) {
+        foreach (FinanceTarget::TIPE as $tipe) {
+            for ($m = 1; $m <= 12; $m++) {
                 FinanceTarget::updateOrCreate(
-                    ['year' => $data['year'], 'month' => $month],
-                    ['target' => $data['targets'][$month] ?? 0]
+                    ['year' => $data['year'], 'type' => $tipe, 'month' => $m],
+                    ['target' => (float) ($data['targets'][$tipe][$m] ?? 0)]
                 );
             }
-        });
+        }
+    });
 
-        return redirect()
-            ->route('dashboard-finance') // sesuaikan dengan nama route dashboard-mu
-            ->with('success', 'Target ' . $data['year'] . ' berhasil disimpan.');
-    }
+    return back()->with('success', 'Target berhasil disimpan.');
+}
 }

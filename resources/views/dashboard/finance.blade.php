@@ -2,18 +2,19 @@
 @section('content')
 @php
     $rp  = fn ($v) => 'Rp ' . number_format($v, 0, ',', '.');
+    $rpS = fn ($v) => ($v < 0 ? '-' : '') . 'Rp ' . number_format(abs($v), 0, ',', '.');
     $pct = fn ($v) => number_format($v, 1, ',', '.') . '%';
     $warnaProgress = fn ($v) => $v >= 100 ? 'good' : ($v >= 70 ? 'mid' : 'bad');
     $warnaTumbuh   = fn ($v) => $v >= 100 ? 'good' : 'bad';
 @endphp
 
 <style>
-    .df{--ink:#13211F;--muted:#62726F;--line:#DCE4E2;--surface:#fff;--head:#F6F9F8;--brand:#0E5B52;--brand-soft:#D9EEEA;--amber:#D9941A;--good:#117A4D;--mid:#B7791F;--bad:#C2410C;font-family:'Plus Jakarta Sans',system-ui,sans-serif;color:var(--ink)}
+    .df{--ink:#13211F;--muted:#62726F;--line:#DCE4E2;--surface:#fff;--head:#F6F9F8;--brand:#000;--brand-soft:#D9EEEA;--amber:#D9941A;--good:#544a1e;--mid:#B7791F;--bad:#C2410C;font-family:'Plus Jakarta Sans',system-ui,sans-serif;color:var(--ink)}
     .df *{box-sizing:border-box}
-    .df-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+    .df-head{display:flex;justify-content:space-between;align-items:center;margin:0px 18px 24px}
     .df-head h1{margin:0;font-size:26px;font-weight:800;letter-spacing:-.02em}
     .df-chip{background:var(--brand-soft);color:var(--brand);font-weight:700;padding:6px 14px;border-radius:999px}
-    .df-card{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;min-width:0;max-width:100%;contain:inline-size}
+    .df-card{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;min-width:0;max-width:100%;contain:inline-size;;margin:0px 18px 24px}
     .df-scroll{overflow-x:auto}
     .df table{border-collapse:separate;border-spacing:0;width:100%;min-width:1500px}
     .df th,.df td{padding:11px 12px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
@@ -34,6 +35,8 @@
     .df-sec{margin-top:28px}
     .df-sec h2{font-size:18px;margin:0 0 12px}
     .df-chart{padding:18px;height:360px}
+    .df-ctrl{display:flex;gap:10px;align-items:center}
+    .df-btn{white-space:nowrap}
     .df-year{display:flex;align-items:center;gap:6px}
     .df-year select.df-chip{border:0;appearance:none;-webkit-appearance:none;cursor:pointer;padding:6px 16px;text-align:center;outline:0}
     .df-nav{width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-size:20px;line-height:1;text-decoration:none}
@@ -41,7 +44,7 @@
     .df-btn{background:var(--brand);color:#fff;border:0;font-weight:700;padding:8px 18px;border-radius:999px;cursor:pointer}
     .df-btn:hover{filter:brightness(1.1)}
     .df-btn.ghost{background:var(--head);color:var(--ink);border:1px solid var(--line)}
-    .df-alert{background:var(--brand-soft);color:var(--brand);font-weight:600;padding:10px 16px;border-radius:12px;margin-bottom:14px}
+    .df-alert{background:var(--brand-soft);color:var(--brand);font-weight:600;padding:10px 16px;border-radius:12px;margin:14px 18px}
     .df-alert-err{background:#FDE8E0;color:var(--bad)}
     .df-modal .modal-content{border-radius:16px;border:1px solid var(--line)}
     .df-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px}
@@ -50,15 +53,84 @@
     .df-input span{padding:0 10px;color:var(--muted);background:var(--head);align-self:stretch;display:flex;align-items:center;font-size:13px}
     .df-input input{border:0;outline:0;padding:9px 10px;width:100%;text-align:right;font-variant-numeric:tabular-nums}
     .df-input:focus-within{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft)}
+    .df-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:0 18px 24px}
+
+@media (max-width: 991.98px) {
+    .df-head {
+        margin-left: 14px;
+        margin-right: 14px;
+    }
+
+    .df-card {
+        margin-left: 14px;
+        margin-right: 14px;
+    }
+}
+
+@media (max-width: 575.98px) {
+
+    /* Header: judul 1 baris, kontrol turun ke bawah */
+    .df-head {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    .df-head h1 {
+        font-size: 22px;
+        white-space: nowrap;
+    }
+    .df-ctrl {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .df table {
+        min-width: 1300px;           /* 12 bulan x ~95px + label + total */
+    }
+
+    .df th,
+    .df td {
+        padding: 10px 8px;
+        font-size: 12px;
+    }
+
+    /* Kolom bulan: kasih lebar minimum supaya angka tidak terpotong */
+    .df th:not(:first-child):not(.tot),
+    .df td:not(:first-child):not(.tot) {
+        min-width: 100px;
+    }
+
+    /* Kolom label: lebih ramping, tetap sticky */
+    .df th:first-child,
+    .df td:first-child {
+        min-width: 92px;
+        max-width: 92px;
+        white-space: normal;         /* label boleh turun baris */
+        padding-left: 8px;
+        padding-right: 6px;
+    }
+
+    /* Kolom Total: TIDAK sticky di mobile, ikut digeser */
+    .df .tot {
+        position: static;
+        min-width: 120px;
+        border-left: 1px solid var(--line);
+    }
+
+    .df .bar {
+        width: 80px;
+    }
+}
+
 </style>
 
 <div class="df" style="width:100%;min-width:0;margin:0;padding:90px 0 64px">
     <div class="df-head">
         <div>
             <h1>Dashboard Finance</h1>
-            <div style="color:var(--muted)">Omset dan target bulanan {{ $year }}</div>
+            {{-- <div style="color:var(--muted)">Omset dan target bulanan {{ $year }}</div> --}}
         </div>
-        <div style="display:flex;gap:10px;align-items:center">
+        <div class="df-ctrl">
             <button type="button" class="df-btn" data-bs-toggle="modal" data-bs-target="#modalTarget">Atur Target</button>
             <div class="df-year">
                 <a href="{{ request()->fullUrlWithQuery(['year' => $year - 1]) }}" class="df-nav" title="Tahun sebelumnya">&#8249;</a>
@@ -79,179 +151,112 @@
         <div class="df-alert df-alert-err">{{ $errors->first() }}</div>
     @endif
 
-    <div class="df-card">
-        <div class="df-scroll">
-            <table>
-                <thead>
-                    <tr>
-                        <th></th>
-                        @foreach ($rows as $r)
-                            <th>{{ $r['label'] }}</th>
-                        @endforeach
-                        <th class="tot">Total {{ $year }}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {{-- Omset tahun lalu --}}
-                    <tr>
-                        <td class="lbl"><b>Omset {{ $year - 1 }}</b><small>pembanding</small></td>
-                        @foreach ($rows as $r)
-                            <td>{{ $rp($r['omset_lalu']) }}</td>
-                        @endforeach
-                        <td class="tot">{{ $rp($total['omset_lalu']) }}</td>
-                    </tr>
+    @include('dashboard.finance_table', [
+        'judul' => 'Omset', 'rows' => $tabel['omset']['rows'], 'total' => $tabel['omset']['total'],
+    ])
 
-                    {{-- Target --}}
-                    <tr>
-                        <td class="lbl"><b>Target</b><small>rencana {{ $year }}</small></td>
-                        @foreach ($rows as $r)
-                            <td>{{ $rp($r['target']) }}</td>
-                        @endforeach
-                        <td class="tot">{{ $rp($total['target']) }}</td>
-                    </tr>
-
-                    {{-- Omset --}}
-                    <tr>
-                        <td class="lbl"><b>Omset</b><small>realisasi {{ $year }}</small></td>
-                        @foreach ($rows as $r)
-                            <td>{!! $r['omset'] === null ? '<span class="dash">–</span>' : $rp($r['omset']) !!}</td>
-                        @endforeach
-                        <td class="tot">{!! $total['omset'] === null ? '<span class="dash">–</span>' : $rp($total['omset']) !!}</td>
-                    </tr>
-
-                    {{-- Progress = omset / target --}}
-                    <tr>
-                        <td class="lbl"><b>Progress</b><small>omset ÷ target</small></td>
-                        @foreach (array_merge($rows, ['total' => $total]) as $key => $r)
-                            <td class="{{ $key === 'total' ? 'tot' : '' }}">
-                                @if ($r['progress'] === null)
-                                    <span class="dash">–</span>
-                                @else
-                                    @php $w = $warnaProgress($r['progress']); @endphp
-                                    <span class="pct {{ $w }}">{{ $pct($r['progress']) }}</span>
-                                    <div class="bar"><i class="{{ $w }}" style="width:{{ min($r['progress'], 100) }}%"></i></div>
-                                @endif
-                            </td>
-                        @endforeach
-                    </tr>
-
-                    {{-- Pertumbuhan = omset / omset tahun lalu --}}
-                    <tr>
-                        <td class="lbl"><b>Pertumbuhan</b><small>omset ÷ omset {{ $year - 1 }}</small></td>
-                        @foreach (array_merge($rows, ['total' => $total]) as $key => $r)
-                            <td class="{{ $key === 'total' ? 'tot' : '' }}">
-                                @if ($r['pertumbuhan'] === null)
-                                    <span class="dash">–</span>
-                                @else
-                                    <span class="pct {{ $warnaTumbuh($r['pertumbuhan']) }}">{{ $pct($r['pertumbuhan']) }}</span>
-                                @endif
-                            </td>
-                        @endforeach
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+    <div class="df-sec">
+        <h2 class="page-title">Kurva</h2>
+        <div class="df-card df-chart"><canvas id="kurvaFinance"></canvas></div>
     </div>
 
     <div class="df-sec">
-        <h2>Kurva</h2>
-        <div class="df-card df-chart"><canvas id="kurvaFinance"></canvas></div>
+        <h2 class="page-title">Cost</h2>
+        @include('dashboard.finance_table', [
+            'judul' => 'Cost', 'rows' => $tabel['cost']['rows'], 'total' => $tabel['cost']['total'], 'kurang' => true,
+        ])
+    </div>
+
+    <div class="df-sec">
+        <h2 class="page-title">Profit</h2>
+        @include('dashboard.finance_table', [
+            'judul' => 'Profit', 'rows' => $tabel['profit']['rows'], 'total' => $tabel['profit']['total'],
+        ])
     </div>
 </div>
 
-{{-- Modal input target --}}
-<div class="modal modal-blur fade df-modal" id="modalTarget" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <form class="modal-content df" method="POST" action="{{ route('dashboard-finance.target.store') }}" id="formTarget">
-            @csrf
-            <input type="hidden" name="year" value="{{ $year }}">
-            <div class="modal-header">
-                <h3 class="modal-title" style="font-weight:800">Target Omset {{ $year }}</h3>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
-            </div>
-            <div class="modal-body">
-                <div style="margin-bottom:14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-                    <span style="color:var(--muted);font-size:13px">Isi semua bulan sekaligus:</span>
-                    <div class="df-input" style="width:190px"><span>Rp</span><input type="text" inputmode="numeric" class="rupiah" id="targetSama" placeholder="0"></div>
-                    <button type="button" class="df-btn ghost" id="btnSamakan">Samakan</button>
-                    <button type="button" class="df-btn ghost" id="btnBagi">Bagi rata dari total</button>
-                </div>
-                <div class="df-grid">
-                    @foreach ($rows as $i => $r)
-                        <div>
-                            <label>{{ $r['label'] }}</label>
-                            <div class="df-input">
-                                <span>Rp</span>
-                                <input type="text" inputmode="numeric" class="rupiah target-bulan"
-                                       name="targets[{{ $i }}]"
-                                       value="{{ $r['target'] ? number_format($r['target'], 0, ',', '.') : '' }}"
-                                       placeholder="0">
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-                <div style="margin-top:16px;font-weight:700">Total target: <span id="totalTarget" style="color:var(--brand)">Rp 0</span></div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="df-btn ghost" data-bs-dismiss="modal">Batal</button>
-                <button type="submit" class="df-btn">Simpan Target</button>
-            </div>
-        </form>
-    </div>
-</div>
+@include('dashboard.finance_modal_target')
 @endsection
 @push('js')
-<script>
-    (() => {
-        const fmt = n => n ? Math.round(n).toLocaleString('id-ID') : '';
-        const val = el => parseInt((el.value || '').replace(/\D/g, '')) || 0;
-        const inputs = [...document.querySelectorAll('.target-bulan')];
-        const total = () => {
-            document.getElementById('totalTarget').textContent = 'Rp ' + (inputs.reduce((s, e) => s + val(e), 0)).toLocaleString('id-ID');
-        };
-        document.querySelectorAll('.rupiah').forEach(el => el.addEventListener('input', () => {
-            el.value = fmt(val(el)); total();
-        }));
-        document.getElementById('btnSamakan').onclick = () => {
-            const v = val(document.getElementById('targetSama'));
-            inputs.forEach(e => e.value = fmt(v)); total();
-        };
-        document.getElementById('btnBagi').onclick = () => {
-            const v = Math.floor(val(document.getElementById('targetSama')) / 12);
-            inputs.forEach(e => e.value = fmt(v)); total();
-        };
-        // kirim angka murni (tanpa titik) ke server
-        document.getElementById('formTarget').addEventListener('submit', () => {
-            inputs.forEach(e => e.value = val(e));
-        });
-        total();
-    })();
-</script>
-@endpush
-@push('js')
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<script>
-    const labels = @json(collect($rows)->pluck('label')->values());
-    const jt = a => a.map(v => v === null ? null : v / 1e6);
 
+{{-- <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script> --}}
+<script>
+    const labels = @json(collect($tabel['omset']['rows'])->pluck('label')->values());
+    const jt = a => a.map(v => v === null ? null : v / 1e6);
+    const labelOmset = {
+        id: 'labelOmset',
+        afterDatasetsDraw(chart) {
+            const {ctx} = chart;
+            const mobile = window.innerWidth < 576;
+
+            chart.data.datasets.forEach((ds, i) => {
+                if (ds.type !== 'bar') return;
+
+                chart.getDatasetMeta(i).data.forEach((bar, idx) => {
+                    const v = ds.data[idx];
+                    if (v === null || v === undefined || v <= 0) return;
+
+                    const {x, y, base} = bar.getProps(['x', 'y', 'base'], true);
+                    const tinggi = Math.abs(base - y);
+                    const txt = Math.round(v).toLocaleString('id-ID') + (mobile ? '' : ' jt');
+
+                    ctx.save();
+                    ctx.font = '600 ' + (mobile ? 9 : 11) + 'px system-ui, sans-serif';
+                    ctx.textBaseline = 'middle';
+
+                    const muat = ctx.measureText(txt).width + 12 <= tinggi;
+                    ctx.translate(x, muat ? y + 6 : y - 4);
+                    ctx.rotate(-Math.PI / 2);
+
+                    if (muat) {            // batang cukup tinggi: tulis di dalam (putih)
+                        ctx.textAlign = 'right';
+                        ctx.fillStyle = '#fff';
+                    } else {               // batang pendek: tulis di atas batang (hitam)
+                        ctx.textAlign = 'left';
+                        ctx.fillStyle = '#000';
+                    }
+                    ctx.fillText(txt, 0, 0);
+                    ctx.restore();
+                });
+            });
+        }
+    };
+    @php
+        $o = $tabel['omset']['rows'];
+        $c = $tabel['cost']['rows'];
+    @endphp
     new Chart(document.getElementById('kurvaFinance'), {
         data: {
             labels,
             datasets: [
-                {type:'bar',  label:'Omset {{ $year }}',  data: jt(@json(collect($rows)->pluck('omset')->values())),
-                 backgroundColor:'#544a1e', borderRadius:6, maxBarThickness:34, order:3},
-                {type:'line', label:'Target {{ $year }}', data: jt(@json(collect($rows)->pluck('target')->values())),
-                 borderColor:'#dccba8', backgroundColor:'#dccba8', cubicInterpolationMode:'monotone', borderWidth:2.5, pointRadius:3, order:1},
-                {type:'line', label:'Omset {{ $year - 1 }}', data: jt(@json(collect($rows)->pluck('omset_lalu')->values())),
-                 borderColor:'#c3bbb0', borderDash:[6,5], cubicInterpolationMode:'monotone', borderWidth:2, pointRadius:0, order:2},
+                {type:'bar',  label:'Omset {{ $year }}', data: jt(@json(collect($o)->pluck('real')->values())),
+                backgroundColor:'#dccba8', hoverBackgroundColor:'#333', borderRadius:6, maxBarThickness:34, order:3},
+
+                {type:'line', label:'Target {{ $year }}', data: jt(@json(collect($o)->pluck('target')->values())),
+                borderColor:'#c3bbb0', backgroundColor:'#c3bbb0', cubicInterpolationMode:'monotone', borderWidth:2.5,
+                pointRadius:3, pointHoverRadius:6, pointHitRadius:16, order:1},
+
+                {type:'line', label:'Omset {{ $year - 1 }}', data: jt(@json(collect($o)->pluck('lalu')->values())),
+                borderColor:'#6d4e35', borderDash:[6,5], cubicInterpolationMode:'monotone', borderWidth:2,
+                pointRadius:2, pointHoverRadius:6, pointHitRadius:16, order:2},
+
+                {type:'line', label:'Cost {{ $year }}', data: jt(@json(collect($c)->pluck('real')->values())),
+                borderColor:'#C2410C', backgroundColor:'#C2410C', cubicInterpolationMode:'monotone', borderWidth:2.5,
+                pointRadius:3, pointHoverRadius:6, pointHitRadius:16, order:0},
             ]
         },
         options: {
             responsive:true, maintainAspectRatio:false,
-            interaction:{mode:'index', intersect:false},
+            events:['click','touchstart','touchmove'],         // respons ke sentuhan
+            interaction:{mode:'nearest', intersect:true},      // hanya elemen yang disentuh
             plugins:{
                 legend:{labels:{usePointStyle:true}},
-                tooltip:{callbacks:{label:c => `${c.dataset.label}: Rp ${Math.round((c.parsed.y||0)*1e6).toLocaleString('id-ID')}`}}
+                tooltip:{
+                    displayColors:true,
+                    callbacks:{
+                        label:c => `${c.dataset.label}: Rp ${Math.round((c.parsed.y||0)*1e6).toLocaleString('id-ID')}`
+                    }
+                }
             },
             scales:{
                 x:{grid:{display:false}},

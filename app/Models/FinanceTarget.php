@@ -6,9 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 
 class FinanceTarget extends Model
 {
+    public const TIPE = ['omset', 'cost', 'profit'];
+
     protected $table = 'finance_targets';
 
-    protected $fillable = ['year', 'month', 'target'];
+    protected $fillable = ['year', 'type', 'month', 'target'];
 
     protected $casts = [
         'year'   => 'integer',

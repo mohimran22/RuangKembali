@@ -8,74 +8,121 @@ use Illuminate\Support\Facades\DB;
 
 class DashboardFinanceController extends Controller
 {
+    /** Awalan account_code yang dihitung sebagai Cost (HPP + beban). Sesuaikan dengan bagan akun. */
+    private const COST_PREFIX = ['5', '6'];
+
     public function index(Request $request)
     {
         $year = (int) $request->get('year', now()->year);
 
-        $omsetLalu = $this->omsetPerBulan($year - 1); // Omset 2026 (pembanding)
-        $omsetIni  = $this->omsetPerBulan($year);     // Omset 2027 (realisasi)
-        $targets   = DB::table('finance_targets')
-            ->where('year', $year)
-            ->pluck('target', 'month');
+        $omsetLalu = $this->omsetPerBulan($year - 1);
+        $omsetIni  = $this->omsetPerBulan($year);
+        $costLalu  = $this->costPerBulan($year - 1);
+        $costIni   = $this->costPerBulan($year);
 
+        // Profit = omset - cost (per bulan)
+        $profitLalu = [];
+        $profitIni  = [];
+        for ($m = 1; $m <= 12; $m++) {
+            $profitLalu[$m] = ($omsetLalu[$m] ?? 0) - ($costLalu[$m] ?? 0);
+            $profitIni[$m]  = ($omsetIni[$m] ?? 0)  - ($costIni[$m] ?? 0);
+        }
+
+        // Target per jenis: ['omset' => [1 => ..., 12 => ...], 'cost' => ..., 'profit' => ...]
+        $targets = DB::table('finance_targets')
+            ->where('year', $year)
+            ->get()
+            ->groupBy('type')
+            ->map(fn ($g) => $g->pluck('target', 'month'));
+
+        return view('dashboard.finance', [
+            'year'  => $year,
+            'tabel' => [
+                'omset'  => $this->bangunTabel($year, $omsetLalu,  $omsetIni,  $targets['omset']  ?? collect()),
+                'cost'   => $this->bangunTabel($year, $costLalu,   $costIni,   $targets['cost']   ?? collect()),
+                'profit' => $this->bangunTabel($year, $profitLalu, $profitIni, $targets['profit'] ?? collect()),
+            ],
+        ]);
+    }
+
+    /**
+     * Susunan tabel yang sama untuk Omset, Cost, dan Profit.
+     * Tiap baris: label, lalu (tahun lalu), target, real (realisasi), progress, tumbuh.
+     */
+    private function bangunTabel(int $year, $lalu, $ini, $target): array
+    {
         $now  = now();
         $rows = [];
 
         for ($m = 1; $m <= 12; $m++) {
             $masaDepan = Carbon::create($year, $m, 1)->startOfMonth()->gt($now);
 
-            $o26    = (float) ($omsetLalu[$m] ?? 0);
-            $target = (float) ($targets[$m] ?? 0);
-            $omset  = $masaDepan ? null : (float) ($omsetIni[$m] ?? 0);
+            $l = (float) ($lalu[$m] ?? 0);
+            $t = (float) ($target[$m] ?? 0);
+            $r = $masaDepan ? null : (float) ($ini[$m] ?? 0);
 
-            $rows[$m] = $this->hitung($o26, $target, $omset);
+            $rows[$m] = $this->hitung($l, $t, $r);
             $rows[$m]['label'] = Carbon::create($year, $m, 1)->translatedFormat('M Y');
         }
 
         // Kolom total tahun
-        $terisi     = collect($rows)->whereNotNull('omset');
-        $totalOmset = $terisi->isEmpty() ? null : $terisi->sum('omset');
+        $terisi = collect($rows)->whereNotNull('real');          // bulan yang sudah berjalan
+        $real   = $terisi->isEmpty() ? null : $terisi->sum('real');
+
         $total = $this->hitung(
-            collect($rows)->sum('omset_lalu'),
+            collect($rows)->sum('lalu'),
             collect($rows)->sum('target'),
-            $totalOmset
+            $real,
+            $terisi->sum('lalu')   // pertumbuhan dibanding bulan yang sama tahun lalu
         );
 
-        return view('dashboard.finance', [
-            'year'  => $year,
-            'rows'  => $rows,
-            'total' => $total,
-        ]);
+        return ['rows' => $rows, 'total' => $total];
     }
 
     /**
-     * Rumus sesuai sketsa:
-     *  Progress    = omset / target * 100
-     *  Pertumbuhan = omset / omset tahun lalu * 100
+     *  Progress    = realisasi / target * 100
+     *  Pertumbuhan = realisasi / tahun lalu * 100
      */
-    private function hitung(float $omsetLalu, float $target, ?float $omset): array
+    private function hitung(float $lalu, float $target, ?float $real, ?float $pembanding = null): array
     {
+        $banding = $pembanding ?? $lalu;
+
         return [
-            'omset_lalu' => $omsetLalu,
-            'target'     => $target,
-            'omset'      => $omset,
-            'progress'   => ($omset !== null && $target > 0) ? $omset / $target * 100 : null,
-            'pertumbuhan'=> ($omset !== null && $omsetLalu > 0) ? $omset / $omsetLalu * 100 : null,
+            'lalu'     => $lalu,
+            'target'   => $target,
+            'real'     => $real,
+            'progress' => ($real !== null && $target > 0)  ? $real / $target  * 100 : null,
+            'tumbuh'   => ($real !== null && $banding > 0) ? $real / $banding * 100 : null,
         ];
     }
 
-    /**
-     * Omset per bulan (key 1..12) dari jurnal akuntansi:
-     * akun Pendapatan = account_code diawali "4", nilai = kredit - debit.
-     */
+    /** Omset: akun Pendapatan (kode diawali "4"), nilai = kredit - debit. */
     private function omsetPerBulan(int $year)
     {
+        return $this->nilaiAkunPerBulan($year, ['4'], 'kredit');
+    }
+
+    /** Cost: akun HPP/beban (lihat COST_PREFIX), nilai = debit - kredit. */
+    private function costPerBulan(int $year)
+    {
+        return $this->nilaiAkunPerBulan($year, self::COST_PREFIX, 'debit');
+    }
+
+    private function nilaiAkunPerBulan(int $year, array $prefix, string $sisi)
+    {
+        $nilai = $sisi === 'kredit' ? 'SUM(d.credit - d.debit)' : 'SUM(d.debit - d.credit)';
+
         return DB::table('accounting_journal_details as d')
             ->join('accounting_journals as j', 'j.id', '=', 'd.journal_id')
             ->join('accounting_accounts as a', 'a.id', '=', 'd.account_id')
-            ->where('a.account_code', 'like', '4%')
-            ->whereYear('j.transaction_date', $year)
-            ->selectRaw('EXTRACT(MONTH FROM j.transaction_date)::int as bulan, SUM(d.credit - d.debit) as total')
+            ->where(function ($q) use ($prefix) {
+                foreach ($prefix as $p) {
+                    $q->orWhere('a.account_code', 'like', $p . '%');
+                }
+            })
+            ->where('j.transaction_date', '>=', "$year-01-01")
+            ->where('j.transaction_date', '<', ($year + 1) . '-01-01')
+            ->selectRaw("EXTRACT(MONTH FROM j.transaction_date)::int as bulan, $nilai as total")
             ->groupByRaw('EXTRACT(MONTH FROM j.transaction_date)')
             ->pluck('total', 'bulan')
             ->map(fn ($v) => (float) $v);
