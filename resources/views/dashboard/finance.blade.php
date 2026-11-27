@@ -1,12 +1,5 @@
 @extends('tablar::page')
 @section('content')
-@php
-    $rp  = fn ($v) => 'Rp ' . number_format($v, 0, ',', '.');
-    $rpS = fn ($v) => ($v < 0 ? '-' : '') . 'Rp ' . number_format(abs($v), 0, ',', '.');
-    $pct = fn ($v) => number_format($v, 1, ',', '.') . '%';
-    $warnaProgress = fn ($v) => $v >= 100 ? 'good' : ($v >= 70 ? 'mid' : 'bad');
-    $warnaTumbuh   = fn ($v) => $v >= 100 ? 'good' : 'bad';
-@endphp
 
 <style>
     .df{--ink:#13211F;--muted:#62726F;--line:#DCE4E2;--surface:#fff;--head:#F6F9F8;--brand:#000;--brand-soft:#D9EEEA;--amber:#D9941A;--good:#544a1e;--mid:#B7791F;--bad:#C2410C;font-family:'Plus Jakarta Sans',system-ui,sans-serif;color:var(--ink)}
@@ -34,7 +27,17 @@
     .df .bar i.good{background:var(--good)} .df .bar i.mid{background:var(--mid)} .df .bar i.bad{background:var(--bad)}
     .df-sec{margin-top:28px}
     .df-sec h2{font-size:18px;margin:0 0 12px}
-    .df-chart{padding:18px;height:360px}
+    .df-chart{padding:18px;height:420px;display:flex;flex-direction:column;gap:14px}
+    .df-chart-wrap{position:relative;flex:1;min-height:0}
+    .df-legend{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+    .df-toggle{--c:#000;--k:#fff;display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:5px 14px 5px 6px;font:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:opacity .15s,background .15s,border-color .15s}
+    .df-toggle:hover{border-color:var(--c)}
+    .df-toggle:focus-visible{outline:2px solid var(--c);outline-offset:2px}
+    .df-toggle .box{width:20px;height:20px;border-radius:50%;background:var(--c);border:2px solid var(--c);color:var(--k);display:grid;place-items:center;transition:background .15s}
+    .df-toggle .box svg{width:11px;height:11px;transition:opacity .15s}
+    .df-toggle[aria-pressed="false"]{opacity:.6;background:var(--head)}
+    .df-toggle[aria-pressed="false"] .box{background:transparent}
+    .df-toggle[aria-pressed="false"] .box svg{opacity:0}
     .df-ctrl{display:flex;gap:10px;align-items:center}
     .df-btn{white-space:nowrap}
     .df-year{display:flex;align-items:center;gap:6px}
@@ -150,16 +153,19 @@
     @if ($errors->any())
         <div class="df-alert df-alert-err">{{ $errors->first() }}</div>
     @endif
-
+    <div class="df-sec">
+        <h2 class="page-title">Kurva</h2>
+        <div class="df-card df-chart">
+            <div class="df-legend" id="dfLegend" role="group" aria-label="Tampilkan atau sembunyikan data kurva"></div>
+            <div class="df-chart-wrap"><canvas id="kurvaFinance"></canvas></div>
+        </div>
+    </div>
+    <div class="df-sec">
+        <h2 class="page-title">Omset</h2>
     @include('dashboard.finance_table', [
         'judul' => 'Omset', 'rows' => $tabel['omset']['rows'], 'total' => $tabel['omset']['total'],
     ])
-
-    <div class="df-sec">
-        <h2 class="page-title">Kurva</h2>
-        <div class="df-card df-chart"><canvas id="kurvaFinance"></canvas></div>
     </div>
-
     <div class="df-sec">
         <h2 class="page-title">Cost</h2>
         @include('dashboard.finance_table', [
@@ -179,89 +185,95 @@
 @endsection
 @push('js')
 
+{{-- <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script> --}}
 <script>
     const labels = @json(collect($tabel['omset']['rows'])->pluck('label')->values());
     const jt = a => a.map(v => v === null ? null : v / 1e6);
-    const labelOmset = {
-        id: 'labelOmset',
-        afterDatasetsDraw(chart) {
-            const {ctx} = chart;
-            const mobile = window.innerWidth < 576;
-
-            chart.data.datasets.forEach((ds, i) => {
-                if (ds.type !== 'bar') return;
-
-                chart.getDatasetMeta(i).data.forEach((bar, idx) => {
-                    const v = ds.data[idx];
-                    if (v === null || v === undefined || v <= 0) return;
-
-                    const {x, y, base} = bar.getProps(['x', 'y', 'base'], true);
-                    const tinggi = Math.abs(base - y);
-                    const txt = Math.round(v).toLocaleString('id-ID') + (mobile ? '' : ' jt');
-
-                    ctx.save();
-                    ctx.font = '600 ' + (mobile ? 9 : 11) + 'px system-ui, sans-serif';
-                    ctx.textBaseline = 'middle';
-
-                    const muat = ctx.measureText(txt).width + 12 <= tinggi;
-                    ctx.translate(x, muat ? y + 6 : y - 4);
-                    ctx.rotate(-Math.PI / 2);
-
-                    if (muat) {            // batang cukup tinggi: tulis di dalam (putih)
-                        ctx.textAlign = 'right';
-                        ctx.fillStyle = '#fff';
-                    } else {               // batang pendek: tulis di atas batang (hitam)
-                        ctx.textAlign = 'left';
-                        ctx.fillStyle = '#000';
-                    }
-                    ctx.fillText(txt, 0, 0);
-                    ctx.restore();
-                });
-            });
-        }
-    };
     @php
         $o = $tabel['omset']['rows'];
         $c = $tabel['cost']['rows'];
+        $p = $tabel['profit']['rows'];
     @endphp
-    new Chart(document.getElementById('kurvaFinance'), {
+    const barBase = {borderRadius:6, maxBarThickness:22, barPercentage:.9, categoryPercentage:.8};
+
+    const kurvaChart = new Chart(document.getElementById('kurvaFinance'), {
         data: {
             labels,
             datasets: [
-                {type:'bar',  label:'Omset {{ $year }}', data: jt(@json(collect($o)->pluck('real')->values())),
-                backgroundColor:'#dccba8', hoverBackgroundColor:'#333', borderRadius:6, maxBarThickness:34, order:3},
+                // Bar: Omset | Cost | Profit (berdampingan per bulan)
+                {...barBase, type:'bar', label:'Omset {{ $year }}', data: jt(@json(collect($o)->pluck('real')->values())),
+                 backgroundColor:'#dccba8', hoverBackgroundColor:'#333', order:3},
 
-                {type:'line', label:'Target {{ $year }}', data: jt(@json(collect($o)->pluck('target')->values())),
-                borderColor:'#c3bbb0', backgroundColor:'#c3bbb0', cubicInterpolationMode:'monotone', borderWidth:2.5,
-                pointRadius:3, pointHoverRadius:6, pointHitRadius:16, order:1},
+                {...barBase, type:'bar', label:'Cost {{ $year }}', data: jt(@json(collect($c)->pluck('real')->values())),
+                 backgroundColor:'#C2410C', hoverBackgroundColor:'#9A3412', order:3},
+
+                {...barBase, type:'bar', label:'Profit {{ $year }}', data: jt(@json(collect($p)->pluck('real')->values())),
+                 backgroundColor:'#544a1e', hoverBackgroundColor:'#544a1e', order:3},
+
+                // Line: Target & Omset tahun lalu
+                {type:'line', label:'Target Omset {{ $year }}', data: jt(@json(collect($o)->pluck('target')->values())),
+                 borderColor:'#c3bbb0', backgroundColor:'#c3bbb0', cubicInterpolationMode:'monotone', borderWidth:2.5,
+                 pointRadius:3, pointHoverRadius:6, pointHitRadius:16, order:1},
+
+                // Target Cost & Profit (garis putus-putus, awalnya disembunyikan; aktifkan lewat chip)
+                {type:'line', label:'Target Cost {{ $year }}', data: jt(@json(collect($c)->pluck('target')->values())),
+                 borderColor:'#C2410C', backgroundColor:'#C2410C', borderDash:[4,4], cubicInterpolationMode:'monotone', borderWidth:2.5,
+                 pointRadius:3, pointHoverRadius:6, pointHitRadius:16, order:1, hidden:true},
+
+                {type:'line', label:'Target Profit {{ $year }}', data: jt(@json(collect($p)->pluck('target')->values())),
+                 borderColor:'#544a1e', backgroundColor:'#544a1e', borderDash:[4,4], cubicInterpolationMode:'monotone', borderWidth:2.5,
+                 pointRadius:3, pointHoverRadius:6, pointHitRadius:16, order:1, hidden:true},
 
                 {type:'line', label:'Omset {{ $year - 1 }}', data: jt(@json(collect($o)->pluck('lalu')->values())),
-                borderColor:'#6d4e35', borderDash:[6,5], cubicInterpolationMode:'monotone', borderWidth:2,
-                pointRadius:2, pointHoverRadius:6, pointHitRadius:16, order:2},
-
-                {type:'line', label:'Cost {{ $year }}', data: jt(@json(collect($c)->pluck('real')->values())),
-                borderColor:'#C2410C', backgroundColor:'#C2410C', cubicInterpolationMode:'monotone', borderWidth:2.5,
-                pointRadius:3, pointHoverRadius:6, pointHitRadius:16, order:0},
+                 borderColor:'#6d4e35', borderDash:[6,5], cubicInterpolationMode:'monotone', borderWidth:2,
+                 pointRadius:2, pointHoverRadius:6, pointHitRadius:16, order:2, hidden:true},
             ]
         },
         options: {
             responsive:true, maintainAspectRatio:false,
-            events:['click','touchstart','touchmove'],         // respons ke sentuhan
-            interaction:{mode:'nearest', intersect:true},      // hanya elemen yang disentuh
+            events:['mousemove','mouseout','click','touchstart','touchmove'],
+            interaction:{mode:'nearest', intersect:true},
             plugins:{
-                legend:{labels:{usePointStyle:true}},
+                legend:{display:false},
                 tooltip:{
                     displayColors:true,
                     callbacks:{
-                        label:c => `${c.dataset.label}: Rp ${Math.round((c.parsed.y||0)*1e6).toLocaleString('id-ID')}`
+                        label:c => {
+                            const v = Math.round((c.parsed.y || 0) * 1e6);
+                            return `${c.dataset.label}: ${v < 0 ? '-' : ''}Rp ${Math.abs(v).toLocaleString('id-ID')}`;
+                        }
                     }
                 }
             },
             scales:{
-                x:{grid:{display:false}},
-                y:{beginAtZero:true, ticks:{callback:v => v + ' jt'}, title:{display:true, text:'Rupiah (juta)'}}
+                // profit bisa minus, jadi sumbu Y tidak dipaksa mulai dari 0
+                x:{grid:{display:false}, ticks:{padding:6}},
+                y:{ticks:{callback:v => v + ' jt'}, title:{display:true, text:'Rupiah (juta)'}}
             }
         }
     });
+    // Legenda kustom: chip centang untuk tampil/sembunyi tiap data
+    (function () {
+        const wrap = document.getElementById('dfLegend');
+        const terang = ['#c3bbb0', '#c4c4c4']; // warna muda -> centang gelap
+        kurvaChart.data.datasets.forEach((ds, i) => {
+            const warna = ds.backgroundColor || ds.borderColor;
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'df-toggle';
+            btn.style.setProperty('--c', warna);
+            btn.style.setProperty('--k', terang.includes(warna) ? '#333' : '#fff');
+            btn.setAttribute('aria-pressed', kurvaChart.isDatasetVisible(i));
+            btn.innerHTML = '<span class="box"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6.5l2.5 2.5 4.5-5.5"/></svg></span><span></span>';
+            btn.lastElementChild.textContent = ds.label;
+            btn.addEventListener('click', () => {
+                const tampil = !kurvaChart.isDatasetVisible(i);
+                kurvaChart.setDatasetVisibility(i, tampil);
+                btn.setAttribute('aria-pressed', tampil);
+                kurvaChart.update();
+            });
+            wrap.appendChild(btn);
+        });
+    })();
 </script>
 @endpush
